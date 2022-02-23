@@ -1,4 +1,5 @@
 from jupyterhub.services.auth import HubAuth
+from google.oauth2.credentials import Credentials
 import os
 import requests
 
@@ -33,6 +34,13 @@ class AuthClient:
             return AuthClient.fetch_local_user()['exchanged_tokens']['google']['access_token']
         except AuthError as err:
             err.print_warning()
+
+    @staticmethod
+    def fetch_google_credentials():
+        return Credentials(
+            token=AuthClient.fetch_google_token(),
+            token_uri="https://oauth2.googleapis.com/token",
+        )
 
     @staticmethod
     def is_ready():

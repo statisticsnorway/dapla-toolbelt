@@ -1,7 +1,5 @@
 import json
 import requests
-import pandas as pd
-from google.oauth2.credentials import Credentials
 from auth import AuthClient
 
 
@@ -52,39 +50,3 @@ def get_guardian_token(guardian_endpoint, keycloak_token, body):
     else:
         raise RuntimeError(f'Error getting guardian token: <{guardian_response.status_code}: {guardian_response.text or guardian_response.reason}>')
 
-
-def get_gcs_file_system():
-    """
-    Return a pythonic file-system for Google Cloud Storage - initialized with a personal Google Identity token.
-    See https://gcsfs.readthedocs.io/en/latest for usage
-    """
-    import gcsfs
-    token = get_gcs_credentials()
-    return gcsfs.GCSFileSystem(token=token)
-
-
-def get_gcs_credentials():
-    return Credentials(
-        token=AuthClient.fetch_google_token(),
-        token_uri="https://oauth2.googleapis.com/token",
-    )
-
-
-def gcs_ls(bucket_name):
-    fs = get_gcs_file_system()
-    return fs.ls(bucket_name)
-
-
-def pandas_read_csv(path):
-    df = pd.read_csv(f"gcs://{path}", storage_options={"token": get_gcs_credentials()})
-    return df
-
-
-def pandas_read_json(path):
-    df = pd.read_json(f"gcs://{path}", storage_options={"token": get_gcs_credentials()})
-    return df
-
-
-def pandas_read_xml(path):
-    df = pd.read_xml(f"gcs://{path}", storage_options={"token": get_gcs_credentials()})
-    return df
