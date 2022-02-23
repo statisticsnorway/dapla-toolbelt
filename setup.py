@@ -15,6 +15,8 @@ setup(
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/statisticsnorway/dapla-toolbelt",
+    author="Statistics Norway",
+    author_email="old@ssb.no",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
