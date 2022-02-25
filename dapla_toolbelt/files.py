@@ -25,7 +25,7 @@ def get_gcs_file_system():
     return gcsfs.GCSFileSystem(token=AuthClient.fetch_google_credentials())
 
 
-def list_content(bucket_name):
+def ls(bucket_name):
     """
     List the contents of a GCS bucket
     :param bucket_name:
@@ -35,14 +35,14 @@ def list_content(bucket_name):
     return fs.ls(bucket_name)
 
 
-def get_file(gcs_path):
+def cat(gcs_path):
     """
-    Copy a single remote file from gcs to local
-    :param gcs_path: to the file you want to get
-    :return:
+    Get string content of file from gcs
+    :param gcs_path: path or paths to the file(s) you want to get the contents of
+    :return: utf-8 decoded string content of the given file
     """
     fs = get_gcs_file_system()
-    return fs.get_file(gcs_path)
+    return fs.cat(gcs_path).decode("utf-8")
 
 
 def gcs_open(gcs_path, mode='r'):
@@ -85,31 +85,34 @@ def load_xml_to_pandas(gcs_path):
     return df
 
 
-def save_pandas_to_csv(df: pd.DataFrame, gcs_path):
+def save_pandas_to_csv(df: pd.DataFrame, gcs_path, index=False):
     """
     Write the contents of a Pandas data frame to a csv file in a bucket
     :param df: the Pandas data frame to persist as csv
     :param gcs_path: target path, starting with the bucket name and ending with the file name
+    :param index: True if you want to write the pandas index to the file
     :return:
     """
-    df.to_csv(ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
+    df.to_csv(ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
 
 
-def save_pandas_to_json(df: pd.DataFrame, gcs_path):
+def save_pandas_to_json(df: pd.DataFrame, gcs_path, index=False):
     """
     Write the contents of a Pandas data frame to a json file in a bucket
     :param df: the Pandas data frame to persist as json
     :param gcs_path: target path, starting with the bucket name and ending with the file name
+    :param index: True if you want to write the pandas index to the file
     :return:
     """
-    df.to_json(ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
+    df.to_json(ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
 
 
-def save_pandas_to_xml(df: pd.DataFrame, gcs_path):
+def save_pandas_to_xml(df: pd.DataFrame, gcs_path, index=False):
     """
     Write the contents of a Pandas data frame to an xml file in a bucket
     :param df: the Pandas data frame to persist as xml
     :param gcs_path: target path, starting with the bucket name and ending with the file name
+    :param index: True if you want to write the pandas index to the file
     :return:
     """
-    df.to_xml(ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
+    df.to_xml(ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)

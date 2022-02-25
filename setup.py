@@ -9,8 +9,8 @@ README = (HERE / "README.md").read_text()
 
 # This call to setup() does all the work
 setup(
-    name="dapla_toolbelt",
-    version="0.0.2",
+    name="dapla-toolbelt",
+    version="0.0.3",
     description="Authorized read and write against GCS when logged in with Keycloak in Jupyter",
     long_description=README,
     long_description_content_type="text/markdown",
