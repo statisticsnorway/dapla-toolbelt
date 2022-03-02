@@ -99,7 +99,7 @@ class FileClient:
         df.to_csv(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
 
     @staticmethod
-    def save_pandas_to_json(df: pd.DataFrame, gcs_path, index=False):
+    def save_pandas_to_json(df: pd.DataFrame, gcs_path):
         """
         Write the contents of a Pandas data frame to a json file in a bucket
         :param df: the Pandas data frame to persist as json
@@ -107,7 +107,7 @@ class FileClient:
         :param index: True if you want to write the pandas index to the file
         :return:
         """
-        df.to_json(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
+        df.to_json(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
 
     @staticmethod
     def save_pandas_to_xml(df: pd.DataFrame, gcs_path, index=False):
