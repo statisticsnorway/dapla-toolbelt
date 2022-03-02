@@ -44,7 +44,7 @@ df = fcli.load_json_to_pandas(f"{path_base}.json")  # read json from path and lo
 df.head()  # show first rows of data frame
 df = fcli.load_csv_to_pandas(f"{path_base}.csv")  # read csv from path and load into pandas data frame
 df.head()  # show first rows of data frame
-df = fcli.load_csv_to_pandas(f"{path_base}.xml")  # read xml from path and load into pandas data frame
+df = fcli.load_xml_to_pandas(f"{path_base}.xml")  # read xml from path and load into pandas data frame
 df.head()  # show first rows of data frame
 
 ```
