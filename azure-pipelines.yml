@@ -16,7 +16,7 @@ trigger:
 pr:
   branches:
     include:
-      - master
+      - main
 
 pool:
   vmImage: 'ubuntu-latest'
