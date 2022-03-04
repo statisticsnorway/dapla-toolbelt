@@ -23,37 +23,37 @@ pool:
 
 jobs:
   - job: 'Release'
-      displayName: "Make release and publish to PyPi"
-      condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
-      steps:
-        - task: UsePythonVersion@0
-          inputs:
-            versionSpec: '3.9'
-          displayName: 'Use Python 3.9'
+    displayName: "Make release and publish to PyPi"
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+    steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.9'
+        displayName: 'Use Python 3.9'
 
-        - script: |
-            python -m pip install --upgrade pip
-            make install-build-tools
-            pipenv install
-          displayName: 'Install dependencies'
+      - script: |
+          python -m pip install --upgrade pip
+          make install-build-tools
+          pipenv install
+        displayName: 'Install dependencies'
 
-        - script: |
-            make build
-          displayName: "Build and validate before uploading to PyPi"
+      - script: |
+          make build
+        displayName: "Build and validate before uploading to PyPi"
 
-        # Authenticate Maven to Nexus using predefined Service Connections
-        # (Project Settings->Pipelines->Service Connections)
-        - task: TwineAuthenticate@1
-          displayName: 'Twine Authenticate'
-          condition: succeeded()
-          inputs:
-            pythonUploadServiceConnection: pypi-dapla
+      # Authenticate Maven to Nexus using predefined Service Connections
+      # (Project Settings->Pipelines->Service Connections)
+      - task: TwineAuthenticate@1
+        displayName: 'Twine Authenticate'
+        condition: succeeded()
+        inputs:
+          pythonUploadServiceConnection: pypi-dapla
 
-        # Use command line script to 'twine upload', use -r to pass the repository name and
-        # --config-file to pass the environment variable set by the authenticate task.
-        - script: |
-            make release
-            echo 'Using config file $(PYPIRC_PATH)'
-            python -m twine upload -r "dapla-toolbelt" --config-file $(PYPIRC_PATH) dist/*
-          condition: succeeded()
-          displayName: "Release to PyPi"
+      # Use command line script to 'twine upload', use -r to pass the repository name and
+      # --config-file to pass the environment variable set by the authenticate task.
+      - script: |
+          make release
+          echo 'Using config file $(PYPIRC_PATH)'
+          python -m twine upload -r "dapla-toolbelt" --config-file $(PYPIRC_PATH) dist/*
+        condition: succeeded()
+        displayName: "Release to PyPi"
