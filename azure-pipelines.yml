@@ -22,7 +22,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 jobs:
-  jobs:
   - job: 'Build'
     displayName: "Build python package"
     pool:
