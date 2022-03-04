@@ -69,10 +69,14 @@ jobs:
         displayName: 'Install dependencies'
         condition: succeeded()
 
+      - script: |
+          make build
+        displayName: 'Build package'
+        condition: succeeded()
+
       # Use command line script to 'twine upload', use -r to pass the repository name and
       # --config-file to pass the environment variable set by the authenticate task.
       - script: |
-          make release
           echo 'Using config file $(PYPIRC_PATH)'
           python -m twine upload -r "dapla-toolbelt" --config-file $(PYPIRC_PATH) dist/*
         condition: succeeded()
