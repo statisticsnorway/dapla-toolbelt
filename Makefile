@@ -3,7 +3,7 @@ default: | help
 
 .PHONY: install-build-tools
 install-build-tools: ## Install required tools for build/dev
-	pip install wheel twine bump2version pipenv
+	pip install wheel twine bump2version pipenv build
 
 .PHONY: build
 build: ## Build dist
