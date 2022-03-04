@@ -24,6 +24,7 @@ pool:
 jobs:
   - job: 'Build'
     displayName: "Build python package"
+    condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
     pool:
       vmImage: 'ubuntu-latest'
 
@@ -44,7 +45,7 @@ jobs:
         displayName: "Build and validate"
 
   - job: 'Release'
-    displayName: "Publish to PyPi"
+    displayName: "Build and publish to PyPi"
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
     steps:
       # Authenticate Maven to Nexus using predefined Service Connections
@@ -54,6 +55,13 @@ jobs:
         condition: succeeded()
         inputs:
           pythonUploadServiceConnection: pypi-dapla
+
+      - script: |
+          python -m pip install --upgrade pip
+          make install-build-tools
+          pipenv install
+        displayName: 'Install dependencies'
+        condition: succeeded()
 
       # Use command line script to 'twine upload', use -r to pass the repository name and
       # --config-file to pass the environment variable set by the authenticate task.
