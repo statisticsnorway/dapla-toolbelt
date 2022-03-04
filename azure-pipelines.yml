@@ -22,9 +22,12 @@ pool:
   vmImage: 'ubuntu-latest'
 
 jobs:
-  - job: 'Release'
-    displayName: "Make release and publish to PyPi"
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  jobs:
+  - job: 'Build'
+    displayName: "Build python package"
+    pool:
+      vmImage: 'ubuntu-latest'
+
     steps:
       - task: UsePythonVersion@0
         inputs:
@@ -39,8 +42,12 @@ jobs:
 
       - script: |
           make build
-        displayName: "Build and validate before uploading to PyPi"
+        displayName: "Build and validate"
 
+  - job: 'Release'
+    displayName: "Publish to PyPi"
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+    steps:
       # Authenticate Maven to Nexus using predefined Service Connections
       # (Project Settings->Pipelines->Service Connections)
       - task: TwineAuthenticate@1
