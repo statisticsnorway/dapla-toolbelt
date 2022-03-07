@@ -54,7 +54,7 @@ jobs:
         displayName: 'Twine Authenticate'
         condition: succeeded()
         inputs:
-          pythonUploadServiceConnection: pypi-dapla
+          pythonUploadServiceConnection: pypi-dapla-toolbelt
 
       - task: UsePythonVersion@0
         inputs:
