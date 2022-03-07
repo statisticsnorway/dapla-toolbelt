@@ -78,6 +78,6 @@ jobs:
       # --config-file to pass the environment variable set by the authenticate task.
       - script: |
           echo 'Using config file $(PYPIRC_PATH)'
-          python -m twine upload -r "dapla-toolbelt" --config-file $(PYPIRC_PATH) dist/*
+          python -m twine upload --verbose -r "dapla-toolbelt" --config-file $(PYPIRC_PATH) dist/*
         condition: succeeded()
         displayName: "Release to PyPi"
