@@ -1,0 +1,84 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+name: $(Build.SourceBranch)-$(date:yyyyMMdd)$(rev:.r)
+# Pipeline triggers on any branch and tag
+trigger:
+  branches:
+    include:
+      - main
+
+  tags:
+    include:
+      - '*'
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+jobs:
+  - job: 'Build'
+    displayName: "Build python package"
+    condition: not(startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.9'
+        displayName: 'Use Python 3.9'
+
+      - script: |
+          python -m pip install --upgrade pip
+          make install-build-tools
+          pipenv install
+        displayName: 'Install dependencies'
+
+      - script: |
+          make build
+        displayName: "Build and validate"
+
+  - job: 'Release'
+    displayName: "Build and publish to PyPi"
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
+    steps:
+      # Authenticate Maven to Nexus using predefined Service Connections
+      # (Project Settings->Pipelines->Service Connections)
+      - task: TwineAuthenticate@1
+        displayName: 'Twine Authenticate'
+        condition: succeeded()
+        inputs:
+          pythonUploadServiceConnection: pypi-dapla-toolbelt
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.9'
+        displayName: 'Use Python 3.9'
+        condition: succeeded()
+
+      - script: |
+          python -m pip install --upgrade pip
+          make install-build-tools
+          pipenv install
+        displayName: 'Install dependencies'
+        condition: succeeded()
+
+      - script: |
+          make build
+        displayName: 'Build package'
+        condition: succeeded()
+
+      # Use command line script to 'twine upload', use -r to pass the repository name and
+      # --config-file to pass the environment variable set by the authenticate task.
+      - script: |
+          echo 'Using config file $(PYPIRC_PATH)'
+          cat "$PYPIRC_PATH"
+          python -m twine upload --verbose -r dapla-toolbelt --config-file $(PYPIRC_PATH) dist/*
+        condition: succeeded()
+        displayName: "Release to PyPi"

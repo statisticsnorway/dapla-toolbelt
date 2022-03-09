@@ -15,6 +15,10 @@ This just means users don't have to prefix a path with "gs://".
 It is implicitly understood that all resources accessed with this tool are located in GCS, 
 with the first level of the path being a GCS bucket name.
 
+## Installation
+
+`pip install dapla-toolbelt`
+
 ## Usage Examples
 
 ``` python
@@ -49,36 +53,48 @@ df.head()  # show first rows of data frame
 
 ```
 
-
-## Installation
-
-`pip install dapla-toolbelt`
-
 ## Development
 
-### Building
-
-The version number is located in `dapla-toolbelt/dapla-toolbelt/__init__.py` and in `dapla-toolbelt/setup.py`
+### Dependencies
 
 External package dependencies are specified in the `setup.py` file, at `install_requires=`.
 
-In the top level where the `setup.py` is located, run
-`python -m build`
-to generate a source distribution and wheel.
+### Bumping version
+
+Use `make` to bump the patch, minor version or major version before creating a pull request to `main`. 
+
+
+The version number is located in `bumpversion.cfg`, `dapla-toolbelt/dapla-toolbelt/__init__.py` and in `dapla-toolbelt/setup.py`.
+To bump the version everywhere at once, run `make bump-version-patch`, `make bump-version-minor`, or `make bump-version-major`.
+Bumping must be done with a clean git working space, and automatically commits with the new version number.
+
+### Building and/or releasing automatically
+
+Azure pipelines will build automatically on pull request creation, merge, and commit to `main`, 
+and will release the new version of the package to pypi.org automatically upon tagging a given commit.
+
+### Building locally for development
+
+Run `make build` to build wheel, source distribution, and check the distribution with `twine`.
 
 Run this to check the contents of your wheel:
 `tar tzf dist/dapla-toolbelt-<SEMVER>.tar.gz` 
 replacing <SEMVER> with your current version number
 
-Run this to check that the package description will render properly on PyPI when published:
-`twine check dist/*`
+### Manually releasing
 
-### Releasing
+#### Test
 
 Run this to test package publication by uploading to TestPyPI:
 `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
 You will have to manually enter a username and password for a user registered to test.pypi.org in order for this to work.
 
+#### Prod
+
+**NB:** This should only be done as a last resort, if the regular CI/CD pipeline (azure pipeline) does not work
+and it's necessary to release regardless.
+
 In order to publish a new version of the package to PyPI for real, run this:
 `twine upload dist/*`
-Authenticate with your regular pypi.org username and password.
+Authenticate with your regular pypi.org username and password. 
+
