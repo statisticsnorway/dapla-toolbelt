@@ -22,8 +22,8 @@ with the first level of the path being a GCS bucket name.
 ## Usage Examples
 
 ``` python
-from dapla_toolbelt.files import FileClient as fcli
-from dapla_toolbelt.guardian import GuardianClient as gcli
+from dapla_toolbelt import FileClient as fcli
+from dapla_toolbelt import GuardianClient as gcli
 import pandas as pd
 
 response = gcli.call_api("https://data.udir.no/api/kag", "88ace991-7871-4ccc-aaec-8fb6d78ed04e", "udir:datatilssb")
