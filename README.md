@@ -1,6 +1,10 @@
 # dapla-toolbelt
 
-This package is a convenience package for authenticated and authorized GCS file access, from within a JupyterHub environment where the user is logged on with keycloak. It is built for the Statistics Norway data platform "Dapla", but is generally applicable in similar settings.
+Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data platform called 
+`Dapla`. It contains support for authenticated access to Google Services such as Google Cloud Storage (GCS) and custom
+Dapla services such as [Maskinporten Guardian](https://github.com/statisticsnorway/maskinporten-guardian). The 
+authentication process is based on the [TokenExchangeAuthenticator](https://github.com/statisticsnorway/jupyterhub-extensions/tree/main/TokenExchangeAuthenticator)
+for Jupyterhub.
 
 [![PyPI version](https://img.shields.io/pypi/v/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
 [![Status](https://img.shields.io/pypi/status/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
@@ -25,33 +29,34 @@ with the first level of the path being a GCS bucket name.
 ## Usage Examples
 
 ``` python
-from dapla_toolbelt import FileClient as fcli
-from dapla_toolbelt import GuardianClient as gcli
+from dapla import FileClient
+from dapla import GuardianClient
 import pandas as pd
 
-response = gcli.call_api("https://data.udir.no/api/kag", "88ace991-7871-4ccc-aaec-8fb6d78ed04e", "udir:datatilssb")
+# Load data using the Maskinporten Guardian client
+response = GuardianClient.call_api("https://data.udir.no/api/kag", "88ace991-7871-4ccc-aaec-8fb6d78ed04e", "udir:datatilssb")
 data_json = response.json()
 
 raw_data_df = pd.DataFrame(data_json)  # create pandas data frame from json
 raw_data_df.head()  # show first rows of data frame
 
-fcli.ls("bucket-name/folder")  # list contents of given folder
+FileClient.ls("bucket-name/folder")  # list contents of given folder
 
 # Save data into different formats
 path_base = "bucket-name/folder/raw_data"
-fcli.save_pandas_to_json(raw_data_df, f"{path_base}.json")  # generate json from data frame, and save to given path
-fcli.save_pandas_to_csv(raw_data_df, f"{path_base}.csv")  # generate csv from data frame, and save to given path
-fcli.save_pandas_to_xml(raw_data_df, f"{path_base}.xml")  # generate xml from data frame, and save to given path
+FileClient.save_pandas_to_json(raw_data_df, f"{path_base}.json")  # generate json from data frame, and save to given path
+FileClient.save_pandas_to_csv(raw_data_df, f"{path_base}.csv")  # generate csv from data frame, and save to given path
+FileClient.save_pandas_to_xml(raw_data_df, f"{path_base}.xml")  # generate xml from data frame, and save to given path
 
-fcli.cat(f"{path_base}.json")  # print contents of file
+FileClient.cat(f"{path_base}.json")  # print contents of file
 
 # Load data from different formats
 # All these data frames should contain the same data:
-df = fcli.load_json_to_pandas(f"{path_base}.json")  # read json from path and load into pandas data frame
+df = FileClient.load_json_to_pandas(f"{path_base}.json")  # read json from path and load into pandas data frame
 df.head()  # show first rows of data frame
-df = fcli.load_csv_to_pandas(f"{path_base}.csv")  # read csv from path and load into pandas data frame
+df = FileClient.load_csv_to_pandas(f"{path_base}.csv")  # read csv from path and load into pandas data frame
 df.head()  # show first rows of data frame
-df = fcli.load_xml_to_pandas(f"{path_base}.xml")  # read xml from path and load into pandas data frame
+df = FileClient.load_xml_to_pandas(f"{path_base}.xml")  # read xml from path and load into pandas data frame
 df.head()  # show first rows of data frame
 
 ```
