@@ -1,7 +1,10 @@
 # dapla-toolbelt
 
-This package is a convenience package for authenticated and authorized GCS file access, from within a JupyterHub environment where the user is logged on with keycloak. 
-It is built for the Statistics Norway data platform "Dapla", but is generally applicable in similar settings.
+This package is a convenience package for authenticated and authorized GCS file access, from within a JupyterHub environment where the user is logged on with keycloak. It is built for the Statistics Norway data platform "Dapla", but is generally applicable in similar settings.
+
+[![PyPI version](https://img.shields.io/pypi/v/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
+[![Status](https://img.shields.io/pypi/status/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
+[![License](https://img.shields.io/pypi/l/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
 
 These operations are supported:
 * List contents of a bucket
