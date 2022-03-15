@@ -26,7 +26,7 @@ bump-version-minor: ## Bump minor version, e.g. 0.0.1 -> 0.1.0
 	bump2version minor
 
 .PHONY: bump-version-major
-bump-version-minor: ## Bump major version, e.g. 0.0.1 -> 1.0.0
+bump-version-major: ## Bump major version, e.g. 0.0.1 -> 1.0.0
 	bump2version major
 
 .PHONY: help

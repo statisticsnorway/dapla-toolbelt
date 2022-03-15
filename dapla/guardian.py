@@ -20,7 +20,7 @@ class GuardianClient:
             keycloak_token = AuthClient.fetch_personal_token()
         body = {
             "maskinportenClientId": maskinporten_client_id,
-            "scopes": scopes  # Array
+            "scopes": scopes
         }
         body = json.dumps(body)
         maskinporten_token = GuardianClient.get_guardian_token(guardian_endpoint_url, keycloak_token, body)
@@ -32,7 +32,7 @@ class GuardianClient:
         if api_response.status_code == 200:
             return api_response.json()
         else:
-            raise RuntimeError(f'Error calling target endpoint: <{api_response.status_code}: {api_response.text or api_response.reason}>')
+            raise RuntimeError(f'Error calling target API ({api_endpoint_url}): Status code <{api_response.status_code} - {api_response.text or api_response.reason}>')
 
     @staticmethod
     def get_guardian_token(guardian_endpoint, keycloak_token, body):
