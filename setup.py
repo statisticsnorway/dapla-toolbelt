@@ -11,7 +11,8 @@ README = (HERE / "README.md").read_text()
 setup(
     name="dapla-toolbelt",
     version="0.0.10",
-    description="Authorized read and write against GCS when logged in with Keycloak in Jupyter",
+    description="Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data "
+                "platform called Dapla",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/statisticsnorway/dapla-toolbelt",
@@ -21,7 +22,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
     ],
-    packages=["dapla_toolbelt"],
+    packages=["dapla"],
     include_package_data=True,
     install_requires=["pandas", "jupyterhub", "gcsfs", "ipython", "lxml"],
 )
