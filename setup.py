@@ -1,5 +1,6 @@
 import pathlib
 from setuptools import setup
+from setuptools import find_packages
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
@@ -23,7 +24,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
     ],
-    packages=["dapla"],
+    packages=find_packages(exclude=('tests', 'examples',)),
     include_package_data=True,
     install_requires=["pandas", "jupyterhub", "gcsfs", "ipython", "lxml"],
 )
