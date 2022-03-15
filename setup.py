@@ -11,6 +11,7 @@ README = (HERE / "README.md").read_text()
 setup(
     name="dapla-toolbelt",
     version="1.1.0",
+    license='Apache Software License',
     description="Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data "
                 "platform called Dapla",
     long_description=README,
