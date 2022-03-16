@@ -7,7 +7,6 @@ authentication process is based on the [TokenExchangeAuthenticator](https://gith
 for Jupyterhub.
 
 [![PyPI version](https://img.shields.io/pypi/v/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
-[![Status](https://img.shields.io/pypi/status/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
 [![License](https://img.shields.io/pypi/l/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
 
 These operations are supported:
