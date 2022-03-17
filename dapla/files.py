@@ -6,7 +6,7 @@ from .auth import AuthClient
 
 class FileClient:
     @staticmethod
-    def ensure_gcs_uri_prefix(gcs_path):
+    def _ensure_gcs_uri_prefix(gcs_path):
         """
         GCS uri is the gcs file path prefixed with 'gs://'. Some operations require GCS uris,
         but we don't want the user to bother with knowing when to use the prefix,
@@ -20,22 +20,22 @@ class FileClient:
         return gcs_path
 
     @staticmethod
-    def get_gcs_file_system():
+    def get_gcs_file_system(**kwargs):
         """
         Return a pythonic file-system for Google Cloud Storage - initialized with a personal Google Identity token.
         See https://gcsfs.readthedocs.io/en/latest for usage
         """
-        return gcsfs.GCSFileSystem(token=AuthClient.fetch_google_credentials())
+        return gcsfs.GCSFileSystem(token=AuthClient.fetch_google_credentials(), **kwargs)
 
     @staticmethod
-    def ls(bucket_name):
+    def ls(gcs_path, detail=False, **kwargs):
         """
-        List the contents of a GCS bucket
-        :param bucket_name:
+        List the contents of a GCS bucket path
+        :param gcs_path: GCS bucket path
+        :param detail: show file details
         :return: Array of contents of bucket
         """
-        fs = FileClient.get_gcs_file_system()
-        return fs.ls(bucket_name)
+        return FileClient.get_gcs_file_system().ls(gcs_path, detail=detail, **kwargs)
 
     @staticmethod
     def cat(gcs_path):
@@ -44,8 +44,7 @@ class FileClient:
         :param gcs_path: path or paths to the file(s) you want to get the contents of
         :return: utf-8 decoded string content of the given file
         """
-        fs = FileClient.get_gcs_file_system()
-        return fs.cat(gcs_path).decode("utf-8")
+        return FileClient.get_gcs_file_system().cat(gcs_path).decode("utf-8")
 
     @staticmethod
     def gcs_open(gcs_path, mode='r'):
@@ -55,7 +54,7 @@ class FileClient:
         :param mode:
         :return:
         """
-        FileClient.get_gcs_file_system().open(FileClient.ensure_gcs_uri_prefix(gcs_path), mode)
+        FileClient.get_gcs_file_system().open(FileClient._ensure_gcs_uri_prefix(gcs_path), mode)
 
     @staticmethod
     def load_csv_to_pandas(gcs_path):
@@ -64,8 +63,7 @@ class FileClient:
         :param gcs_path: of the file, starting with the bucket name
         :return: a Pandas data frame
         """
-        df = pd.read_csv(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
-        return df
+        return pd.read_csv(FileClient._ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
 
     @staticmethod
     def load_json_to_pandas(gcs_path):
@@ -74,8 +72,7 @@ class FileClient:
         :param gcs_path: of the file, starting with the bucket name
         :return: a Pandas data frame
         """
-        df = pd.read_json(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
-        return df
+        return pd.read_json(FileClient._ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
 
     @staticmethod
     def load_xml_to_pandas(gcs_path):
@@ -84,8 +81,7 @@ class FileClient:
         :param gcs_path: of the file, starting with the bucket name
         :return: a Pandas data frame
         """
-        df = pd.read_xml(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
-        return df
+        return pd.read_xml(FileClient._ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
 
     @staticmethod
     def save_pandas_to_csv(df: pd.DataFrame, gcs_path, index=False):
@@ -96,7 +92,7 @@ class FileClient:
         :param index: True if you want to write the pandas index to the file
         :return:
         """
-        df.to_csv(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
+        df.to_csv(FileClient._ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
 
     @staticmethod
     def save_pandas_to_json(df: pd.DataFrame, gcs_path):
@@ -107,7 +103,7 @@ class FileClient:
         :param index: True if you want to write the pandas index to the file
         :return:
         """
-        df.to_json(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
+        df.to_json(FileClient._ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()})
 
     @staticmethod
     def save_pandas_to_xml(df: pd.DataFrame, gcs_path, index=False):
@@ -118,4 +114,4 @@ class FileClient:
         :param index: True if you want to write the pandas index to the file
         :return:
         """
-        df.to_xml(FileClient.ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
+        df.to_xml(FileClient._ensure_gcs_uri_prefix(gcs_path), storage_options={"token": AuthClient.fetch_google_credentials()}, index=index)
