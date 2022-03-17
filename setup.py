@@ -26,5 +26,5 @@ setup(
     ],
     packages=find_packages(exclude=('tests', 'examples',)),
     include_package_data=True,
-    install_requires=["pandas", "jupyterhub", "gcsfs", "ipython", "lxml"],
+    install_requires=["pandas", "jupyterhub", "gcsfs", "ipython", "lxml", "pyarrow"],
 )
