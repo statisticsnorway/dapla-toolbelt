@@ -18,7 +18,7 @@ class GCSFileSystem(gcsfs.GCSFileSystem):
         return info["type"] == "directory"
 
     @staticmethod
-    def _should_silently_exclude(file_name):
+    def _should_silently_exclude(self, file_name):
         from pyarrow.parquet import EXCLUDED_PARQUET_PATHS
         return (file_name.endswith('.crc') or  # Checksums
                 file_name.endswith('_$folder$') or  # HDFS directories in S3
