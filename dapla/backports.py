@@ -43,8 +43,8 @@ def read_pandas(gcs_path, columns=None, **kwargs):
     """
     import pyarrow.parquet as pq
     fs = FileClient.get_gcs_file_system()
-    file_path = gcs_path.replace('gs://', '')
-    return pq.read_table(file_path, filesystem=fs, columns=columns).to_pandas(**kwargs)
+    parquet_ds = pq.ParquetDataset(gcs_path, filesystem=fs)
+    return parquet_ds.read_pandas(columns=columns).to_pandas(split_blocks=False, self_destruct=True, **kwargs)
 
 
 def write_pandas(df, gcs_path, **kwargs):
