@@ -1,7 +1,7 @@
 import pandas as pd
-import gcsfs
 
 from .auth import AuthClient
+from .gcs import GCSFileSystem
 
 
 class FileClient:
@@ -25,7 +25,7 @@ class FileClient:
         Return a pythonic file-system for Google Cloud Storage - initialized with a personal Google Identity token.
         See https://gcsfs.readthedocs.io/en/latest for usage
         """
-        return gcsfs.GCSFileSystem(token=AuthClient.fetch_google_credentials(), **kwargs)
+        return GCSFileSystem(token=AuthClient.fetch_google_credentials(), **kwargs)
 
     @staticmethod
     def ls(gcs_path, detail=False, **kwargs):

@@ -5,19 +5,27 @@ import pandas.core.arrays._arrow_utils  # noqa
 
 def show(gcs_path):
     """
-    Backported dapla function to support a simplified list of files or folders for a given GCS path
-    :param gcs_path: path or paths to the file(s) you want to get the contents of
+    Backported dapla function to recursively show all folders below a given GCS path
+    :param gcs_path: the path from which you want to list all folders
     :return: a simplified list of files or folders
     """
     fs = FileClient.get_gcs_file_system()
-    return list(map(lambda o:  _trimmed_name(o), fs.ls(gcs_path, detail=True)))
+    out = dict()
+    dirs = None
+    for path, dirs, files in fs.walk(gcs_path, detail=True):
+        out.update({_trimmed_name(info): info for name, info in dirs.items()})
+    # Add the base path (if it exists) to avoid an empty list when there are no subfolders
+    if dirs is not None:
+        # Base path has the key ''
+        out[_trimmed_name(files['']).rstrip('/')] = {}
+    return sorted(out)
 
 
 def details(gcs_path):
     """
-    Backported dapla function to support detailed list of files or folders for a given GCS path
-    :param gcs_path: path or paths to the file(s) you want to get the contents of
-    :return: a detailed list of files or folders
+    Backported dapla function to support detailed list of files for a given GCS path
+    :param gcs_path: path to the file(s) you want to get the contents of
+    :return: a detailed list of files
     """
     fs = FileClient.get_gcs_file_system()
     return list(map(lambda o: _folder_item(o) if o['storageClass'] == 'DIRECTORY' else _file_item(o),
