@@ -11,13 +11,15 @@ def show(gcs_path):
     """
     fs = FileClient.get_gcs_file_system()
     out = dict()
-    dirs = None
+    files = None
     for path, dirs, files in fs.walk(gcs_path, detail=True):
         out.update({_trimmed_name(info): info for name, info in dirs.items()})
     # Add the base path (if it exists) to avoid an empty list when there are no subfolders
-    if dirs is not None:
-        # Base path has the key ''
-        out[_trimmed_name(files['']).rstrip('/')] = {}
+    if len(out) == 0 and files is not None:
+        # Get the bucket name from any of the files
+        bucket_name = list(files.values())[0]['bucket']
+        trimmed_name = gcs_path.lstrip('gs://').lstrip(bucket_name).rstrip('/')
+        out[trimmed_name] = {}
     return sorted(out)
 
 
