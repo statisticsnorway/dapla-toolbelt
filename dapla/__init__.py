@@ -1,4 +1,4 @@
-__version__ = "1.1.7"
+__version__ = "1.1.8"
 
 from .auth import AuthClient
 from .files import FileClient
