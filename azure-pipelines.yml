@@ -37,12 +37,12 @@ jobs:
       - script: |
           python -m pip install --upgrade pip
           make install-build-tools
-          pipenv install
         displayName: 'Install dependencies'
 
       - script: |
           make build
-        displayName: "Build and validate"
+          make test
+        displayName: "Build and test"
 
   - job: 'Release'
     displayName: "Build and publish to PyPi"
@@ -65,7 +65,6 @@ jobs:
       - script: |
           python -m pip install --upgrade pip
           make install-build-tools
-          pipenv install
         displayName: 'Install dependencies'
         condition: succeeded()
 
