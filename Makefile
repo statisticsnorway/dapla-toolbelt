@@ -3,18 +3,35 @@ default: | help
 
 .PHONY: install-build-tools
 install-build-tools: ## Install required tools for build/dev
-	pip install wheel twine bump2version pipenv build
+	pip install tox wheel twine bump2version
 
 .PHONY: build
 build: ## Build dist
+	python setup.py sdist bdist_wheel
+
+.PHONY: test
+test: ## Run tests
+	tox
+
+.PHONY: clean
+clean: ## Clean all build artifacts
+	rm -rf .tox
 	rm -rf *.egg-info
 	rm -rf dist
-	python -m build
+
+.PHONY: release-validate
+release-validate: ## Validate that a distribution will render properly on PyPI
+	@make clean build test
 	twine check dist/*
+
+.PHONY: release-test
+release-test: ## Release a new version, uploading it to PyPI Test
+	@make release-validate
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 .PHONY: release
 release: ## Release a new version, uploading it to PyPI
-	@make build
+	@make release-validate
 	twine upload dist/*
 
 .PHONY: bump-version-patch
