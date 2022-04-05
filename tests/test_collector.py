@@ -15,7 +15,7 @@ def test_initiate_201_response(auth_client_mock):
     collector_response = {}
     responses.add(responses.PUT, collector_test_url, json=collector_response, status=201)
     client = CollectorClient(collector_test_url)
-    client.initiate(specification)
+    client.start(specification)
 
     assert len(responses.calls) == 1
 
@@ -27,6 +27,6 @@ def test_list_tasks_200_response(auth_client_mock):
     collector_response = {}
     responses.add(responses.GET, collector_test_url, json=collector_response, status=200)
     client = CollectorClient(collector_test_url)
-    client.list_tasks()
+    client.running_tasks()
 
     assert len(responses.calls) == 1

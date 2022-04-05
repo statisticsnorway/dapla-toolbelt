@@ -10,7 +10,7 @@ class CollectorClient:
     def __init__(self, collector_url):
         self.collector_url = collector_url
 
-    def initiate(self, specification):
+    def start(self, specification):
         keycloak_token = AuthClient.fetch_personal_token()
         collector_response = requests.put(
             self.collector_url,
@@ -19,13 +19,13 @@ class CollectorClient:
         )
 
         if collector_response.status_code == 201:
-            print("Collector initiated successfully! Check running tasks with the list_tasks() method.")
+            print("Task initiated successfully! Check running tasks with the running_tasks() method.")
         else:
             raise RuntimeError(f'Something went wrong. Response from {self.collector_url}:'
                                f' {collector_response.status_code}'
                                f' - {collector_response.text or collector_response.reason}')
 
-    def list_tasks(self):
+    def running_tasks(self):
         keycloak_token = AuthClient.fetch_personal_token()
         collector_response = requests.get(self.collector_url, headers={'Authorization': 'Bearer %s' % keycloak_token})
 

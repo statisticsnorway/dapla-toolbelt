@@ -1,5 +1,6 @@
 import responses
 import mock
+import json
 
 from dapla.converter import ConverterClient
 
@@ -41,5 +42,18 @@ def test_converter_start_200_response(auth_client_mock):
     job_config = {}
     responses.add(responses.POST, 'https://mock-converter.no/jobs', json=sample_response_start_job, status=200)
     client = ConverterClient(converter_test_url)
-    res = client.start(job_config)
-    print(res)
+    response = client.start(job_config)
+    json_str = json.loads(response.json())
+
+    assert json_str['jobId'] == json.loads(sample_response_start_job)['jobId']
+
+
+@mock.patch('dapla.auth.AuthClient')
+@responses.activate
+def test_converter_get_job_summary_200_response(auth_client_mock):
+    auth_client_mock.fetch_personal_token.return_value = fake_token
+    responses.add(responses.GET, 'https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/execution-summary', json=sample_response_get_job_summary, status=200)
+    client = ConverterClient(converter_test_url)
+    response = client.get_job_summary(json.loads(sample_response_start_job)['jobId'])
+
+    assert json.loads(response.json()) == json.loads(sample_response_get_job_summary)
