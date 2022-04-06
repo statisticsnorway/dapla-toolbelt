@@ -1,5 +1,6 @@
 import mock
 import responses
+import json
 
 from dapla.collector import CollectorClient
 
@@ -12,11 +13,15 @@ fake_token = '123456789'
 def test_initiate_201_response(auth_client_mock):
     auth_client_mock.fetch_personal_token.return_value = fake_token
     specification = {}
-    collector_response = {}
+    worker_id = "abcd"
+    collector_response = '''{
+        "workerId": "%s"
+    }''' % worker_id
     responses.add(responses.PUT, collector_test_url, json=collector_response, status=201)
     client = CollectorClient(collector_test_url)
-    client.start(specification)
+    response = client.start(specification)
 
+    assert json.loads(response.json())['workerId'] == worker_id
     assert len(responses.calls) == 1
 
 

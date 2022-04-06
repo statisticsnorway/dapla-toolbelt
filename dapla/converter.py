@@ -20,7 +20,7 @@ class ConverterClient:
             headers={'Authorization': 'Bearer %s' % keycloak_token, 'Content-type': 'application/json'},
             data=json.dumps(job_config)
         )
-
+        converter_response.raise_for_status()
         return converter_response
 
     def get_job_summary(self, job_id):
@@ -34,5 +34,5 @@ class ConverterClient:
             f'{self.converter_url}/jobs/{job_id}/execution-summary',
             headers={'Authorization': 'Bearer %s' % keycloak_token, 'Content-type': 'application/json'}
         )
-
+        job_summary.raise_for_status()
         return job_summary

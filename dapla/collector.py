@@ -17,21 +17,12 @@ class CollectorClient:
             headers={'Authorization': 'Bearer %s' % keycloak_token, 'Content-type': 'application/json'},
             data=json.dumps(specification)
         )
-
-        if collector_response.status_code == 201:
-            print("Task initiated successfully! Check running tasks with the running_tasks() method.")
-        else:
-            raise RuntimeError(f'Something went wrong. Response from {self.collector_url}:'
-                               f' {collector_response.status_code}'
-                               f' - {collector_response.text or collector_response.reason}')
+        collector_response.raise_for_status()
+        print("Task initiated successfully! Check running tasks with the running_tasks() method.")
+        return collector_response
 
     def running_tasks(self):
         keycloak_token = AuthClient.fetch_personal_token()
         collector_response = requests.get(self.collector_url, headers={'Authorization': 'Bearer %s' % keycloak_token})
-
-        if collector_response.status_code == 200:
-            print(json.dumps(collector_response.json(), indent=2))
-        else:
-            raise RuntimeError(f'Something went wrong. Response from {self.collector_url}:'
-                               f' {collector_response.status_code}'
-                               f' - {collector_response.text or collector_response.reason}')
+        collector_response.raise_for_status()
+        return collector_response
