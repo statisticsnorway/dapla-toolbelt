@@ -18,7 +18,7 @@ DEPENDENCIES = ["pandas", "jupyterhub", "gcsfs", "ipython", "lxml", "pyarrow"]
 # This call to setup() does all the work
 setup(
     name="dapla-toolbelt",
-    version="1.2.1",
+    version="1.2.2",
     license='Apache Software License',
     description="Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data "
                 "platform called Dapla",
