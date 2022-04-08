@@ -18,8 +18,7 @@ class CollectorClient:
             data=json.dumps(specification)
         )
         collector_response.raise_for_status()
-        print("Collector task with id: " + collector_response.json()['workerId'] +
-              " initiated successfully! Check running tasks with the running_tasks() method.")
+        print("Task initiated successfully! Check running tasks with the running_tasks() method.")
         return collector_response
 
     def running_tasks(self):
@@ -33,5 +32,5 @@ class CollectorClient:
         collector_response = requests.delete(f'{self.collector_url}/{task_id}',
                                              headers={'Authorization': 'Bearer %s' % keycloak_token})
         collector_response.raise_for_status()
-        print("Collector task with id: "+ task_id +" stopped successfully")
+        print("Collector task with id: " + task_id + " stopped successfully")
         return collector_response
