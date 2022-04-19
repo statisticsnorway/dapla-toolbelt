@@ -26,3 +26,14 @@ class CollectorClient:
         collector_response = requests.get(self.collector_url, headers={'Authorization': 'Bearer %s' % keycloak_token})
         collector_response.raise_for_status()
         return collector_response
+
+    def stop(self, task_id):
+        keycloak_token = AuthClient.fetch_personal_token()
+        collector_response = requests.delete(f'{self.collector_url}/{task_id}',
+                                             headers={'Authorization': 'Bearer %s' % keycloak_token})
+        if collector_response.status_code == 400:
+            print("Collector task with id: " + task_id + " cannot be stopped! Maybe it was already stopped or completed")
+        else:
+            print("Collector task with id: " + task_id + " stopped successfully")
+
+        return collector_response

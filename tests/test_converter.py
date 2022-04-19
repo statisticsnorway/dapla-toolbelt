@@ -57,3 +57,14 @@ def test_converter_get_job_summary_200_response(auth_client_mock):
     response = client.get_job_summary(json.loads(sample_response_start_job)['jobId'])
 
     assert json.loads(response.json()) == json.loads(sample_response_get_job_summary)
+
+
+@mock.patch('dapla.auth.AuthClient')
+@responses.activate
+def test_converter_stop_job_200_response(auth_client_mock):
+    auth_client_mock.fetch_personal_token.return_value = fake_token
+    responses.add(responses.POST, 'https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/stop', json=sample_response_get_job_summary, status=200)
+    client = ConverterClient(converter_test_url)
+    response = client.stop_job(json.loads(sample_response_start_job)['jobId'])
+
+    assert response.status_code == 200

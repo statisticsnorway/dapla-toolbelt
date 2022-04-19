@@ -25,8 +25,8 @@ class ConverterClient:
 
     def get_job_summary(self, job_id):
         """
-        :param job_id:
-        :return:
+        :param job_id: job id returned after starting converter job using start()
+        :return: job summary
         """
         keycloak_token = AuthClient.fetch_personal_token()
 
@@ -36,3 +36,17 @@ class ConverterClient:
         )
         job_summary.raise_for_status()
         return job_summary
+
+    def stop_job(self, job_id):
+        """
+        :param job_id:
+        :return:
+        """
+        keycloak_token = AuthClient.fetch_personal_token()
+
+        job_status = requests.post(
+            f'{self.converter_url}/jobs/{job_id}/stop',
+            headers={'Authorization': 'Bearer %s' % keycloak_token, 'Content-type': 'application/json'}
+        )
+        job_status.raise_for_status()
+        return job_status
