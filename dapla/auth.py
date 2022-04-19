@@ -2,6 +2,7 @@ from jupyterhub.services.auth import HubAuth
 from google.oauth2.credentials import Credentials
 import os
 import requests
+from functools import partial
 
 
 class AuthClient:
@@ -37,10 +38,16 @@ class AuthClient:
 
     @staticmethod
     def fetch_google_credentials():
-        return Credentials(
+        credentials = Credentials(
             token=AuthClient.fetch_google_token(),
             token_uri="https://oauth2.googleapis.com/token",
         )
+
+        def _refresh(self, request):
+            self.token = AuthClient.fetch_google_token()
+
+        credentials.refresh = partial(_refresh, credentials)
+        return credentials
 
     @staticmethod
     def is_ready():
