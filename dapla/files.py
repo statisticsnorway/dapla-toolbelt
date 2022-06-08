@@ -54,7 +54,7 @@ class FileClient:
         :param mode:
         :return:
         """
-        FileClient.get_gcs_file_system().open(FileClient._ensure_gcs_uri_prefix(gcs_path), mode)
+        return FileClient.get_gcs_file_system().open(FileClient._ensure_gcs_uri_prefix(gcs_path), mode)
 
     @staticmethod
     def load_csv_to_pandas(gcs_path, **kwargs):
