@@ -62,46 +62,56 @@ df.head()  # show first rows of data frame
 
 ## Development
 
+For local development we rely on the command line tool `make`. Execute `make` in the project folder to see the available commands.
+
 ### Dependencies
 
 External package dependencies are specified in the `setup.py` file, at `install_requires=`.
 
 ### Bumping version
 
-Use `make` to bump the patch, minor version or major version before creating a pull request to `main`. 
-
+Use `make` to bump the patch, minor version or major version before creating a pull request to the `main` GIT branch.
 
 The version number is located in `bumpversion.cfg`, `dapla-toolbelt/dapla-toolbelt/__init__.py` and in `dapla-toolbelt/setup.py`.
+
 To bump the version everywhere at once, run `make bump-version-patch`, `make bump-version-minor`, or `make bump-version-major`.
 Bumping must be done with a clean git working space, and automatically commits with the new version number.
 
-### Building and/or releasing automatically
+### Building and releasing with Azure Pipelines
 
-Azure pipelines will build automatically on pull request creation, merge, and commit to `main`, 
-and will release the new version of the package to pypi.org automatically upon tagging a given commit.
+Before merging your changes into the `main` branch, make sure you have bumped the version like outlined above.
 
-### Building locally for development
+Azure pipelines will build dapla-toolbelt automatically upon pull request-creation, merges, and direct commits to the `main` GIT branch.
 
-Run `make build` to build wheel, source distribution, and check the distribution with `twine`.
+Azure pipelines will release a new version of the package to pypi.org automatically when a commit is tagged, 
+for example by a GitHub release.
 
-Run this to check the contents of your wheel:
-`tar tzf dist/dapla-toolbelt-<SEMVER>.tar.gz` 
-replacing <SEMVER> with your current version number
+### Building and releasing manually
 
-### Manually releasing
+Run `make build` to build a wheel and a source distribution.
 
-#### Test
+Run `make release-validate` to do all that AND validate it for release.
 
-Run this to test package publication by uploading to TestPyPI:
-`twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
-You will have to manually enter a username and password for a user registered to test.pypi.org in order for this to work.
+Run this (replacing <SEMVER> with your current version number) to check the contents of your wheel:
+`tar tzf dist/dapla-toolbelt-<SEMVER>.tar.gz`
 
-#### Prod
+#### Test release
 
-**NB:** This should only be done as a last resort, if the regular CI/CD pipeline (azure pipeline) does not work
-and it's necessary to release regardless.
+You have to bump the version of the package (see documentation on "Bumping version" above) before releasing, 
+because even test.pypi.org does not allow re-releases of a previously released version.
 
-In order to publish a new version of the package to PyPI for real, run this:
-`twine upload dist/*`
-Authenticate with your regular pypi.org username and password. 
+Run the following command in order to build, validate, and test package publication by uploading to TestPyPI:
+`make release-test`
 
+You will have to manually enter a username and password for a user registered to [test.pypi.org](https://test.pypi.org) in order for this to work.
+
+#### Production release
+
+**NB: A manual production release should only be done as a last resort**, if the regular CI/CD pipeline 
+(azure pipeline) does not work, and it's necessary to release regardless.
+
+You have to bump the version of the package (see documentation on "Bumping version" above) to something 
+different from the last release before releasing.
+
+In order to publish a new version of the package to PyPI for real, run `make release`. 
+Authenticate by manually entering your [pypi.org](https://pypi.org) username and password. 
