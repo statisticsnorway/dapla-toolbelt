@@ -4,3 +4,6 @@
 /dist
 /build
 /dapla-toolbelt.iml
+
+# Jupyterlab checkpoints
+*-checkpoint.py
