@@ -7,6 +7,10 @@
 #   - StatbankRequest (valid header for both, but needs to swap to post/get and params)
 # - Testing
 # - Docstrings / Documentation
+# - Test against typical file formats on gcs-storage
+#   - json
+#   - xml
+#   - csv
 
 # Standard library
 import os
@@ -24,6 +28,18 @@ import pandas as pd
 import pyarrow as pa
 
 from dapla import AuthClient
+from dapla import FileClient
+
+
+from abc import ABCMeta, abstractmethod
+from base64 import b64decode, b64encode
+from binascii import unhexlify
+
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.ciphers.modes import ECB
+
 
 # Can be removed when finished developing
 from dotenv import load_dotenv
@@ -94,14 +110,39 @@ class StatbankTransfer(StatbankAuth):
 
         
     def _body_from_data(self):
-        # If data is string, check if valid body, or path(s)
-            ## Read from paths into pa.Tables or pd.DataFrame? Stress-test which?
-            ## Reset self.data_type to new datatype
-        
-        
+        # If data is "body like" return right away
+        if self.data_type == str:
+            if len(self.data) == 1:
+                if self.data.contains("Content-Disposition:form-data;"):
+                    return self.data
+                
         # If data is single pd.DataFrame or pa.Table, put into iterable, so code under works
         if not self.data_iter:
             self.data = [self.data]
+            
+        
+        if self.data_type == str:
+            # If data type is string, see if it is "dat-file-content-like"
+            for i, elem in enumerate(self.data):
+                if elem.replace(";", "").replace("\n","").replace(",","").isalnum(): # Only semicolons and commas allowed
+                    self.data[i] = pd.DataFrame([x.split(";") for x in elem.split("\n")])
+                else:  # Presume path-like?
+                    elem = Path(elem)  # We probably want this to raise its own errors, if its not convertible to path?
+                    if elem.suffix == "json":
+                        self.data[i] = FileClient.load_json_to_pandas(elem)
+                    elif elem.suffix == "csv":
+                        self.data[i] = FileClient.load_csv_to_pandas(elem)
+                    elif elem.suffix == "xml":
+                        self.data[i] = FileClient.load_xml_to_pandas(elem)
+                    else:
+                        try:
+                            # One last desperate attempt
+                            self.data[i] = dp.read_pandas(elem)
+                        except Exception as e:
+                            print("Failed importing something that looks like a path?")
+                            raise e
+            self.data_type = pd.DataFrame
+
         # We need the filenames in the body, and they must match up with amount of data-elements we have
         deltabeller_filnavn = [x['Filnavn'] for x in self.filbeskrivelse['DeltabellTitler']]
         if len(deltabeller_filnavn) != len(self.data):
@@ -154,6 +195,11 @@ class StatbankTransfer(StatbankAuth):
 
     def _validate_body_filbeskrivelse(self):
         ...
+        ### Correct number of columns
+        ### No values outside codelists
+        ### No Nans, Nones etc.
+        ### Semicolon as seperator
+        ### Sum i alt kode med i data, om den ligger i filbeskrivelse
         
     @staticmethod
     def _valid_date_form(date)
@@ -194,10 +240,7 @@ class StatbankTransfer(StatbankAuth):
 
     
     def _get_filbeskrivelse(self):
-        filbesk = StatbankUttrekksBeskrivelse(self.urls['uttak'], self.tabellid, self.headers)
-        
-        return filbesk
-
+        return StatbankUttrekksBeskrivelse(self.urls['uttak'], self.tabellid, self.headers)
 
     
 class StatbankUttrekksBeskrivelse(StatbankAuth):
@@ -296,5 +339,83 @@ class StatbankAuth:
         return cipher.encrypt(getpass.getpass(f"Lastepassord:"))
     
 
+
+# credit: https://github.com/Laerte/aes_pkcs5/blob/main/aes_pkcs5/algorithms/__init__.py
+OUTPUT_FORMATS = ("b64", "hex")
+
+
+class AESCommon(metaclass=ABCMeta):
+    """Common AES interface"""
+
+    def __init__(self, key: str, output_format: str) -> None:
+        self._key = key.encode()
+
+        if output_format not in OUTPUT_FORMATS:
+            raise NotImplementedError(
+                f"Support for output format: {output_format} is not implemented"
+            )
+
+        self._output_format = output_format
+
+    def encrypt(self, message: str) -> str:
+        """
+        Return encrypted message
+        :param message: message to be encrypted
+        :type message: str
+        """
+        cipher_instance = self._get_cipher()
+        message = message.encode()
+
+        offset = 16 - len(message) % 16
+        message = message + (offset * chr(offset)).encode()
+
+        encryptor = cipher_instance.encryptor()
+
+        result = encryptor.update(message)
+
+        return (
+            b64encode(result).decode() if self._output_format == "b64" else result.hex()
+        )
+
+    def decrypt(self, message: str) -> str:
+        """
+        Return decrypted message
+        :param message: encrypted message
+        :type message: str
+        """
+        cipher_instance = self._get_cipher()
+
+        decryptor = cipher_instance.decryptor()
+
+        result = decryptor.update(
+            b64decode(message) if self._output_format == "b64" else unhexlify(message)
+        )
+
+        pad_num = result[-1]
+        result = result[:-pad_num]
+
+        return result.decode()
+
+    @abstractmethod
+    def _get_cipher(self) -> Cipher:
+        """
+        Return the Cipher that will be used
+        """
+        
+
+
+class AESECBPKCS5Padding(AESCommon):
+    """
+    Implements AES algorithm with ECB mode of operation and padding scheme PKCS5.
+    """
+
+    def __init__(self, key: str, output_format: str):
+        super(AESECBPKCS5Padding, self).__init__(key=key, output_format=output_format)
+
+    def _get_cipher(self):
+        """Return AES/CBC/PKCS5Padding Cipher"""
+        return Cipher(AES(self._key), mode=ECB(), backend=default_backend())
+
 if __name__ == '__main__':
     print("Only for importing?")
+    
