@@ -39,7 +39,7 @@ load_dotenv()
 
 class StatbankAuth:
 
-    def _build_headers(self):
+    def _build_headers(self) -> dict:
         return {
             'Authorization': self._build_auth(),
             'Content-Type': 'multipart/form-data; boundary=12345',
@@ -145,7 +145,7 @@ class StatbankTransfer(StatbankAuth):
         finally:
             del self.headers
 
-    def _identify_data_type(self):
+    def _identify_data_type(self) -> tuple[type, bool]:
         try:
             iter(self.data)
             datatype = None
@@ -160,7 +160,7 @@ class StatbankTransfer(StatbankAuth):
         else:
             return datatype, True
 
-    def _body_from_data(self):
+    def _body_from_data(self) -> str:
         # If data is single pd.DataFrame, put into iterable, so code under works
         if not self.data_iter:
             self.data = [self.data]
@@ -189,7 +189,7 @@ class StatbankTransfer(StatbankAuth):
         body = body.replace("\n", "\r\n")  # Statbank likes this?
         return body
 
-    def _validate_original_parameters(self):
+    def _validate_original_parameters(self) -> None:
         # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
         #    raise ValueError("Tabellid må være tall, som en streng, og 5 tegn lang.")
 
@@ -216,12 +216,12 @@ class StatbankTransfer(StatbankAuth):
             raise ValueError("(Strengverdi) Sett godkjenn_data til enten '0' = manuell, '1' = automatisk (umiddelbart), eller '2' = JIT-automatisk (just-in-time)")
 
     @staticmethod
-    def _valid_date_form(date):
+    def _valid_date_form(date) -> bool:
         if (date[:4] + date[5:7] + date[8:]).isdigit() and (date[4]+date[7]) == "--":
             return True
         return False
 
-    def _build_params(self):
+    def _build_params(self) -> dict:
         if isinstance(self.publisering, dt):
             self.publisering = self.publisering.strftime('%Y-%m-%d')
         return {
@@ -236,7 +236,7 @@ class StatbankTransfer(StatbankAuth):
 
 
 
-    def _get_filbeskrivelse(self):
+    def _get_filbeskrivelse(self) -> StatbankUttrekksBeskrivelse:
         return StatbankUttrekksBeskrivelse(self.database, self.tabellid, self.headers)
 
 
@@ -261,7 +261,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             del self.headers
         self._split_attributes()
 
-    def validate_dfs(self, data):
+    def validate_dfs(self, data) -> None:
         ### Number deltabelltitler should match length of data-iterable
         if len(self.deltabelltitler) > 1:
             if not isinstance(data, list) or not isinstance(data, tuple):
@@ -280,7 +280,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         
         ### Sum i alt kode med i data, om den ligger i filbeskrivelse
         
-    def _get_uttrekksbeskrivelse(self):
+    def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
         filbeskrivelse = r.get(filbeskrivelse_url, headers=self.headers)
         if filbeskrivelse.status_code != 200:
@@ -295,7 +295,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         # reset tabellid and hovedkode after content of request
         self.filbeskrivelse = filbeskrivelse
 
-    def _split_attributes(self):
+    def _split_attributes(self) - > None:
         # Tabellid might have been "hovedkode" up to this point, as both are valid in the URI
         self.lagd = self.filbeskrivelse['Uttaksbeskrivelse_lagd']
         #self.base = self.filbeskrivelse['base']
