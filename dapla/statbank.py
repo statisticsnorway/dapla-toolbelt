@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 # Todo
-# - Which classes do we want? Hierarchy?
-#   - StatbankTable (some shared properties with "getting from external API", tabellid, number of classification and value-columns etc.)
-#   - UttaksBeskrivelse (without need to enter password twice?)
-#   - StatbankRequest (valid header for both, but needs to swap to post/get and params)
+# - Validation on
+#   - Time?
+#   - Rounding of floats?
 # - Testing
 # - Docstrings / Documentation
 
@@ -15,6 +14,7 @@ import base64
 from datetime import datetime as dt
 from datetime import timedelta as td
 import json
+import urllib.parse
 # External packages
 import requests as r
 from requests.exceptions import ConnectionError
@@ -104,7 +104,7 @@ class StatbankAuth:
 
     
 class StatbankUttrekksBeskrivelse(StatbankAuth):
-    def __init__(self, tabellid, database, lastebruker, headers=None):
+    def __init__(self, tabellid, lastebruker, database="PROD", headers=None):
         self.database = database
         self.lastebruker = lastebruker
         self.url = self._build_urls(self.database)['uttak']
@@ -168,12 +168,14 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         
         ### Check rounding on floats?
         ### Check formatting on time?
-        
-        print("Category codes missing from data:")
-        print("\n".join(categorycode_missing))
-        print()
-        print("Codes in data, outside codelist:")
-        print("\n".join(categorycode_outside))
+        if categorycode_missing:
+            print("Category codes missing from data:")
+            print("\n".join(categorycode_missing))
+            print()
+        if categorycode_outside:
+            print("Codes in data, outside codelist:")
+            print("\n".join(categorycode_outside))
+            print()
         
         
     def _get_uttrekksbeskrivelse(self) -> dict:
@@ -207,8 +209,8 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
 class StatbankTransfer(StatbankAuth):
     def __init__(self,
                 data: pd.DataFrame,
-                    lastebruker: str,
                     tabellid: str = None,
+                    lastebruker: str = "",
                     database: str = 'PROD',
                     bruker_trebokstaver: str = os.environ['JUPYTERHUB_USER'].split("@")[0], 
                     publisering: dt = (dt.now() + td(days=366)).strftime('%Y-%m-%d'),
@@ -218,7 +220,10 @@ class StatbankTransfer(StatbankAuth):
                     auto_godkjenn_data: str = '2',
                     validation: bool = True):
         self.data = data
-        self.lastebruker = lastebruker
+        if lastebruker:
+            self.lastebruker = lastebruker
+        else:
+            raise ValueError("You must set lastebruker as a parameter")
         self.tabellid = tabellid
         self.hovedtabell = None
         self.database = database
@@ -233,36 +238,43 @@ class StatbankTransfer(StatbankAuth):
         if validation: self._validate_original_parameters()
 
         self.urls = self._build_urls(self.database)
-        self.params = self._build_params()
         self.headers = self._build_headers()
         try:
             self.filbeskrivelse = self._get_filbeskrivelse()
+            self.hovedtabell = self.filbeskrivelse.hovedtabell
+            self.tabellid = self.filbeskrivelse.tabellid
+            self.params = self._build_params()
+            
             self.data_type, self.data_iter = self._identify_data_type()
             if self.data_type != pd.DataFrame: 
-                raise ValueError("Data must be loaded into one or more pandas DataFrames.")
+                raise ValueError(f"Data must be loaded into one or more pandas DataFrames. Type looks like {self.data_type}")
             if validation: self.filbeskrivelse.validate_dfs(self.data)
-            
             self.body = self._body_from_data()
             
-            self.response = self._handle_response()
+            url_load_params = self.urls['loader'] + urllib.parse.urlencode(self.params)
+            print(url_load_params, self.headers, self.body)
+            self.response = r.post(url_load_params, headers = self.headers, data = self.body)
+            print(self.response)
         finally:
             del self.headers
-
+            
     def _identify_data_type(self) -> tuple[type, bool]:
-        try:
-            iter(self.data)
-            datatype = None
-            for elem in self.data:
-                if not datatype: 
-                    datatype=type(elem)
-                else:
-                    if not datatype == type(elem):
-                        raise TypeError("Data is iterable with non-uniform file types, needs to be uniform")
-        except:
-            return type(self.data), False
+        if isinstance(self.data, pd.DataFrame):
+            data_type = pd.DataFrame
+            data_iter = False
+        elif isinstance(self.data, list) or isinstance(self.data, tuple):
+            for i, d in enumerate(self.data):
+                if not isinstance(d, pd.DataFrame):
+                      raise TypeError(f"Element {i} in data, is not a DataFrame :(")
+            data_type = pd.DataFrame
+            data_iter = True
         else:
-            return datatype, True
+            raise TypeError("Expecting data to be either a single DataFrame, or a list/tuple of DataFrames.")
+        return data_type, data_iter          
+        
 
+        
+        
     def _body_from_data(self) -> str:
         # If data is single pd.DataFrame, put into iterable, so code under works
         if not self.data_iter:
@@ -272,16 +284,17 @@ class StatbankTransfer(StatbankAuth):
             raise TypeError("Only programmed for Pandas DataFrames as data at this point.")
 
         # We need the filenames in the body, and they must match up with amount of data-elements we have
-        deltabeller_filnavn = [x['Filnavn'] for x in self.filbeskrivelse['DeltabellTitler']]
+        deltabeller_filnavn = [x['Filnavn'] for x in self.filbeskrivelse.deltabelltitler]
         if len(deltabeller_filnavn) != len(self.data):
             raise ValueError("Length mismatch between data-iterable and number of Uttaksbeskrivelse deltabellers filnavn.")
         # Data should be a iterable of pd.DataFrames at this point, reshape to body
         for elem, filename in zip(self.data, deltabeller_filnavn):
-            # Replace all nans in 
+            # Replace all nans in data
+            elem = elem.fillna("")
             
             
             
-            body += f"--{self.boundary}"
+            body = f"--{self.boundary}"
             body += f"\nContent-Disposition:form-data; filename={filename}"
             body += "\nContent-type:text/plain\n\n"
             if self.data_type == pd.DataFrame:
@@ -290,6 +303,7 @@ class StatbankTransfer(StatbankAuth):
                 raise TypeError("Expecting Dataframe or Table at this point in code")
         body += f"\n--{self.boundary}--"
         body = body.replace("\n", "\r\n")  # Statbank likes this?
+        print(repr(body))
         return body
 
     def _validate_original_parameters(self) -> None:
@@ -340,7 +354,10 @@ class StatbankTransfer(StatbankAuth):
 
 
     def _get_filbeskrivelse(self) -> StatbankUttrekksBeskrivelse:
-        return StatbankUttrekksBeskrivelse(self.tabellid, self.database, self.lastebruker, self.headers)
+        return StatbankUttrekksBeskrivelse(tabellid=self.tabellid, 
+                                           lastebruker=self.lastebruker, 
+                                           database=self.database, 
+                                           headers=self.headers)
 
 
 
