@@ -3,7 +3,7 @@
 # Todo
 # - Validation on
 #   - Time?
-#   - Rounding of floats?
+#   - Rounding of floats? And correct decimal-signifier
 # - Testing
 # - Docstrings / Documentation
 
@@ -20,21 +20,17 @@ import requests as r
 from requests.exceptions import ConnectionError
 import pandas as pd
 
+# SSB-packages / local
 from dapla import AuthClient
 
+# Ciphering requirements
 from abc import ABCMeta, abstractmethod
 from base64 import b64decode, b64encode
 from binascii import unhexlify
-
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.modes import ECB
-
-
-# Can be removed when finished developing
-from dotenv import load_dotenv
-load_dotenv()
 
 
 class StatbankAuth:
@@ -159,24 +155,23 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
                 #print(kodeliste["SumIALtTotalKode"])
             col_unique = to_validate[deltabell_nr-1].iloc[:,int(variabel["kolonnenummer"])-1].unique()
             kod_unique = [i["kode"] for i in kodeliste['koder']]
-            for kod in kod_unique:
-                if kod not in col_unique:
-                    categorycode_missing += [f"Code {kod} missing from column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
             for kod in col_unique:
                 if kod not in kod_unique:
                     categorycode_outside += [f"Code {kod} in data, but not in uttrekksbeskrivelse, add to statbank admin? From column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
-        
+            for kod in kod_unique:
+                if kod not in col_unique:
+                    categorycode_missing += [f"Code {kod} missing from column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
         ### Check rounding on floats?
         ### Check formatting on time?
-        if categorycode_missing:
-            print("Category codes missing from data:")
-            print("\n".join(categorycode_missing))
-            print()
         if categorycode_outside:
             print("Codes in data, outside codelist:")
             print("\n".join(categorycode_outside))
             print()
-        
+        if categorycode_missing:
+            print("Category codes missing from data (This is ok, just make sure missing data is intentional):")
+            print("\n".join(categorycode_missing))
+            print()
+        return categorycode_outside
         
     def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
@@ -248,16 +243,47 @@ class StatbankTransfer(StatbankAuth):
             self.data_type, self.data_iter = self._identify_data_type()
             if self.data_type != pd.DataFrame: 
                 raise ValueError(f"Data must be loaded into one or more pandas DataFrames. Type looks like {self.data_type}")
-            if validation: self.filbeskrivelse.validate_dfs(self.data)
+            if validation: 
+                outside_valid = self.filbeskrivelse.validate_dfs(self.data)
+                if outside_valid:
+                    raise ValueError("Transfer stopped by validation, correct values outside the codelists. If you want to override send validation=False as a parameter.")
+                
             self.body = self._body_from_data()
             
             url_load_params = self.urls['loader'] + urllib.parse.urlencode(self.params)
-            print(url_load_params, self.headers, self.body)
+            #print(url_load_params, self.headers, self.body)
             self.response = r.post(url_load_params, headers = self.headers, data = self.body)
             print(self.response)
+            if self.response.status_code == 200:
+                del self.response.request.headers  # Auth is stored here also, for some reason
         finally:
-            del self.headers
+            del self.headers  # Cleaning up auth-storing
             
+        self._handle_response()
+        
+    
+    def _handle_response(self) -> None:
+        response_json = json.loads(self.response.text)
+        if self.response.status_code == 200:
+            response_message = response_json['TotalResult']['Message']
+            self.oppdragsnummer = response_message.split("lasteoppdragsnummer:")[1].split(" =")[0]
+            if not self.oppdragsnummer.isdigit():
+                raise ValueError(f"Lasteoppdragsnummer: {oppdragsnummer} er ikke ett rent nummer.")
+
+            publiseringdato = dt.strptime(response_message.split("Publiseringsdato '")[1].split("',")[0], "%d.%m.%Y %H:%M:%S")
+            publiseringstime = int(response_message.split("Publiseringstid '")[1].split(":")[0])
+            publiseringsminutt = int(response_message.split("Publiseringstid '")[1].split(":")[1].split("'")[0])
+            publisering = publiseringdato + td(0, (publiseringstime*3600+publiseringsminutt*60))
+            print(f"Publisering satt til: {publisering.strftime('%Y-%m-%d %H:%M')}")
+            print(f"Følg med på lasteloggen (tar noen minutter): {self.urls['gui'] + self.oppdragsnummer}")
+            print(f"Og evt APIen?: {self.urls['api'] + self.oppdragsnummer}")
+            self.response_json = response_json
+        else:
+            print("Take a closer look at StatbankTransfer.response.text for more info about connection issues.")
+            raise ConnectionError(response_json['ItemResults'][0]['Exception'])
+        
+    
+    
     def _identify_data_type(self) -> tuple[type, bool]:
         if isinstance(self.data, pd.DataFrame):
             data_type = pd.DataFrame
@@ -303,7 +329,7 @@ class StatbankTransfer(StatbankAuth):
                 raise TypeError("Expecting Dataframe or Table at this point in code")
         body += f"\n--{self.boundary}--"
         body = body.replace("\n", "\r\n")  # Statbank likes this?
-        print(repr(body))
+        #print(repr(body))
         return body
 
     def _validate_original_parameters(self) -> None:
