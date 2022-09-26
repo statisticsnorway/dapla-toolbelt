@@ -13,7 +13,7 @@ def read(filename):
         return re.sub(text_type(r':[a-z]+:`~?(.*?)`'), text_type(r'``\1``'), fd.read())
 
 
-DEPENDENCIES = ["pandas", "jupyterhub", "gcsfs", "ipython", "lxml", "pyarrow"]
+DEPENDENCIES = ["pandas>=1.4.4", "jupyterhub", "gcsfs", "ipython", "lxml", "pyarrow"]
 
 # This call to setup() does all the work
 setup(
