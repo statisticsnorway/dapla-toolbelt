@@ -50,18 +50,20 @@ class StatbankAuth:
 
     def _build_auth(self):
         # Hør med Bjørn om hvordan dette skal implementeres for å sende passordet
-        response = r.post('http://dapla-statbank-authenticator.dapla.svc.cluster.local/encrypt',
-                                 headers={
-                                      'Authorization': 'Bearer %s' % AuthClient.fetch_personal_token(),
-                                      'Content-type': 'application/json'
-                                 }, json={"message": self.database})
+        #response = r.post('http://dapla-statbank-authenticator.dapla.svc.cluster.local/encrypt',
+        #                         headers={
+        #                              'Authorization': 'Bearer %s' % AuthClient.fetch_personal_token(),
+        #                              'Content-type': 'application/json'
+        #                         }, json={"message": self.database})
         # Get key from response
+        #try:
+        #    key = response.text['key']
         try:
-            key = response.text['key']
+            key = os.environ["STATBANK_TEST_KEY"]
         except Exception as e:
             raise e
-        finally:
-            del response
+        #finally:
+        #    del response
         # Encrypt password with key
         try:
             encrypted_password = self._encrypt_password(key)
@@ -99,6 +101,107 @@ class StatbankAuth:
             'api': 'lastelogg/api/',
         }
         return {k: base_url+v for k, v in END_URLS.items()}
+
+    
+class StatbankUttrekksBeskrivelse(StatbankAuth):
+    def __init__(self, tabellid, database, lastebruker, headers=None):
+        self.database = database
+        self.lastebruker = lastebruker
+        self.url = self._build_urls(self.database)['uttak']
+        self.lagd = ""
+        self.tabellid = tabellid
+        self.hovedtabell = ""
+        self.deltabelltitler = dict()
+        self.variabler = dict()
+        self.kodelister = dict()
+        self.prikking = None
+        if headers:
+            self.headers = headers
+        else:
+            self.headers = self._build_headers()
+        try:
+            self._get_uttrekksbeskrivelse()
+        finally:
+            del self.headers
+        self._split_attributes()
+
+    def validate_dfs(self, data) -> None:
+        ### Number deltabelltitler should match length of data-iterable
+        if len(self.deltabelltitler) > 1:
+            if not isinstance(data, list) or not isinstance(data, tuple):
+                raise TypeError(f"""Please put multiple pandas Dataframes in a list as your data.
+                These are your 'deltabeller', and the number & order of DataFrames should match this: 
+                {self.deltabelltitler}
+                """)
+        elif len(self.deltabelltitler) == 1:
+            if not isinstance(data, pd.DataFrame):
+                raise TypeError("Only one deltabell, expecting one pandas Dataframe in as your data.")
+            # For the code below to access the data correctly
+            to_validate = [data]
+        else:
+            raise ValueError("Deltabeller is shorter than one, weird. Make sure the uttaksbeskrivelse is ok.")
+        
+        ### No values outside, warn of missing from codelists on categorical columns
+        categorycode_outside = []
+        categorycode_missing = []
+        for kodeliste in self.kodelister:
+            kodeliste_id = kodeliste['kodeliste']
+            for deltabell in self.variabler:
+                for i, deltabell2 in enumerate(self.deltabelltitler):
+                    if deltabell2["Filnavn"] == deltabell["deltabell"]:
+                        deltabell_nr = i + 1
+                for variabel in deltabell["variabler"]:
+                    if variabel["Kodeliste_id"] == kodeliste_id:
+                        break
+                else:
+                    raise KeyError(f"Can't find {kodeliste_id} among deltabells variables.")
+            #if 'SumIALtTotalKode' in kodeliste.keys():
+                #print(kodeliste["SumIALtTotalKode"])
+            col_unique = to_validate[deltabell_nr-1].iloc[:,int(variabel["kolonnenummer"])-1].unique()
+            kod_unique = [i["kode"] for i in kodeliste['koder']]
+            for kod in kod_unique:
+                if kod not in col_unique:
+                    categorycode_missing += [f"Code {kod} missing from column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
+            for kod in col_unique:
+                if kod not in kod_unique:
+                    categorycode_outside += [f"Code {kod} in data, but not in uttrekksbeskrivelse, add to statbank admin? From column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
+        
+        ### Check rounding on floats?
+        ### Check formatting on time?
+        
+        print("Category codes missing from data:")
+        print("\n".join(categorycode_missing))
+        print()
+        print("Codes in data, outside codelist:")
+        print("\n".join(categorycode_outside))
+        
+        
+    def _get_uttrekksbeskrivelse(self) -> dict:
+        filbeskrivelse_url = self.url+"tableId="+self.tabellid
+        filbeskrivelse = r.get(filbeskrivelse_url, headers=self.headers)
+        if filbeskrivelse.status_code != 200:
+            del self.headers
+            raise ConnectionError(filbeskrivelse)
+        # Also deletes / overwrites returned Auth-header from get-request
+        filbeskrivelse = json.loads(filbeskrivelse.text)
+        print(f"""Hentet uttaksbeskrivelsen for {filbeskrivelse['Huvudtabell']}, 
+        med tabellid: {self.tabellid}
+        den {filbeskrivelse['Uttaksbeskrivelse_lagd']}""")
+        
+        # reset tabellid and hovedkode after content of request
+        self.filbeskrivelse = filbeskrivelse
+
+    def _split_attributes(self) -> None:
+        # Tabellid might have been "hovedkode" up to this point, as both are valid in the URI
+        self.lagd = self.filbeskrivelse['Uttaksbeskrivelse_lagd']
+        #self.base = self.filbeskrivelse['base']
+        self.tabellid = self.filbeskrivelse['TabellId']
+        self.hovedtabell = self.filbeskrivelse['Huvudtabell']
+        self.deltabelltitler = self.filbeskrivelse['DeltabellTitler']
+        self.variabler = self.filbeskrivelse['deltabller']
+        self.kodelister = self.filbeskrivelse['kodelister']
+        if 'null_prikk_missing_kodeliste' in self.filbeskrivelse.keys():
+            self.prikking = self.filbeskrivelse['null_prikk_missing_kodeliste']
 
 
 class StatbankTransfer(StatbankAuth):
@@ -237,75 +340,7 @@ class StatbankTransfer(StatbankAuth):
 
 
     def _get_filbeskrivelse(self) -> StatbankUttrekksBeskrivelse:
-        return StatbankUttrekksBeskrivelse(self.database, self.tabellid, self.headers)
-
-
-class StatbankUttrekksBeskrivelse(StatbankAuth):
-    def __init__(self, database, tabellid, headers=None):
-        self.database = database
-        self.url = self._build_urls(self.database)['uttak']
-        self.lagd = ""
-        self.tabellid = tabellid
-        self.hovedtabell = ""
-        self.deltabelltitler = dict()
-        self.variabler = dict()
-        self.kodelister = dict()
-        self.prikking = None
-        if headers:
-            self.headers = headers
-        else:
-            self.headers = self._build_headers()
-        try:
-            self._get_uttrekksbeskrivelse()
-        finally:
-            del self.headers
-        self._split_attributes()
-
-    def validate_dfs(self, data) -> None:
-        ### Number deltabelltitler should match length of data-iterable
-        if len(self.deltabelltitler) > 1:
-            if not isinstance(data, list) or not isinstance(data, tuple):
-                raise TypeError(f"""Please put multiple pandas Dataframes in a list as your data.
-                These are your 'deltabeller', and the number & order of DataFrames should match this: 
-                {self.deltabelltitler}
-                """)
-        elif len(self.deltatbelltitler) == 1:
-            if not isinstance(data, pd.DataFrame):
-                raise TypeError("Only one deltabell, expecting one pandas Dataframe in as your data.")
-        else:
-            raise ValueError("Deltabeller is shorter than one, weird. Make sure the uttaksbeskrivelse is ok.")
-        
-        ### No values outside codelists
-        for in self.kodelister.items():
-        
-        ### Sum i alt kode med i data, om den ligger i filbeskrivelse
-        
-    def _get_uttrekksbeskrivelse(self) -> dict:
-        filbeskrivelse_url = self.url+"tableId="+self.tabellid
-        filbeskrivelse = r.get(filbeskrivelse_url, headers=self.headers)
-        if filbeskrivelse.status_code != 200:
-            del self.headers
-            raise ConnectionError(filbeskrivelse)
-        # Also deletes / overwrites returned Auth-header from get-request
-        filbeskrivelse = json.loads(filbeskrivelse.text)
-        print(f"""Hentet uttaksbeskrivelsen for {filbeskrivelse['Huvudtabell']}, 
-        med tabellid: {self.tabellid}
-        den {filbeskrivelse['Uttaksbeskrivelse_lagd']}""")
-        
-        # reset tabellid and hovedkode after content of request
-        self.filbeskrivelse = filbeskrivelse
-
-    def _split_attributes(self) - > None:
-        # Tabellid might have been "hovedkode" up to this point, as both are valid in the URI
-        self.lagd = self.filbeskrivelse['Uttaksbeskrivelse_lagd']
-        #self.base = self.filbeskrivelse['base']
-        self.tabellid = self.filbeskrivelse['TabellId']
-        self.hovedtabell = self.filbeskrivelse['Huvudtabell']
-        self.deltabelltitler = self.filbeskrivelse['DeltabellTitler']
-        self.variabler = self.filbeskrivelse['deltabller']
-        self.kodelister = self.filbeskrivelse['kodelister']
-        if 'null_prikk_missing_kodeliste' in filbeskrivelse.keys():
-            self.prikking = self.filbeskrivelse['null_prikk_missing_kodeliste']
+        return StatbankUttrekksBeskrivelse(self.tabellid, self.database, self.lastebruker, self.headers)
 
 
 
