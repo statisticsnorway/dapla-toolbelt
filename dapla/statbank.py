@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Todo
+# - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
 #   - Time?
 #   - Rounding of floats? And correct decimal-signifier
@@ -35,22 +36,15 @@ from cryptography.hazmat.primitives.ciphers.modes import ECB
 
 class StatbankAuth:
     """
-    Parent class for shared behavior between Statbankens "Transfer-API" and "
-
+    Parent class for shared behavior between Statbankens "Transfer-API" and "Uttaksbeskrivelse-API"
     ...
-
-    Attributes
-    ----------
-    name : str
-        first name of the person
-    surname : str
-        family name of the person
-    age : int
-        age of the person
 
     Methods
     -------
-    
+    _build_headers():
+    _build_auth():
+    _encrypt_password(key):
+    _build_urls(database):
     __init__():
         is not implemented, as Transfer and UttrekksBeskrivelse both add their ow.
     
@@ -87,8 +81,12 @@ class StatbankAuth:
             raise e
         finally:
             del key
-        # Combine with username
-        username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(encrypted_password, 'UTF-8')
+            
+        try:
+            # Combine with username
+            username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(encrypted_password, 'UTF-8')
+        finally:
+            del encrypted_password
         return bytes('Basic ', 'UTF-8') + base64.b64encode(username_encryptedpassword)
 
     @staticmethod
@@ -121,23 +119,45 @@ class StatbankAuth:
     
 class StatbankUttrekksBeskrivelse(StatbankAuth):
     """
-    A class to represent a person.
-
+    Class for talking with the "uttrekksbeskrivelses-API", which describes metadata about shape of data to be transferred.
+    And metadata about the table itself in Statbankens system, like ID, name of codelists etc.
     ...
 
     Attributes
     ----------
-    name : str
-        first name of the person
-    surname : str
-        family name of the person
-    age : int
-        age of the person
-
+    database : str
+        f
+    lastebruker : str
+        f
+    url : str
+        a
+    lagd : str
+        a
+    tabellid: str
+        a
+    hovedtabell : str
+        a
+    deltabelltitler : str
+        a    
+    variabler : str
+        a
+    kodelister : str
+        a
+    prikking : str
+        a
+    headers : str
+        a
+    filbeskrivelse : dict
+        a
+    
     Methods
     -------
     validate_dfs(data=pd.DataFrame):
         Checks sent data against UttrekksBeskrivelse, raises errors at end of checking
+    _get_uttrekksbeskrivelse():
+    _split_attributes():
+    __init__():
+    
     """
     def __init__(self, tabellid, lastebruker, database="PROD", headers=None):
         self.database = database
@@ -245,7 +265,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     def _split_attributes(self) -> None:
         # Tabellid might have been "hovedkode" up to this point, as both are valid in the URI
         self.lagd = self.filbeskrivelse['Uttaksbeskrivelse_lagd']
-        #self.base = self.filbeskrivelse['base']
+        #self.database = self.filbeskrivelse['base']
         self.tabellid = self.filbeskrivelse['TabellId']
         self.hovedtabell = self.filbeskrivelse['Huvudtabell']
         self.deltabelltitler = self.filbeskrivelse['DeltabellTitler']
@@ -256,6 +276,47 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
 
 
 class StatbankTransfer(StatbankAuth):
+    """
+    Class for talking with the "transfer-API", which actually recieves the data from the user.
+    Create an instance of a StatbankUttrekksbeskrivelse.
+
+    ...
+
+    Attributes
+    ----------
+    database : str
+        f
+    lastebruker : str
+        f
+    url : str
+        a
+    lagd : str
+        a
+    tabellid: str
+        a
+    hovedtabell : str
+        a
+    deltabelltitler : str
+        a    
+    variabler : str
+        a
+    kodelister : str
+        a
+    prikking : str
+        a
+    headers : str
+        a
+    filbeskrivelse : dict
+        a
+    
+    Methods
+    -------
+    validate_dfs(data=pd.DataFrame):
+        Checks sent data against UttrekksBeskrivelse, raises errors at end of checking
+    _get_uttrekksbeskrivelse():
+    _split_attributes():
+    __init__():
+    """
     def __init__(self,
                 data: pd.DataFrame,
                     tabellid: str = None,
