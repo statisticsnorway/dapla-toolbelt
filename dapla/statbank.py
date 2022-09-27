@@ -3,6 +3,7 @@
 # Todo
 # - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
+#   - Column count, accounts for "prikking-columns"?
 #   - Time?
 #   - Rounding of floats? And correct decimal-signifier
 # - Testing
@@ -41,12 +42,20 @@ class StatbankAuth:
 
     Methods
     -------
-    _build_headers():
-    _build_auth():
-    _encrypt_password(key):
-    _build_urls(database):
+    _build_headers() -> dict:
+        Creates dict of headers needed in request to talk to Statbank-API
+        
+    _build_auth() -> str:
+        Gets key from environment and encrypts password with key, combines it with username into expected Authentication header.
+        
+    _encrypt_password(key) -> str:
+        Encrypts password with key. Password is not possible to send into function. Because safety.
+        
+    _build_urls(database) -> dict:
+        Urls will differ based on database to connect to, returns a dict of urls depending on database choice.
+        
     __init__():
-        is not implemented, as Transfer and UttrekksBeskrivelse both add their ow.
+        is not implemented, as Transfer and UttrekksBeskrivelse both add their own.
     
     """
     def _build_headers(self) -> dict:
@@ -126,34 +135,37 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     Attributes
     ----------
     database : str
-        f
+        Which of statbankens databases to connect to. PROD, TEST, QA or UTV
     lastebruker : str
-        f
+        Username for Statbanken, not the same as "tbf" or "common personal username" in other SSB-systems
     url : str
-        a
+        Main url for transfer, built from database choice
     lagd : str
-        a
+        Time of getting the Uttrekksbeskrivelse
     tabellid: str
-        a
+        Originally the ID of the main table, which to get the Uttrekksbeskrivelse on, 
+        but is reset based on the info in the Uttrekksbeskrivelse. 
+        To compansate for the possibility of the user sending in "Hovedtabell"-name as tabellid.
+        That should work also, probably...
     hovedtabell : str
-        a
-    deltabelltitler : str
-        a    
-    variabler : str
-        a
-    kodelister : str
-        a
-    prikking : str
-        a
-    headers : str
-        a
+        The name of the main table in Statbanken, not numbers, like the ID is.
+    deltabelltitler : dict
+        Names and descriptions of the individual "table-parts" that need to be sent in as different DataFrames.
+    variabler : dict
+        Metadata about the columns in the different table-parts.
+    kodelister : dict
+        Metadata about column-contents, like formatting on time, or possible values ("codes").
+    prikking : dict
+        Details around extra columns which describe main column's "prikking", meaning their suppression-type. 
+    headers : dict
+        The headers for the request, might be sent in from a StatbankTransfer-object.
     filbeskrivelse : dict
-        a
+        The "raw" json returned from the API-get-request, loaded into a dict.
     
     Methods
     -------
-    validate_dfs(data=pd.DataFrame):
-        Checks sent data against UttrekksBeskrivelse, raises errors at end of checking
+    validate_dfs(data=pd.DataFrame, raise_errors=bool):
+        Checks sent data against UttrekksBeskrivelse, raises errors at end of checking, if raise_errors not set to False.
     _get_uttrekksbeskrivelse():
     _split_attributes():
     __init__():
@@ -165,6 +177,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         self.url = self._build_urls(self.database)['uttak']
         self.lagd = ""
         self.tabellid = tabellid
+        self.raise_errors = raise_errors
         self.hovedtabell = ""
         self.deltabelltitler = dict()
         self.variabler = dict()
@@ -284,37 +297,60 @@ class StatbankTransfer(StatbankAuth):
 
     Attributes
     ----------
-    database : str
+    data : pd.DataFrame or list of pd.DataFrames
         f
     lastebruker : str
         f
-    url : str
-        a
-    lagd : str
-        a
     tabellid: str
-        a
+        The 
     hovedtabell : str
         a
-    deltabelltitler : str
+    tbf : str
         a    
-    variabler : str
+    publisering : str
         a
-    kodelister : str
+    fagansvarlig1 : str
         a
-    prikking : str
+    fagansvarlig2 : str
         a
-    headers : str
+    overskriv_data : str
         a
-    filbeskrivelse : dict
+    godkjenn_data : str
+        a
+    validation : bool
+        a
+    boundary : str
+        a
+    urls : dict
+        a
+    headers: dict
+        a
+    filbeskrivelse: dict
+        a
+    params: dict
+        a
+    data_iter: bool
+        a
+    data_type: type
+        a
+    body: str
+        a
+    response: requests.response
         a
     
     Methods
     -------
-    validate_dfs(data=pd.DataFrame):
-        Checks sent data against UttrekksBeskrivelse, raises errors at end of checking
-    _get_uttrekksbeskrivelse():
-    _split_attributes():
+    _validate_original_parameters():
+    _build_urls():
+        INHERITED - See description under StatbankAuth
+    _build_headers():
+        INHERITED - See description under StatbankAuth
+    _get_filbeskrivelse():
+        Gets a StatbankUttrekksbeskrivelses-object
+    _build_params():
+    _identify_data_type():
+    _body_from_data():
+    _handle_response():
     __init__():
     """
     def __init__(self,
@@ -330,11 +366,11 @@ class StatbankTransfer(StatbankAuth):
                     auto_godkjenn_data: str = '2',
                     validation: bool = True):
         self.data = data
+        self.tabellid = tabellid
         if lastebruker:
             self.lastebruker = lastebruker
         else:
             raise ValueError("You must set lastebruker as a parameter")
-        self.tabellid = tabellid
         self.hovedtabell = None
         self.database = database
         self.tbf = bruker_trebokstaver
@@ -352,6 +388,7 @@ class StatbankTransfer(StatbankAuth):
         try:
             self.filbeskrivelse = self._get_filbeskrivelse()
             self.hovedtabell = self.filbeskrivelse.hovedtabell
+            # Reset taballid, as sending in "hovedkode" as tabellid is possible up to this point
             self.tabellid = self.filbeskrivelse.tabellid
             self.params = self._build_params()
             
@@ -374,28 +411,32 @@ class StatbankTransfer(StatbankAuth):
             
         self._handle_response()
         
-    
-    def _handle_response(self) -> None:
-        response_json = json.loads(self.response.text)
-        if self.response.status_code == 200:
-            response_message = response_json['TotalResult']['Message']
-            self.oppdragsnummer = response_message.split("lasteoppdragsnummer:")[1].split(" =")[0]
-            if not self.oppdragsnummer.isdigit():
-                raise ValueError(f"Lasteoppdragsnummer: {oppdragsnummer} er ikke ett rent nummer.")
+    def _validate_original_parameters(self) -> None:
+        # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
+        #    raise ValueError("Tabellid må være tall, som en streng, og 5 tegn lang.")
 
-            publiseringdato = dt.strptime(response_message.split("Publiseringsdato '")[1].split("',")[0], "%d.%m.%Y %H:%M:%S")
-            publiseringstime = int(response_message.split("Publiseringstid '")[1].split(":")[0])
-            publiseringsminutt = int(response_message.split("Publiseringstid '")[1].split(":")[1].split("'")[0])
-            publisering = publiseringdato + td(0, (publiseringstime*3600+publiseringsminutt*60))
-            print(f"Publisering satt til: {publisering.strftime('%Y-%m-%d %H:%M')}")
-            print(f"Følg med på lasteloggen (tar noen minutter): {self.urls['gui'] + self.oppdragsnummer}")
-            print(f"Og evt APIen?: {self.urls['api'] + self.oppdragsnummer}")
-            self.response_json = response_json
-        else:
-            print("Take a closer look at StatbankTransfer.response.text for more info about connection issues.")
-            raise ConnectionError(response_json['ItemResults'][0]['Exception'])
-        
-    
+        if not isinstance(self.lastebruker, str) or not self.lastebruker:
+            raise ValueError("Du må sette en lastebruker korrekt")
+
+        databases = ['PROD', 'TEST', 'QA', 'UTV']
+        database = self.database.upper()
+        if database not in databases:
+            raise ValueError(f"{database} not among {*databases,}")
+
+        for tbf in [self.tbf, self.fagansvarlig1, self.fagansvarlig2]:
+            if len(tbf) != 3 or not isinstance(tbf, str):
+                raise ValueError(f'Brukeren {tbf} - "trebokstavsforkortelse" - må være tre bokstaver...')
+
+        if not isinstance(self.publisering, dt):
+            if not self._valid_date_form(self.publisering):
+                raise ValueError("Skriv inn datoformen for publisering som 1900-01-01")
+
+        if self.overskriv_data not in ['0', '1']:
+            raise ValueError("(Strengverdi) Sett overskriv_data til enten '0' = ingen overskriving (dubletter gir feil), eller  '1' = automatisk overskriving")
+
+        if self.godkjenn_data not in ['0', '1', '2']:
+            raise ValueError("(Strengverdi) Sett godkjenn_data til enten '0' = manuell, '1' = automatisk (umiddelbart), eller '2' = JIT-automatisk (just-in-time)")
+
     
     def _identify_data_type(self) -> tuple[type, bool]:
         if isinstance(self.data, pd.DataFrame):
@@ -445,31 +486,6 @@ class StatbankTransfer(StatbankAuth):
         #print(repr(body))
         return body
 
-    def _validate_original_parameters(self) -> None:
-        # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
-        #    raise ValueError("Tabellid må være tall, som en streng, og 5 tegn lang.")
-
-        if not isinstance(self.lastebruker, str) or not self.lastebruker:
-            raise ValueError("Du må sette en lastebruker korrekt")
-
-        databases = ['PROD', 'TEST', 'QA', 'UTV']
-        database = self.database.upper()
-        if database not in databases:
-            raise ValueError(f"{database} not among {*databases,}")
-
-        for tbf in [self.tbf, self.fagansvarlig1, self.fagansvarlig2]:
-            if len(tbf) != 3 or not isinstance(tbf, str):
-                raise ValueError(f'Brukeren {tbf} - "trebokstavsforkortelse" - må være tre bokstaver...')
-
-        if not isinstance(self.publisering, dt):
-            if not self._valid_date_form(self.publisering):
-                raise ValueError("Skriv inn datoformen for publisering som 1900-01-01")
-
-        if self.overskriv_data not in ['0', '1']:
-            raise ValueError("(Strengverdi) Sett overskriv_data til enten '0' = ingen overskriving (dubletter gir feil), eller  '1' = automatisk overskriving")
-
-        if self.godkjenn_data not in ['0', '1', '2']:
-            raise ValueError("(Strengverdi) Sett godkjenn_data til enten '0' = manuell, '1' = automatisk (umiddelbart), eller '2' = JIT-automatisk (just-in-time)")
 
     @staticmethod
     def _valid_date_form(date) -> bool:
@@ -498,6 +514,27 @@ class StatbankTransfer(StatbankAuth):
                                            database=self.database, 
                                            headers=self.headers)
 
+    def _handle_response(self) -> None:
+        response_json = json.loads(self.response.text)
+        if self.response.status_code == 200:
+            response_message = response_json['TotalResult']['Message']
+            self.oppdragsnummer = response_message.split("lasteoppdragsnummer:")[1].split(" =")[0]
+            if not self.oppdragsnummer.isdigit():
+                raise ValueError(f"Lasteoppdragsnummer: {oppdragsnummer} er ikke ett rent nummer.")
+
+            publiseringdato = dt.strptime(response_message.split("Publiseringsdato '")[1].split("',")[0], "%d.%m.%Y %H:%M:%S")
+            publiseringstime = int(response_message.split("Publiseringstid '")[1].split(":")[0])
+            publiseringsminutt = int(response_message.split("Publiseringstid '")[1].split(":")[1].split("'")[0])
+            publisering = publiseringdato + td(0, (publiseringstime*3600+publiseringsminutt*60))
+            print(f"Publisering satt til: {publisering.strftime('%Y-%m-%d %H:%M')}")
+            print(f"Følg med på lasteloggen (tar noen minutter): {self.urls['gui'] + self.oppdragsnummer}")
+            print(f"Og evt APIen?: {self.urls['api'] + self.oppdragsnummer}")
+            self.response_json = response_json
+        else:
+            print("Take a closer look at StatbankTransfer.response.text for more info about connection issues.")
+            raise ConnectionError(response_json['ItemResults'][0]['Exception'])
+        
+    
 
 
 # credit: https://github.com/Laerte/aes_pkcs5/blob/main/aes_pkcs5/algorithms/__init__.py
