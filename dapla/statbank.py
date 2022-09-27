@@ -34,7 +34,27 @@ from cryptography.hazmat.primitives.ciphers.modes import ECB
 
 
 class StatbankAuth:
+    """
+    Parent class for shared behavior between Statbankens "Transfer-API" and "
 
+    ...
+
+    Attributes
+    ----------
+    name : str
+        first name of the person
+    surname : str
+        family name of the person
+    age : int
+        age of the person
+
+    Methods
+    -------
+    
+    __init__():
+        is not implemented, as Transfer and UttrekksBeskrivelse both add their ow.
+    
+    """
     def _build_headers(self) -> dict:
         return {
             'Authorization': self._build_auth(),
@@ -100,6 +120,25 @@ class StatbankAuth:
 
     
 class StatbankUttrekksBeskrivelse(StatbankAuth):
+    """
+    A class to represent a person.
+
+    ...
+
+    Attributes
+    ----------
+    name : str
+        first name of the person
+    surname : str
+        family name of the person
+    age : int
+        age of the person
+
+    Methods
+    -------
+    validate_dfs(data=pd.DataFrame):
+        Checks sent data against UttrekksBeskrivelse, raises errors at end of checking
+    """
     def __init__(self, tabellid, lastebruker, database="PROD", headers=None):
         self.database = database
         self.lastebruker = lastebruker
@@ -121,7 +160,9 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             del self.headers
         self._split_attributes()
 
-    def validate_dfs(self, data) -> None:
+    def validate_dfs(self, data, raise_errors: bool = False) -> dict:
+        validation_errors = {}
+        
         ### Number deltabelltitler should match length of data-iterable
         if len(self.deltabelltitler) > 1:
             if not isinstance(data, list) or not isinstance(data, tuple):
@@ -135,7 +176,15 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             # For the code below to access the data correctly
             to_validate = [data]
         else:
-            raise ValueError("Deltabeller is shorter than one, weird. Make sure the uttaksbeskrivelse is ok.")
+            validation_errors["deltabell_num"] = ValueError("Deltabeller is shorter than one, weird. Make sure the uttaksbeskrivelse is ok.")
+
+        ### Number of columns in data must match beskrivelse
+        for deltabell_num, deltabell in enumerate(self.variabler):
+            deltabell_navn = deltabell['deltabell']
+            col_num = len(deltabell['variabler'])
+            if len(to_validate[deltabell_num].columns) != col_num:
+                validation_errors["col_count_data" + deltabell_num] = ValueError(f"Expecting {col_num} columns in datapart {deltabell_num}: {deltabell_navn}")
+        
         
         ### No values outside, warn of missing from codelists on categorical columns
         categorycode_outside = []
@@ -167,11 +216,16 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             print("Codes in data, outside codelist:")
             print("\n".join(categorycode_outside))
             print()
+            validation_errors["categorycode_outside"] = ValueError(categorycode_outside)
         if categorycode_missing:
             print("Category codes missing from data (This is ok, just make sure missing data is intentional):")
             print("\n".join(categorycode_missing))
             print()
-        return categorycode_outside
+        
+        if raise_errors:
+            raise Exception(validation_errors)
+        
+        return validation_errors
         
     def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
@@ -244,9 +298,7 @@ class StatbankTransfer(StatbankAuth):
             if self.data_type != pd.DataFrame: 
                 raise ValueError(f"Data must be loaded into one or more pandas DataFrames. Type looks like {self.data_type}")
             if validation: 
-                outside_valid = self.filbeskrivelse.validate_dfs(self.data)
-                if outside_valid:
-                    raise ValueError("Transfer stopped by validation, correct values outside the codelists. If you want to override send validation=False as a parameter.")
+                validation_errors = self.filbeskrivelse.validate_dfs(self.data, raise_errors = True)
                 
             self.body = self._body_from_data()
             
