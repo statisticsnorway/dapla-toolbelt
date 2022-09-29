@@ -25,16 +25,6 @@ import pandas as pd
 # SSB-packages / local
 from .auth import AuthClient
 
-# Ciphering requirements
-from abc import ABCMeta, abstractmethod
-from base64 import b64decode, b64encode
-from binascii import unhexlify
-from cryptography.hazmat.primitives.ciphers import Cipher
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers.algorithms import AES
-from cryptography.hazmat.primitives.ciphers.modes import ECB
-
-
 ############################################
 # Transferring data to Statbank from Dapla #
 ############################################
@@ -69,47 +59,17 @@ class StatbankAuth:
 
     def _build_auth(self):
         # Hør med Bjørn om hvordan dette skal implementeres for å sende passordet
-        #response = r.post('http://dapla-statbank-authenticator.dapla.svc.cluster.local/encrypt',
-        #                         headers={
-        #                              'Authorization': 'Bearer %s' % AuthClient.fetch_personal_token(),
-        #                              'Content-type': 'application/json'
-        #                         }, json={"message": getpass.getpass(f"Lastepassord:")})
-        #
-        #    
+        response = r.post('http://dapla-statbank-authenticator.dapla.svc.cluster.local/encrypt',
+                                 headers={
+                                      'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
+                                      'Content-type': 'application/json'
+                                 }, json={"message": getpass.getpass(f"Lastepassord:")})
         try:
-            # Combine with username
             username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(response.json()['message'], 'UTF-8')
-        try:
-            key = os.environ["STATBANK_TEST_KEY"]
-        except Exception as e:
-            raise e
-        #finally:
-        #    del response
-        # Encrypt password with key
-        try:
-            encrypted_password = self._encrypt_password(key)
-        except Exception as e:
-            raise e
         finally:
-            del key
-            
-        try:
-            # Combine with username
-            username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(encrypted_password, 'UTF-8')
-        finally:
-            del encrypted_password
+            del response
         return bytes('Basic ', 'UTF-8') + base64.b64encode(username_encryptedpassword)
 
-    @staticmethod
-    def _encrypt_password(key):
-        if len(key) != 16:
-            raise ValueError('Key must be of length 16')
-        try:
-            cipher = AESECBPKCS5Padding(key)
-        finally:
-            del key
-        return cipher.encrypt(getpass.getpass(f"Lastepassord:"))
-    
     @staticmethod
     def _build_urls(database: str) -> dict:
         BASE_URLS = {
@@ -531,62 +491,7 @@ class StatbankTransfer(StatbankAuth):
         else:
             print("Take a closer look at StatbankTransfer.response.text for more info about connection issues.")
             raise ConnectionError(response_json)
-        
-    
-#############
-# Ciphering #
-#############
-
-# credit: https://github.com/Laerte/aes_pkcs5/blob/main/aes_pkcs5/algorithms/__init__.py
-class AESCommon(metaclass=ABCMeta):
-    """Common AES interface"""
-    def __init__(self, key: str) -> None:
-        self._key = key.encode()
-
-    def encrypt(self, message: str) -> str:
-        """Return encrypted message
-        :param message: message to be encrypted
-        :type message: str
-        """
-        cipher_instance = self._get_cipher()
-        message = message.encode()
-        offset = 16 - len(message) % 16
-        message = message + (offset * chr(offset)).encode()
-        encryptor = cipher_instance.encryptor()
-        result = encryptor.update(message)
-        return (
-            b64encode(result).decode()
-        )
-
-    def decrypt(self, message: str) -> str:
-        """Return decrypted message
-        :param message: encrypted message
-        :type message: str
-        """
-        cipher_instance = self._get_cipher()
-        decryptor = cipher_instance.decryptor()
-        result = decryptor.update(
-            b64decode(message)
-        )
-        pad_num = result[-1]
-        result = result[:-pad_num]
-        return result.decode()
-
-    @abstractmethod
-    def _get_cipher(self) -> Cipher:
-        """
-        Return the Cipher that will be used
-        """
-
-class AESECBPKCS5Padding(AESCommon):
-    """Implements AES algorithm with ECB mode of operation and padding scheme PKCS5."""
-    def __init__(self, key: str):
-        super(AESECBPKCS5Padding, self).__init__(key=key)
-
-    def _get_cipher(self):
-        """Return AES/CBC/PKCS5Padding Cipher"""
-        return Cipher(AES(self._key), mode=ECB(), backend=default_backend())
-
+            
     
 ##############################
 # Getting data from Statbank #
