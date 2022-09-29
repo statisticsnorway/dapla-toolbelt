@@ -48,6 +48,13 @@ class StatbankAuth:
         is not implemented, as Transfer and UttrekksBeskrivelse both add their own.
     
     """
+    @staticmethod
+    def _decide_dapla_environ() -> str:
+        if "staging" in os.environ["CLUSTER_ID"].lower():
+            return "TEST"
+        else:
+            return "PROD"
+    
     def _build_headers(self) -> dict:
         return {
             'Authorization': self._build_auth(),
@@ -98,6 +105,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     ----------
     database : str
         Which of statbankens databases to connect to. PROD, TEST, QA or UTV
+        In Dapla-Prod, you will get the key of PROD,
     lastebruker : str
         Username for Statbanken, not the same as "tbf" or "common personal username" in other SSB-systems
     url : str
@@ -133,8 +141,8 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     __init__():
     
     """
-    def __init__(self, tabellid, lastebruker, database="PROD", raise_errors = True, headers=None):
-        self.database = database
+    def __init__(self, tabellid, lastebruker, raise_errors = True, headers=None):
+        self.database = self._decide_dapla_environ()
         self.lastebruker = lastebruker
         self.url = self._build_urls(self.database)['uttak']
         self.lagd = ""
@@ -261,23 +269,25 @@ class StatbankTransfer(StatbankAuth):
     Attributes
     ----------
     data : pd.DataFrame or list of pd.DataFrames
-        f
+        Number of DataFrames needs to match the number of "deltabeller" in the uttakksbeskrivelse.
+        Data-shape can be validated before transfer with the Uttakksbeskrivelses-class.
     lastebruker : str
-        f
+        Username for Statbanken, not the same as "tbf" or "common personal username" in other SSB-systems
     tabellid: str
-        The 
+        The numeric id of the table, matching the one found on the website. Should be a 5-length string.
     hovedtabell : str
-        a
+        The "name" of the table, not known to most, so this is set by the Uttakksbeskrivelse, when we get it
     tbf : str
-        a    
+        The abbrivation of username at ssb. Three letters, like "cfc"
     publisering : str
-        a
+        Date for publishing the transfer. Shape should be "yyyy-mm-dd", like "2022-01-01". 
+        Statbanken only allows publishing four months into the future?
     fagansvarlig1 : str
-        a
+        First person to be notified by email of transfer. Defaults to the same as "tbf"
     fagansvarlig2 : str
-        a
+        Second person to be notified by email of transfer. Defaults to the same as "tbf"
     overskriv_data : str
-        a
+        
     godkjenn_data : str
         a
     validation : bool
@@ -285,7 +295,7 @@ class StatbankTransfer(StatbankAuth):
     boundary : str
         a
     urls : dict
-        a
+        Urls for transfer, observing the result etc., built from database choice
     headers: dict
         a
     filbeskrivelse: dict
@@ -320,7 +330,7 @@ class StatbankTransfer(StatbankAuth):
                 data: pd.DataFrame,
                     tabellid: str = None,
                     lastebruker: str = "",
-                    database: str = 'PROD',
+                    #database: str = 'PROD',
                     bruker_trebokstaver: str = os.environ['JUPYTERHUB_USER'].split("@")[0], 
                     publisering: dt = (dt.now() + td(days=100)).strftime('%Y-%m-%d'),
                     fagansvarlig1: str = os.environ['JUPYTERHUB_USER'].split("@")[0],
@@ -329,13 +339,13 @@ class StatbankTransfer(StatbankAuth):
                     auto_godkjenn_data: str = '2',
                     validation: bool = True):
         self.data = data
+        self.database = self._decide_dapla_environ()
         self.tabellid = tabellid
         if lastebruker:
             self.lastebruker = lastebruker
         else:
             raise ValueError("You must set lastebruker as a parameter")
         self.hovedtabell = None
-        self.database = database
         self.tbf = bruker_trebokstaver
         self.publisering = publisering
         self.fagansvarlig1 = fagansvarlig1
@@ -469,7 +479,6 @@ class StatbankTransfer(StatbankAuth):
     def _get_filbeskrivelse(self) -> StatbankUttrekksBeskrivelse:
         return StatbankUttrekksBeskrivelse(tabellid=self.tabellid, 
                                            lastebruker=self.lastebruker, 
-                                           database=self.database, 
                                            headers=self.headers)
 
     def _handle_response(self) -> None:
