@@ -37,8 +37,13 @@ def test_uttrekksbeskrivelse_init():
     # last thing to get filled during __init__ is .kodelister, check that dict has length
     assert len(uttrekk.kodelister)
     
+def test_uttrekksbeskrivelse_validate_data_wrong_deltabell_count():
+    ...
     
-def test_uttrekksbeskrivelse_validate_data():
+def test_uttrekksbeskrivelse_validate_data_wrong_col_count():
+    ...
+    
+def test_uttrekksbeskrivelse_validate_data_codes_outside_beskrivelse():
     ...
     
     
@@ -57,8 +62,27 @@ def test_transfer_correct_entry():
 def test_transfer_no_auth_residuals():
     # Do a search for the key, password, and ciphered auth in the returned object.
     # Important to remove any traces of these before object is handed to user
-    ...
     
+    # Username should be in object (checks integrity of object, and validity of search) 
+    assert len(search__dict__(transfer, fake_user))
+    
+    # Make sure none of these are in the object for security
+    assert 0 == len(search__dict__(transfer, fake_key))
+    assert 0 == len(search__dict__(transfer, fake_pass))
+    assert 0 == len(search__dict__(transfer, fake_auth[:15]))
+    
+def search__dict__(obj, searchterm: str, path = "root", keep = {}):
+    """ Recursive search through all nested objects having a __dict__-attribute"""
+    if hasattr(obj, "__dict__"):
+        for key, elem in obj.__dict__.items():
+            if hasattr(elem, "__dict__"):
+                path = path + "/" + key
+                keep = search__dict__(elem, searchterm, path=path, keep=keep)
+            if searchterm.lower() in str(elem).lower() or searchterm.lower() in str(key).lower():
+                keep[path + "/" + key] = elem
+    return keep
+
+
 def test_transfer_validation_error():
     # Alter in-data to introduce error which causes the validation-process to error-out
     ...
@@ -67,3 +91,5 @@ def test_transfer_auth_error():
     # Sending in the wrong password, make sure its handled elegantly
     with pytest.raises(Exception):
         ...
+        
+        

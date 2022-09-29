@@ -3,10 +3,10 @@
 # Todo
 # - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
-#   - Column count, accounts for "prikking-columns"?
-#   - Time?
-#   - Rounding of floats? And correct decimal-signifier
-# - Testing
+#   - Time formats? ååååMmm = 2022M01
+#   - Rounding of floats? And correct decimal-signifier in data?
+#   - "Prikking"-columns contain only allowed codes
+# - Testing (Pytest + mocking requests)
 # - Docstrings / Documentation
 
 # Standard library
@@ -23,7 +23,7 @@ from requests.exceptions import ConnectionError
 import pandas as pd
 
 # SSB-packages / local
-from dapla import AuthClient
+from .auth import AuthClient
 
 # Ciphering requirements
 from abc import ABCMeta, abstractmethod
@@ -35,6 +35,10 @@ from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.modes import ECB
 
 
+############################################
+# Transferring data to Statbank from Dapla #
+############################################
+
 class StatbankAuth:
     """
     Parent class for shared behavior between Statbankens "Transfer-API" and "Uttaksbeskrivelse-API"
@@ -44,16 +48,12 @@ class StatbankAuth:
     -------
     _build_headers() -> dict:
         Creates dict of headers needed in request to talk to Statbank-API
-        
     _build_auth() -> str:
         Gets key from environment and encrypts password with key, combines it with username into expected Authentication header.
-        
     _encrypt_password(key) -> str:
         Encrypts password with key. Password is not possible to send into function. Because safety.
-        
     _build_urls(database) -> dict:
         Urls will differ based on database to connect to, returns a dict of urls depending on database choice.
-        
     __init__():
         is not implemented, as Transfer and UttrekksBeskrivelse both add their own.
     
@@ -73,10 +73,12 @@ class StatbankAuth:
         #                         headers={
         #                              'Authorization': 'Bearer %s' % AuthClient.fetch_personal_token(),
         #                              'Content-type': 'application/json'
-        #                         }, json={"message": self.database})
-        # Get key from response
-        #try:
-        #    key = response.text['key']
+        #                         }, json={"message": getpass.getpass(f"Lastepassord:")})
+        #
+        #    
+        try:
+            # Combine with username
+            username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(response.json()['message'], 'UTF-8')
         try:
             key = os.environ["STATBANK_TEST_KEY"]
         except Exception as e:
@@ -103,7 +105,7 @@ class StatbankAuth:
         if len(key) != 16:
             raise ValueError('Key must be of length 16')
         try:
-            cipher = AESECBPKCS5Padding(key, "b64")
+            cipher = AESECBPKCS5Padding(key)
         finally:
             del key
         return cipher.encrypt(getpass.getpass(f"Lastepassord:"))
@@ -171,7 +173,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     __init__():
     
     """
-    def __init__(self, tabellid, lastebruker, database="PROD", headers=None):
+    def __init__(self, tabellid, lastebruker, database="PROD", raise_errors = True, headers=None):
         self.database = database
         self.lastebruker = lastebruker
         self.url = self._build_urls(self.database)['uttak']
@@ -195,7 +197,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
 
     def validate_dfs(self, data, raise_errors: bool = False) -> dict:
         validation_errors = {}
-        
+        print("validating...")
         ### Number deltabelltitler should match length of data-iterable
         if len(self.deltabelltitler) > 1:
             if not isinstance(data, list) or not isinstance(data, tuple):
@@ -214,9 +216,11 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         ### Number of columns in data must match beskrivelse
         for deltabell_num, deltabell in enumerate(self.variabler):
             deltabell_navn = deltabell['deltabell']
-            col_num = len(deltabell['variabler'])
+            col_num = len(deltabell['variabler']) + len(deltabell['statistikkvariabler'])
+            if "null_prikk_missing" in deltabell.keys():
+                col_num += len(deltabell["null_prikk_missing"])
             if len(to_validate[deltabell_num].columns) != col_num:
-                validation_errors["col_count_data" + deltabell_num] = ValueError(f"Expecting {col_num} columns in datapart {deltabell_num}: {deltabell_navn}")
+                validation_errors[f"col_count_data_{deltabell_num}"] = ValueError(f"Expecting {col_num} columns in datapart {deltabell_num}: {deltabell_navn}")
         
         
         ### No values outside, warn of missing from codelists on categorical columns
@@ -255,7 +259,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             print("\n".join(categorycode_missing))
             print()
         
-        if raise_errors:
+        if raise_errors and validation_errors:
             raise Exception(validation_errors)
         
         return validation_errors
@@ -292,9 +296,8 @@ class StatbankTransfer(StatbankAuth):
     """
     Class for talking with the "transfer-API", which actually recieves the data from the user.
     Create an instance of a StatbankUttrekksbeskrivelse.
-
     ...
-
+    
     Attributes
     ----------
     data : pd.DataFrame or list of pd.DataFrames
@@ -359,7 +362,7 @@ class StatbankTransfer(StatbankAuth):
                     lastebruker: str = "",
                     database: str = 'PROD',
                     bruker_trebokstaver: str = os.environ['JUPYTERHUB_USER'].split("@")[0], 
-                    publisering: dt = (dt.now() + td(days=366)).strftime('%Y-%m-%d'),
+                    publisering: dt = (dt.now() + td(days=100)).strftime('%Y-%m-%d'),
                     fagansvarlig1: str = os.environ['JUPYTERHUB_USER'].split("@")[0],
                     fagansvarlig2: str = os.environ['JUPYTERHUB_USER'].split("@")[0],
                     auto_overskriv_data: str = '1',
@@ -450,11 +453,9 @@ class StatbankTransfer(StatbankAuth):
             data_iter = True
         else:
             raise TypeError("Expecting data to be either a single DataFrame, or a list/tuple of DataFrames.")
-        return data_type, data_iter          
-        
+        return data_type, data_iter
 
-        
-        
+
     def _body_from_data(self) -> str:
         # If data is single pd.DataFrame, put into iterable, so code under works
         if not self.data_iter:
@@ -471,9 +472,6 @@ class StatbankTransfer(StatbankAuth):
         for elem, filename in zip(self.data, deltabeller_filnavn):
             # Replace all nans in data
             elem = elem.fillna("")
-            
-            
-            
             body = f"--{self.boundary}"
             body += f"\nContent-Disposition:form-data; filename={filename}"
             body += "\nContent-type:text/plain\n\n"
@@ -532,21 +530,18 @@ class StatbankTransfer(StatbankAuth):
             self.response_json = response_json
         else:
             print("Take a closer look at StatbankTransfer.response.text for more info about connection issues.")
-            raise ConnectionError(response_json['ItemResults'][0]['Exception'])
+            raise ConnectionError(response_json)
         
     
-
+#############
+# Ciphering #
+#############
 
 # credit: https://github.com/Laerte/aes_pkcs5/blob/main/aes_pkcs5/algorithms/__init__.py
-OUTPUT_FORMATS = ("b64", "hex")
-
 class AESCommon(metaclass=ABCMeta):
     """Common AES interface"""
-    def __init__(self, key: str, output_format: str) -> None:
+    def __init__(self, key: str) -> None:
         self._key = key.encode()
-        if output_format not in OUTPUT_FORMATS:
-            raise NotImplementedError(f"Support for output format: {output_format} is not implemented")
-        self._output_format = output_format
 
     def encrypt(self, message: str) -> str:
         """Return encrypted message
@@ -560,7 +555,7 @@ class AESCommon(metaclass=ABCMeta):
         encryptor = cipher_instance.encryptor()
         result = encryptor.update(message)
         return (
-            b64encode(result).decode() if self._output_format == "b64" else result.hex()
+            b64encode(result).decode()
         )
 
     def decrypt(self, message: str) -> str:
@@ -571,7 +566,7 @@ class AESCommon(metaclass=ABCMeta):
         cipher_instance = self._get_cipher()
         decryptor = cipher_instance.decryptor()
         result = decryptor.update(
-            b64decode(message) if self._output_format == "b64" else unhexlify(message)
+            b64decode(message)
         )
         pad_num = result[-1]
         result = result[:-pad_num]
@@ -585,13 +580,93 @@ class AESCommon(metaclass=ABCMeta):
 
 class AESECBPKCS5Padding(AESCommon):
     """Implements AES algorithm with ECB mode of operation and padding scheme PKCS5."""
-    def __init__(self, key: str, output_format: str):
-        super(AESECBPKCS5Padding, self).__init__(key=key, output_format=output_format)
+    def __init__(self, key: str):
+        super(AESECBPKCS5Padding, self).__init__(key=key)
 
     def _get_cipher(self):
         """Return AES/CBC/PKCS5Padding Cipher"""
         return Cipher(AES(self._key), mode=ECB(), backend=default_backend())
+
     
+##############################
+# Getting data from Statbank #
+##############################
+
+def apidata(sb_id: str = "05300",
+            payload: dict = {"query": [], "response": {"format": "json-stat2"}},
+            include_id=False) -> pd.DataFrame:
+    """
+    Parameter1: ID, the numeric ID of the statbank-table as a string.
+    Parameter2: Payload, the query to include with the request.
+    Parameter3: If you want to include "codes" in the dataframe, set this to True
+    Returns: a pandas dataframe with the table
+    """
+    url = f"https://data.ssb.no/api/v0/no/table/{sb_id}/"
+    repr(url)
+    print(url)
+    # Spør APIet om å få resultatet med requests-biblioteket
+    resultat = requests.post(url, json=payload)
+    if resultat.status_code == 200:
+        # Putt teksten i resultatet inn i ett pyjstat-datasett-objekt
+        dataset = pyjstat.Dataset.read(resultat.text)
+        # Skriv pyjstat-objektet ut som en pandas dataframe
+        df = dataset.write('dataframe')
+        # Om man ønsker IDen påført dataframen, så er vi fancy
+        if include_id:
+            df2 = dataset.write('dataframe', naming='id')
+            skip = 0
+            for i, col in enumerate(df2.columns):
+                insert_at = (i+1)*2-1-skip
+                df_col_tocompare = df.iloc[:, insert_at-1]
+                # Sett inn kolonne på rett sted, avhengig av at navnet ikke er brukt
+                # og at nabokolonnen ikke har samme verdier.
+                if col not in df.columns and not df2[col].equals(df_col_tocompare):
+                    df.insert(insert_at, col, df2[col])
+                # Indexen må justeres, om vi lar være å skrive inn kolonnen
+                else:
+                    skip += 1
+        df = df.convert_dtypes()
+        return df
+    elif resultat.status_code == 403:
+        raise requests.ConnectionError(f"Too big dataset? Try specifying a query into the function apidata (not apidata_all) to limit the returned data size. Status code {resultat.status_code}: {resultat.text}")
+    elif resultat.status_code == 400:
+        raise requests.ConnectionError(f"Bad Request, something might be wrong with your query... Status code {resultat.status_code}: {resultat.text}")
+    else:
+        raise requests.ConnectionError(f"Status code {resultat.status_code}: {resultat.text}")
+
+def apidata_all(sb_id: str = "05300", include_id=False) -> pd.DataFrame:
+    """
+    Parameter1: The numeric ID of the table as a string.
+    Parameter2: If you want to include "codes" in the dataframe, set this to True.
+    Returns: a pandas dataframe with the table
+    """
+    return apidata(sb_id, apidata_query_all(sb_id), include_id)
+        
+def apidata_query_all(sb_id: str = "05300") -> dict:
+    """
+    Parameter1: The id of the STATBANK-table to get the total query for.
+    Returns: A dict of the prepared query based on all the codes in the table.
+    """
+    url = f"https://data.ssb.no/api/v0/no/table/{sb_id}/"
+    res = requests.get(url)
+    if res.status_code == 200:
+        meta = json.loads(res.text)['variables']
+        code_list = []
+        for code in meta:
+            tmp = {}
+            for k, v in code.items():
+                if k == 'code':
+                    tmp[k] = v
+                if k == 'values':
+                    tmp['selection'] = {'filter':'item', k : v}
+            code_list += [tmp]
+        code_list
+        query = {'query': code_list,
+                 "response": {"format": "json-stat2"}}
+        return query
+    else:
+        raise requests.ConnectionError(f"Can't get query metadata in first of two requests. Status code {res.status_code}: {res.text}")
+
     
 if __name__ == '__main__':
     print("Only for importing?")
