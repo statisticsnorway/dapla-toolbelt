@@ -66,7 +66,7 @@ class StatbankAuth:
 
     def _build_auth(self):
         # Hør med Bjørn om hvordan dette skal implementeres for å sende passordet
-        response = r.post('http://dapla-statbank-authenticator.dapla.svc.cluster.local/encrypt',
+        response = r.post(os.environ['STATBANK_ENCRYPT_URL'],
                                  headers={
                                       'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
                                       'Content-type': 'application/json'
@@ -78,14 +78,8 @@ class StatbankAuth:
         return bytes('Basic ', 'UTF-8') + base64.b64encode(username_encryptedpassword)
 
     @staticmethod
-    def _build_urls(database: str) -> dict:
-        BASE_URLS = {
-            'PROD': "https://i.ssb.no/",
-            'TEST': "https://i.test.ssb.no/",
-            'QA': "https://i.qa.ssb.no/", # Fins denne?
-            'UTV': "https://i.utv.ssb.no/",
-        }
-        base_url = BASE_URLS[database]
+    def _build_urls() -> dict:
+        base_url = os.environ['STATBANK_BASE_URL']
         END_URLS = {
             'loader': 'statbank/sos/v1/DataLoader?',
             'uttak': 'statbank/sos/v1/uttaksbeskrivelse?',
@@ -144,7 +138,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     def __init__(self, tabellid, lastebruker, raise_errors = True, headers=None):
         self.database = self._decide_dapla_environ()
         self.lastebruker = lastebruker
-        self.url = self._build_urls(self.database)['uttak']
+        self.url = self._build_urls()['uttak']
         self.lagd = ""
         self.tabellid = tabellid
         self.raise_errors = raise_errors
@@ -235,6 +229,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
         filbeskrivelse = r.get(filbeskrivelse_url, headers=self.headers)
+        print(filbeskrivelse.text)
         if filbeskrivelse.status_code != 200:
             del self.headers
             raise ConnectionError(filbeskrivelse)
@@ -356,7 +351,7 @@ class StatbankTransfer(StatbankAuth):
         self.boundary = "12345"
         if validation: self._validate_original_parameters()
 
-        self.urls = self._build_urls(self.database)
+        self.urls = self._build_urls()
         self.headers = self._build_headers()
         try:
             self.filbeskrivelse = self._get_filbeskrivelse()
