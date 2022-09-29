@@ -1,6 +1,9 @@
 from .files import FileClient
-# import utils to register the pyarrow extension types
-import pandas.core.arrays._arrow_utils  # noqa
+from .auth import AuthClient
+from pandas import read_csv, read_json
+
+# import this module to trigger import side-effect and register the pyarrow extension types
+import pandas.core.arrays.arrow.extension_types
 
 
 def show(gcs_path):
