@@ -158,7 +158,8 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         try:
             self._get_uttrekksbeskrivelse()
         finally:
-            del self.headers
+            if hasattr(self, "headers"):
+                del self.headers
         self._split_attributes()
 
     def validate_dfs(self, data, raise_errors: bool = False) -> dict:
@@ -230,16 +231,16 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         
         return validation_errors
     
-    def _make_request(url: str, header: dict):
-        return r.get(filbeskrivelse_url, headers=self.headers)
+    def _make_request(self, url: str, header: dict):
+        return r.get(url, headers=self.headers)
         
     def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
         try:
             filbeskrivelse = self._make_request(filbeskrivelse_url, self.headers)
         finally:
-            ...
-            #del self.headers
+            if hasattr(self, "headers"):
+                del self.headers
         #print(filbeskrivelse.text)
         if filbeskrivelse.status_code != 200:
             raise ConnectionError(filbeskrivelse)
@@ -390,7 +391,7 @@ class StatbankTransfer(StatbankAuth):
         self._handle_response()
     
     def _make_transfer_request(self, url_params: str,):
-        return r.post(url_load_params, headers = self.headers, data = self.body)
+        return r.post(url_params, headers = self.headers, data = self.body)
     
     def _validate_original_parameters(self) -> None:
         # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
