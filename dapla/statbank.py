@@ -6,7 +6,7 @@
 #   - Time formats? ååååMmm = 2022M01
 #   - Rounding of floats? And correct decimal-signifier in data?
 #   - "Prikking"-columns contain only allowed codes
-# - Testing (Pytest + mocking requests)
+# - More Testing (Pytest + mocking requests)
 # - Docstrings / Documentation
 
 # Standard library
@@ -36,14 +36,16 @@ class StatbankAuth:
 
     Methods
     -------
+    _decide_dapla_environ() -> str:
+        If in Dapla-staging, should return "TEST", otherwise "PROD". 
     _build_headers() -> dict:
         Creates dict of headers needed in request to talk to Statbank-API
     _build_auth() -> str:
         Gets key from environment and encrypts password with key, combines it with username into expected Authentication header.
-    _encrypt_password(key) -> str:
-        Encrypts password with key. Password is not possible to send into function. Because safety.
-    _build_urls(database) -> dict:
-        Urls will differ based on database to connect to, returns a dict of urls depending on database choice.
+    _encrypt_request() -> str:
+        Encrypts password with key from local service, url for service should be environment variables. Password is not possible to send into function. Because safety.
+    _build_urls() -> dict:
+        Urls will differ based environment variables, returns a dict of urls.
     __init__():
         is not implemented, as Transfer and UttrekksBeskrivelse both add their own.
     
@@ -54,7 +56,7 @@ class StatbankAuth:
             return "TEST"
         else:
             return "PROD"
-    
+        
     def _build_headers(self) -> dict:
         return {
             'Authorization': self._build_auth(),
@@ -63,23 +65,24 @@ class StatbankAuth:
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept' : r'*/*',
             }
-    
-    @staticmethod
-    def _encrypt_request():
-        return r.post(os.environ['STATBANK_ENCRYPT_URL'],
-                                 headers={
-                                      'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
-                                      'Content-type': 'application/json'
-                                 }, json={"message": getpass.getpass(f"Lastepassord:")})
-        
+
+
     def _build_auth(self):
-        # Hør med Bjørn om hvordan dette skal implementeres for å sende passordet
         response = self._encrypt_request()
         try:
             username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(json.loads(response.text)['message'], 'UTF-8')
         finally:
             del response
         return bytes('Basic ', 'UTF-8') + base64.b64encode(username_encryptedpassword)
+
+    @staticmethod
+    def _encrypt_request():
+        return r.post(os.environ['STATBANK_ENCRYPT_URL'],
+                      headers={
+                              'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
+                              'Content-type': 'application/json'}, 
+                      json={"message": getpass.getpass(f"Lastepassord:")}
+                     )
 
     @staticmethod
     def _build_urls() -> dict:
@@ -101,13 +104,10 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
 
     Attributes
     ----------
-    database : str
-        Which of statbankens databases to connect to. PROD, TEST, QA or UTV
-        In Dapla-Prod, you will get the key of PROD,
     lastebruker : str
         Username for Statbanken, not the same as "tbf" or "common personal username" in other SSB-systems
     url : str
-        Main url for transfer, built from database choice
+        Main url for transfer
     lagd : str
         Time of getting the Uttrekksbeskrivelse
     tabellid: str
@@ -135,12 +135,15 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     validate_dfs(data=pd.DataFrame, raise_errors=bool):
         Checks sent data against UttrekksBeskrivelse, raises errors at end of checking, if raise_errors not set to False.
     _get_uttrekksbeskrivelse():
+        Handles the response from the API, prints some status.
+    _make_request():
+        Makes the actual get-request, split out for easier mocking
     _split_attributes():
+        After a successful response, split recieved data into attributes for easier access
     __init__():
     
     """
     def __init__(self, tabellid, lastebruker, raise_errors = True, headers=None):
-        self.database = self._decide_dapla_environ()
         self.lastebruker = lastebruker
         self.url = self._build_urls()['uttak']
         self.lagd = ""
@@ -231,8 +234,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         
         return validation_errors
     
-    def _make_request(self, url: str, header: dict):
-        return r.get(url, headers=self.headers)
+
         
     def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
@@ -252,11 +254,13 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
         
         # reset tabellid and hovedkode after content of request
         self.filbeskrivelse = filbeskrivelse
-
+        
+    def _make_request(self, url: str, header: dict):
+        return r.get(url, headers=self.headers)
+    
     def _split_attributes(self) -> None:
         # Tabellid might have been "hovedkode" up to this point, as both are valid in the URI
         self.lagd = self.filbeskrivelse['Uttaksbeskrivelse_lagd']
-        #self.database = self.filbeskrivelse['base']
         self.tabellid = self.filbeskrivelse['TabellId']
         self.hovedtabell = self.filbeskrivelse['Huvudtabell']
         self.deltabelltitler = self.filbeskrivelse['DeltabellTitler']
@@ -293,32 +297,44 @@ class StatbankTransfer(StatbankAuth):
     fagansvarlig2 : str
         Second person to be notified by email of transfer. Defaults to the same as "tbf"
     overskriv_data : str
-        
+        "0" = no overwrite
+        "1" = overwrite
     godkjenn_data : str
-        a
+        "0" = manual approval
+        "1" = automatic approval at transfer-time (immediately)
+        "2" = JIT (Just In Time), approval right before publishing time
     validation : bool
-        a
+        Set to True, if you want the python-validation code to run user-side.
+        Set to False, if its slow and unnecessary.
     boundary : str
-        a
+        String that defines the splitting of the body in the transfer-post-request. 
+        Kept here for uniform choice through the class.
     urls : dict
-        Urls for transfer, observing the result etc., built from database choice
+        Urls for transfer, observing the result etc., 
+        built from environment variables in Dapla-environment
     headers: dict
-        a
-    filbeskrivelse: dict
-        a
+        Might be deleted without warning.
+        Temporarily holds the Authentication for the request.
+    filbeskrivelse: StatbankUttrekksBeskrivelse
+        Transfer creates its own StatbankUttrekksBeskrivelse, to validate its data against.
+        And also guarantee that "tabellid" and "hovedtabell" are set correctly.
     params: dict
-        a
+        This dict will be built into the url in the post request. 
+        Keep it in this nice shape for later introspection.
     data_iter: bool
-        a
+        A record of if the data was sent into the class as an iterable or not.
     data_type: type
-        a
+        The datatype of the data sent in, either sent standalone, or in the sent list.
+        Currently the class prefers pd.DataFrame.
     body: str
-        a
+        The data parsed into the body-shape the Statbank-API expects in the transfer-post-request.
     response: requests.response
-        a
+        The resulting response from the transfer-request. Headers might be deleted without warning.
     
     Methods
     -------
+    transfer():
+        If 
     _validate_original_parameters():
     _build_urls():
         INHERITED - See description under StatbankAuth
@@ -336,16 +352,15 @@ class StatbankTransfer(StatbankAuth):
                 data: pd.DataFrame,
                     tabellid: str = None,
                     lastebruker: str = "",
-                    #database: str = 'PROD',
                     bruker_trebokstaver: str = os.environ['JUPYTERHUB_USER'].split("@")[0], 
                     publisering: dt = (dt.now() + td(days=100)).strftime('%Y-%m-%d'),
                     fagansvarlig1: str = os.environ['JUPYTERHUB_USER'].split("@")[0],
                     fagansvarlig2: str = os.environ['JUPYTERHUB_USER'].split("@")[0],
                     auto_overskriv_data: str = '1',
                     auto_godkjenn_data: str = '2',
-                    validation: bool = True):
+                    validation: bool = True,
+                    delay: bool = False):
         self.data = data
-        self.database = self._decide_dapla_environ()
         self.tabellid = tabellid
         if lastebruker:
             self.lastebruker = lastebruker
@@ -359,51 +374,21 @@ class StatbankTransfer(StatbankAuth):
         self.overskriv_data = auto_overskriv_data
         self.godkjenn_data = auto_godkjenn_data
         self.validation = validation
+        self.__delay = delay
+        
         self.boundary = "12345"
         if validation: self._validate_original_parameters()
 
         self.urls = self._build_urls()
-        self.headers = self._build_headers()
-        try:
-            self.filbeskrivelse = self._get_filbeskrivelse()
-            self.hovedtabell = self.filbeskrivelse.hovedtabell
-            # Reset taballid, as sending in "hovedkode" as tabellid is possible up to this point
-            self.tabellid = self.filbeskrivelse.tabellid
-            self.params = self._build_params()
-            
-            self.data_type, self.data_iter = self._identify_data_type()
-            if self.data_type != pd.DataFrame: 
-                raise ValueError(f"Data must be loaded into one or more pandas DataFrames. Type looks like {self.data_type}")
-            if validation: 
-                validation_errors = self.filbeskrivelse.validate_dfs(self.data, raise_errors = True)
-                
-            self.body = self._body_from_data()
-            
-            url_load_params = self.urls['loader'] + urllib.parse.urlencode(self.params)
-            #print(url_load_params, self.headers, self.body)
-            self.response = self._make_transfer_request(url_load_params)
-            print(self.response)
-            if self.response.status_code == 200:
-                del self.response.request.headers  # Auth is stored here also, for some reason
-        finally:
-            del self.headers  # Cleaning up auth-storing
-            
-        self._handle_response()
-    
-    def _make_transfer_request(self, url_params: str,):
-        return r.post(url_params, headers = self.headers, data = self.body)
-    
+        if not delay:
+            self.transfer()
+
     def _validate_original_parameters(self) -> None:
         # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
         #    raise ValueError("Tabellid må være tall, som en streng, og 5 tegn lang.")
 
         if not isinstance(self.lastebruker, str) or not self.lastebruker:
             raise ValueError("Du må sette en lastebruker korrekt")
-
-        databases = ['PROD', 'TEST', 'QA', 'UTV']
-        database = self.database.upper()
-        if database not in databases:
-            raise ValueError(f"{database} not among {*databases,}")
 
         for tbf in [self.tbf, self.fagansvarlig1, self.fagansvarlig2]:
             if len(tbf) != 3 or not isinstance(tbf, str):
@@ -483,13 +468,44 @@ class StatbankTransfer(StatbankAuth):
             'auto_godkjenn_data': self.godkjenn_data,
         }
 
-
+    def transfer(self):
+        if not self.__delay:
+            raise ValueError("Already transferred? Remake the StatbankTransfer-object if intentional.")
+        self.headers = self._build_headers()
+        try:
+            self.filbeskrivelse = self._get_filbeskrivelse()
+            self.hovedtabell = self.filbeskrivelse.hovedtabell
+            # Reset taballid, as sending in "hovedkode" as tabellid is possible up to this point
+            self.tabellid = self.filbeskrivelse.tabellid
+            self.params = self._build_params()
+            
+            self.data_type, self.data_iter = self._identify_data_type()
+            if self.data_type != pd.DataFrame: 
+                raise ValueError(f"Data must be loaded into one or more pandas DataFrames. Type looks like {self.data_type}")
+            if validation: 
+                validation_errors = self.filbeskrivelse.validate_dfs(self.data, raise_errors = True)
+                
+            self.body = self._body_from_data()
+            
+            url_load_params = self.urls['loader'] + urllib.parse.urlencode(self.params)
+            #print(url_load_params, self.headers, self.body)
+            self.response = self._make_transfer_request(url_load_params)
+            print(self.response)
+            if self.response.status_code == 200:
+                del self.response.request.headers  # Auth is stored here also, for some reason
+        finally:
+            del self.headers  # Cleaning up auth-storing
+            self.__delay = False
+        self._handle_response()
 
     def _get_filbeskrivelse(self) -> StatbankUttrekksBeskrivelse:
         return StatbankUttrekksBeskrivelse(tabellid=self.tabellid, 
                                            lastebruker=self.lastebruker, 
                                            headers=self.headers)
-
+    
+    def _make_transfer_request(self, url_params: str,):
+        return r.post(url_params, headers = self.headers, data = self.body)
+    
     def _handle_response(self) -> None:
         response_json = json.loads(self.response.text)
         if self.response.status_code == 200:
