@@ -16,21 +16,21 @@ def mock_settings_env_vars():
 # Fake Auth
 def fake_user():
     return "SSB-person-456"
-
 def fake_pass():
     return "coConU7s6"
-
 def fake_auth():
     return "SoCipherVerySecure"
-
 # Fake data
 def fake_data():
     return pd.DataFrame({"1":["999","01","02"],
                         "2":["2022", "2022", "2000"],
                         "3":["100", "2000", "30000"]})
-@pytest.fixture
-def fake_body():
-    return "--12345\r\nContent-Disposition:form-data; filename=delfil1.dat\r\nContent-type:text/plain\r\n\r\n01;2022;100\r\n02;2022;2000\r\n04;2022;30000\r\n--12345--\r\n"
+#@pytest.fixture
+#def fake_body():
+#    return "--12345\r\nContent-Disposition:form-data; filename=delfil1.dat\r\nContent-type:text/plain\r\n\r\n01;2022;100\r\n02;2022;2000\r\n04;2022;30000\r\n--12345--\r\n"
+
+
+# Fake responses from APIs
 
 def fake_get_response_uttrekksbeskrivelse_successful():
     response = requests.Response()
@@ -40,10 +40,10 @@ def fake_get_response_uttrekksbeskrivelse_successful():
     response.request.headers = {'Authorization': fake_auth(), 'Content-Type': 'multipart/form-data; boundary=12345'}
     return response
 
-def fake_post_response_key_service(fake_auth):
+def fake_post_response_key_service():
     response = requests.Response()
     response.status_code = 200
-    response._content = bytes('{"message":"' + fake_auth + '"}', "utf8")
+    response._content = bytes('{"message":"' + fake_auth() + '"}', "utf8")
     return response
     
 def fake_post_response_transfer_successful():
@@ -54,13 +54,16 @@ def fake_post_response_transfer_successful():
     response.request.headers = {'Authorization': fake_auth(), 'Content-Type': 'multipart/form-data; boundary=12345'}
     return response
 
+
+# Successful fixtures
+
 # Our only get-request is for the "uttrekksbeskrivelse"
 @pytest.fixture
 @mock.patch.object(dapla.statbank.StatbankUttrekksBeskrivelse, "_make_request")
 @mock.patch.object(dapla.statbank.StatbankUttrekksBeskrivelse, "_encrypt_request")            
 def uttrekksbeskrivelse_success(test_encrypt, test_make_request):
     test_make_request.return_value = fake_get_response_uttrekksbeskrivelse_successful()
-    test_encrypt.return_value = fake_post_response_key_service(fake_auth())
+    test_encrypt.return_value = fake_post_response_key_service()
     return dapla.statbank.StatbankUttrekksBeskrivelse("10000", fake_user())
 
 @pytest.fixture
@@ -70,9 +73,9 @@ def uttrekksbeskrivelse_success(test_encrypt, test_make_request):
 @mock.patch.object(dapla.statbank.StatbankTransfer, "_encrypt_request")  
 def transfer_success(test_transfer_encrypt, test_transfer_make_request, test_besk_encrypt, test_besk_make_request):
     test_besk_make_request.return_value = fake_get_response_uttrekksbeskrivelse_successful()
-    test_besk_encrypt.return_value = fake_post_response_key_service(fake_auth())
+    test_besk_encrypt.return_value = fake_post_response_key_service()
     test_transfer_make_request.return_value = fake_post_response_transfer_successful()
-    test_transfer_encrypt.return_value = fake_post_response_key_service(fake_auth())
+    test_transfer_encrypt.return_value = fake_post_response_key_service()
     return dapla.statbank.StatbankTransfer(fake_data(), "10000", fake_user())
 
 
@@ -88,8 +91,6 @@ def test_uttrekksbeskrivelse_has_kodelister(uttrekksbeskrivelse_success):
     
 #def test_uttrekksbeskrivelse_validate_data_codes_outside_beskrivelse():
 #    ...
-    
-# Post requests both to dapla-key service and to the transfer API...
 
 def test_transfer_correct_entry(transfer_success):
     # "Lastenummer" is one of the last things set by __init__ and signifies a correctly loaded data-transfer.
