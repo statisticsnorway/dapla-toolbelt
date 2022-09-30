@@ -1,5 +1,5 @@
 import pytest
-import mock
+from unittest import mock
 from dapla.pandas import read_pandas
 from dapla.gcs import GCSFileSystem
 

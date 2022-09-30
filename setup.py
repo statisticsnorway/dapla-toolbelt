@@ -13,12 +13,12 @@ def read(filename):
         return re.sub(text_type(r':[a-z]+:`~?(.*?)`'), text_type(r'``\1``'), fd.read())
 
 
-DEPENDENCIES = ["pandas", "jupyterhub", "gcsfs", "ipython", "lxml", "pyarrow"]
+DEPENDENCIES = ["pandas>=1.4.4", "jupyterhub", "gcsfs", "ipython", "lxml", "pyarrow"]
 
 # This call to setup() does all the work
 setup(
     name="dapla-toolbelt",
-    version="1.3.1",
+    version="1.3.3",
     license='Apache Software License',
     description="Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data "
                 "platform called Dapla",
