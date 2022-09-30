@@ -21,6 +21,7 @@ import urllib.parse
 import requests as r
 from requests.exceptions import ConnectionError
 import pandas as pd
+from pyjstat import pyjstat
 
 # SSB-packages / local
 from .auth import AuthClient
@@ -245,7 +246,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
                 del self.headers
         #print(filbeskrivelse.text)
         if filbeskrivelse.status_code != 200:
-            raise ConnectionError(filbeskrivelse)
+            raise ConnectionError(filbeskrivelse, filbeskrivelse.text)
         # Also deletes / overwrites returned Auth-header from get-request
         filbeskrivelse = json.loads(filbeskrivelse.text)
         print(f"""Hentet uttaksbeskrivelsen for {filbeskrivelse['Huvudtabell']}, 
@@ -334,18 +335,23 @@ class StatbankTransfer(StatbankAuth):
     Methods
     -------
     transfer():
-        If 
+        If Transfer was delayed, you can make the transfer by calling this method.
     _validate_original_parameters():
+        Validating "pure" parameters on the way into the class.
     _build_urls():
         INHERITED - See description under StatbankAuth
     _build_headers():
         INHERITED - See description under StatbankAuth
     _get_filbeskrivelse():
-        Gets a StatbankUttrekksbeskrivelses-object
+        Initializes a StatbankUttrekksbeskrivelses-object under .filbeskrivelse
     _build_params():
+        Builds the params to be attached to the url
     _identify_data_type():
+        Sets data_iter and data_type dependant on data sent in to "data"
     _body_from_data():
+        Converts data to .body for the transfer request to add to json/data/body.
     _handle_response():
+        Handles the response back from the transfer post-request
     __init__():
     """
     def __init__(self,
@@ -359,7 +365,8 @@ class StatbankTransfer(StatbankAuth):
                     auto_overskriv_data: str = '1',
                     auto_godkjenn_data: str = '2',
                     validation: bool = True,
-                    delay: bool = False):
+                    delay: bool = False,
+                    ):
         self.data = data
         self.tabellid = tabellid
         if lastebruker:
@@ -376,13 +383,18 @@ class StatbankTransfer(StatbankAuth):
         self.validation = validation
         self.__delay = delay
         
+        
         self.boundary = "12345"
         if validation: self._validate_original_parameters()
 
         self.urls = self._build_urls()
         if not delay:
             self.transfer()
-
+    
+    @property
+    def delay():
+        return self.__delay
+            
     def _validate_original_parameters(self) -> None:
         # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
         #    raise ValueError("Tabellid må være tall, som en streng, og 5 tegn lang.")
@@ -468,10 +480,14 @@ class StatbankTransfer(StatbankAuth):
             'auto_godkjenn_data': self.godkjenn_data,
         }
 
-    def transfer(self):
+    def transfer(self, headers: dict = {}):
+        """The headers-parameter is for a future implemention of a possible BatchTransfer, dont use it please."""
         if not self.__delay:
             raise ValueError("Already transferred? Remake the StatbankTransfer-object if intentional.")
-        self.headers = self._build_headers()
+        if not headers:
+            self.headers = self._build_headers()
+        else:
+            self.headers = headers
         try:
             self.filbeskrivelse = self._get_filbeskrivelse()
             self.hovedtabell = self.filbeskrivelse.hovedtabell
@@ -482,8 +498,8 @@ class StatbankTransfer(StatbankAuth):
             self.data_type, self.data_iter = self._identify_data_type()
             if self.data_type != pd.DataFrame: 
                 raise ValueError(f"Data must be loaded into one or more pandas DataFrames. Type looks like {self.data_type}")
-            if validation: 
-                validation_errors = self.filbeskrivelse.validate_dfs(self.data, raise_errors = True)
+            if self.validation: 
+                self.validation_errors = self.filbeskrivelse.validate_dfs(self.data, raise_errors = True)
                 
             self.body = self._body_from_data()
             
@@ -510,7 +526,10 @@ class StatbankTransfer(StatbankAuth):
         response_json = json.loads(self.response.text)
         if self.response.status_code == 200:
             response_message = response_json['TotalResult']['Message']
-            self.oppdragsnummer = response_message.split("lasteoppdragsnummer:")[1].split(" =")[0]
+            try:
+                self.oppdragsnummer = response_message.split("lasteoppdragsnummer:")[1].split(" =")[0]
+            except:
+                raise ValueError(response_json)
             if not self.oppdragsnummer.isdigit():
                 raise ValueError(f"Lasteoppdragsnummer: {oppdragsnummer} er ikke ett rent nummer.")
 
@@ -525,26 +544,56 @@ class StatbankTransfer(StatbankAuth):
         else:
             print("Take a closer look at StatbankTransfer.response.text for more info about connection issues.")
             raise ConnectionError(response_json)
-            
-    
+
+class StatbankBatchTransfer(StatbankAuth):
+    """
+    Takes a bunch of delayed Transfer jobs in a list, so they can all be dispatched at the same time, with one password request.
+    """    
+    def __init__(self,
+                jobs: list = []):
+        self.jobs = jobs
+        # Make sure all jobs are delayed StatbankTransfer-objects
+        for i, job in enumerate(self.jobs):
+            if not isinstance(job, StatbankTransfer):
+                raise TypeError(f"Transfer-job {i} is not a StatbankTransfer-object.")
+            if not job.delay:
+                raise ValueError(f"Transfer-job {i} was not delayed?")
+        self.lastebruker = self.jobs[0].lastebruker
+        self.headers = self._build_headers()
+        self.transfer()
+        
+        
+    def transfer(self):
+        try:
+            for job in self.jobs:
+                job.transfer(self.headers)
+        finally: 
+            del self.headers
+        
+        
 ##############################
 # Getting data from Statbank #
 ##############################
 
-def apidata(sb_id: str = "05300",
+def apidata(external_id: str = "",
+            full_url: str = "",
             payload: dict = {"query": [], "response": {"format": "json-stat2"}},
-            include_id=False) -> pd.DataFrame:
+            include_id: bool = False) -> pd.DataFrame:
     """
     Parameter1: ID, the numeric ID of the statbank-table as a string.
-    Parameter2: Payload, the query to include with the request.
-    Parameter3: If you want to include "codes" in the dataframe, set this to True
+    Parameter2: full_url, if you are not supplying the id, you can supply the full url
+    Parameter3: Payload, the query to include with the request.
+    Parameter4: If you want to include "codes" in the dataframe, set this to True
     Returns: a pandas dataframe with the table
     """
-    url = f"https://data.ssb.no/api/v0/no/table/{sb_id}/"
+    if not full_url:
+        url = f"https://data.ssb.no/api/v0/no/table/{external_id}/"
+    else:
+        url = full_url
     repr(url)
     print(url)
     # Spør APIet om å få resultatet med requests-biblioteket
-    resultat = requests.post(url, json=payload)
+    resultat = r.post(url, json=payload)
     if resultat.status_code == 200:
         # Putt teksten i resultatet inn i ett pyjstat-datasett-objekt
         dataset = pyjstat.Dataset.read(resultat.text)
@@ -567,27 +616,41 @@ def apidata(sb_id: str = "05300",
         df = df.convert_dtypes()
         return df
     elif resultat.status_code == 403:
-        raise requests.ConnectionError(f"Too big dataset? Try specifying a query into the function apidata (not apidata_all) to limit the returned data size. Status code {resultat.status_code}: {resultat.text}")
+        raise r.ConnectionError(f"Too big dataset? Try specifying a query into the function apidata (not apidata_all) to limit the returned data size. Status code {resultat.status_code}: {resultat.text}")
     elif resultat.status_code == 400:
-        raise requests.ConnectionError(f"Bad Request, something might be wrong with your query... Status code {resultat.status_code}: {resultat.text}")
+        raise r.ConnectionError(f"Bad Request, something might be wrong with your query... Status code {resultat.status_code}: {resultat.text}")
     else:
-        raise requests.ConnectionError(f"Status code {resultat.status_code}: {resultat.text}")
+        raise r.ConnectionError(f"Status code {resultat.status_code}: {resultat.text}")
 
-def apidata_all(sb_id: str = "05300", include_id=False) -> pd.DataFrame:
+def apidata_all(external_id: str = "", 
+                full_url: str = "",
+                include_id: bool = False, 
+                internal: bool = False) -> pd.DataFrame:
     """
     Parameter1: The numeric ID of the table as a string.
     Parameter2: If you want to include "codes" in the dataframe, set this to True.
     Returns: a pandas dataframe with the table
     """
-    return apidata(sb_id, apidata_query_all(sb_id), include_id)
+    if external_id:
+        return apidata(external_id=external_id, 
+                       payload=apidata_query_all(external_id=external_id), 
+                       include_id=include_id)
+    else:
+        return apidata(full_url=full_url, 
+                       payload=apidata_query_all(full_url=full_url), 
+                       include_id=include_id)
         
-def apidata_query_all(sb_id: str = "05300") -> dict:
+def apidata_query_all(external_id: str = "", full_url: str = "") -> dict:
     """
-    Parameter1: The id of the STATBANK-table to get the total query for.
+    Parameter1 - external_id: The id of the STATBANK-table to get the total query for, supply if the table is externally exposed.
+    Parameter2 - full_url: The whole url for the internal table, supply if the table is only internally exposed.
     Returns: A dict of the prepared query based on all the codes in the table.
     """
-    url = f"https://data.ssb.no/api/v0/no/table/{sb_id}/"
-    res = requests.get(url)
+    if not full_url:
+        url = f"https://data.ssb.no/api/v0/no/table/{external_id}/"
+    else:
+        url = full_url
+    res = r.get(url)
     if res.status_code == 200:
         meta = json.loads(res.text)['variables']
         code_list = []
@@ -604,8 +667,22 @@ def apidata_query_all(sb_id: str = "05300") -> dict:
                  "response": {"format": "json-stat2"}}
         return query
     else:
-        raise requests.ConnectionError(f"Can't get query metadata in first of two requests. Status code {res.status_code}: {res.text}")
+        raise r.ConnectionError(f"Can't get query metadata in first of two requests. Status code {res.status_code}: {res.text}")
 
-    
+# Credit: https://github.com/sehyoun/SSB_API_helper/blob/master/src/ssb_api_helper.py    
+def apidata_rotate(df, ind='year', val='value'):
+    """Rotate the dataframe so that years are used as the index
+    Args:
+    df (pandas.dataframe): dataframe (from <get_from_ssb> function
+    ind (str): string of column name denoting time
+    ind (str): string of column name denoting values
+    Returns:
+    dataframe: pivotted dataframe
+    """
+    return df.pivot_table(index=ind,
+                        values=val,
+                        columns=[iter for iter in df.columns \
+                                      if iter != ind and iter != val])
+
 if __name__ == '__main__':
     print("Only for importing?")
