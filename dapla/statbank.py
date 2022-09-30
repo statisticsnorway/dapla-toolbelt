@@ -575,8 +575,7 @@ class StatbankBatchTransfer(StatbankAuth):
 # Getting data from Statbank #
 ##############################
 
-def apidata(external_id: str = "",
-            full_url: str = "",
+def apidata(id_or_url: str = "",
             payload: dict = {"query": [], "response": {"format": "json-stat2"}},
             include_id: bool = False) -> pd.DataFrame:
     """
@@ -586,10 +585,14 @@ def apidata(external_id: str = "",
     Parameter4: If you want to include "codes" in the dataframe, set this to True
     Returns: a pandas dataframe with the table
     """
-    if not full_url:
-        url = f"https://data.ssb.no/api/v0/no/table/{external_id}/"
+    if len(id_or_url)==5 and id_or_url.isdigit():
+        url = f"https://data.ssb.no/api/v0/no/table/{id_or_url}/"
     else:
-        url = full_url
+        try:
+            urllib.parse.urlparse(id_or_url)
+            url = id_or_url
+        except:
+            raise ValueError("First parameter not recognized as a statbank ID or a direct url")
     repr(url)
     print(url)
     # Spør APIet om å få resultatet med requests-biblioteket
@@ -622,34 +625,30 @@ def apidata(external_id: str = "",
     else:
         raise r.ConnectionError(f"Status code {resultat.status_code}: {resultat.text}")
 
-def apidata_all(external_id: str = "", 
-                full_url: str = "",
-                include_id: bool = False, 
-                internal: bool = False) -> pd.DataFrame:
+def apidata_all(id_or_url: str = "",
+                include_id: bool = False) -> pd.DataFrame:
     """
     Parameter1: The numeric ID of the table as a string.
     Parameter2: If you want to include "codes" in the dataframe, set this to True.
     Returns: a pandas dataframe with the table
     """
-    if external_id:
-        return apidata(external_id=external_id, 
-                       payload=apidata_query_all(external_id=external_id), 
-                       include_id=include_id)
-    else:
-        return apidata(full_url=full_url, 
-                       payload=apidata_query_all(full_url=full_url), 
+    return apidata(id_or_url, apidata_query_all(id_or_url), 
                        include_id=include_id)
         
-def apidata_query_all(external_id: str = "", full_url: str = "") -> dict:
+def apidata_query_all(id_or_url: str = "") -> dict:
     """
     Parameter1 - external_id: The id of the STATBANK-table to get the total query for, supply if the table is externally exposed.
     Parameter2 - full_url: The whole url for the internal table, supply if the table is only internally exposed.
     Returns: A dict of the prepared query based on all the codes in the table.
     """
-    if not full_url:
-        url = f"https://data.ssb.no/api/v0/no/table/{external_id}/"
+    if len(id_or_url)==5 and id_or_url.isdigit():
+        url = f"https://data.ssb.no/api/v0/no/table/{id_or_url}/"
     else:
-        url = full_url
+        try:
+            urllib.parse.urlparse(id_or_url)
+            url = id_or_url
+        except:
+            raise ValueError("First parameter not recognized as a statbank ID or a direct url")
     res = r.get(url)
     if res.status_code == 200:
         meta = json.loads(res.text)['variables']
