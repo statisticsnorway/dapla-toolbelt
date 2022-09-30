@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from dapla.statbank import StatbankTransfer, StatbankUttrekksBeskrivelse
+import dapla.statbank
 import pandas as pd
 import pytest
 from unittest import mock
@@ -14,21 +14,16 @@ def mock_settings_env_vars():
         yield
 
 # Fake Auth
-@pytest.fixture
-def fake_key():
-    return "16-Chars_LongKey"
-@pytest.fixture
 def fake_user():
     return "SSB-person-456"
-@pytest.fixture
+
 def fake_pass():
     return "coConU7s6"
-@pytest.fixture
+
 def fake_auth():
-    return bytes("SoCipherVerySecure", "utf8")
+    return "SoCipherVerySecure"
 
 # Fake data
-@pytest.fixture
 def fake_data():
     return pd.DataFrame({"1":["999","01","02"],
                         "2":["2022", "2022", "2000"],
@@ -37,93 +32,53 @@ def fake_data():
 def fake_body():
     return "--12345\r\nContent-Disposition:form-data; filename=delfil1.dat\r\nContent-type:text/plain\r\n\r\n01;2022;100\r\n02;2022;2000\r\n04;2022;30000\r\n--12345--\r\n"
 
-@pytest.fixture
 def fake_get_response_uttrekksbeskrivelse_successful():
     response = requests.Response()
     response.status_code = 200
-    response.text = """{"Uttaksbeskrivelse_lagd":"29.09.2022 klokka 18:51" , "base": "DB1T"
-,"TabellId":"10000"
-,"Huvudtabell":"HovedTabellNavn"
-,"DeltabellTitler":[
-   { "Filnavn": "delfil1.dat" , "Filtext": "10000: Fake table" } 
-] 
-,"deltabller":[
-  {
-  "deltabell":"delfil1.dat"
-  ,"variabler":[
-    {
-    "kolonnenummer":"1"
-    ,"Klassifikasjonsvariabel":"Kodeliste1"
-    ,"Variabeltext":"kodeliste1"
-    ,"Kodeliste_id":"Kodeliste1"
-    ,"Kodeliste_text":"Kodeliste 1"
-    }
-    ,{
-    "kolonnenummer":"2"
-    ,"Klassifikasjonsvariabel":"Tid"
-    ,"Variabeltext":"tid"
-    ,"Kodeliste_id":"-"
-    ,"Kodeliste_text":"Tidsperioden for tabelldataene, enhet = år, format = åååå"
-    }
-  ]
-  ,"statistikkvariabler":[
-    {
-    "kolonnenummer":"3"
-    ,"Text":"Antall"
-    ,"Enhet":"personer"
-    ,"Antall_lagrede_desimaler":"0"
-    ,"Antall_viste_desimaler":"0"
-    }
-  ]
-  ,"eksempel_linje":"01;2022;100"
-  }
-]
-,"kodelister":[
-  {"kodeliste":"Kodeliste1"
-    ,"SumIALtTotalKode":"999"
-  ,"koder":[
-    {"kode":"999","text":"i alt"}
-    ,{"kode":"01","text":"Kode1"}
-    ,{"kode":"02","text":"Kode2"}
-  ]
-}
-]
-}"""
+    response._content = bytes('{"Uttaksbeskrivelse_lagd":"29.09.2022 klokka 18:51" , "base": "DB1T","TabellId":"10000","Huvudtabell":"HovedTabellNavn","DeltabellTitler":[{ "Filnavn": "delfil1.dat" , "Filtext": "10000: Fake table" }] ,"deltabller":[{"deltabell":"delfil1.dat","variabler":[{"kolonnenummer":"1","Klassifikasjonsvariabel":"Kodeliste1","Variabeltext":"kodeliste1","Kodeliste_id":"Kodeliste1","Kodeliste_text":"Kodeliste 1"},{"kolonnenummer":"2","Klassifikasjonsvariabel":"Tid","Variabeltext":"tid","Kodeliste_id":"-","Kodeliste_text":"Tidsperioden for tabelldataene, enhet = år, format = åååå"}],"statistikkvariabler":[{ "kolonnenummer":"3","Text":"Antall","Enhet":"personer","Antall_lagrede_desimaler":"0","Antall_viste_desimaler":"0"}],"eksempel_linje":"01;2022;100"}],"kodelister":[{"kodeliste":"Kodeliste1","SumIALtTotalKode":"999","koder":[{"kode":"999","text":"i alt"},{"kode":"01","text":"Kode1"},{"kode":"02","text":"Kode2"}]}]}', "utf8")
+    response.request = requests.PreparedRequest()
+    response.request.headers = {'Authorization': fake_auth(), 'Content-Type': 'multipart/form-data; boundary=12345'}
     return response
-
 
 def fake_post_response_key_service(fake_auth):
     response = requests.Response()
     response.status_code = 200
-    response.text = '{"message":"' + fake_auth + '"}'
+    response._content = bytes('{"message":"' + fake_auth + '"}', "utf8")
     return response
     
 def fake_post_response_transfer_successful():
     response = requests.Response()
     response.status_code = 200
-    response.text = '{"TotalResult":{"GeneratedId":null,"Status":"Success","Message":"ExecutePublish with AutoGodkjennData \'2\', AutoOverskrivData \'1\', Fagansvarlig1 \'tbf\', Fagansvarlig2 \'tbf\', Hovedtabell \'HovedTabellNavn\', Publiseringsdato \'07.01.2023 00:00:00\', Publiseringstid \'08:00\':  Status 0, OK, lasting er registrert med lasteoppdragsnummer:197885 => INFORMASJON. Publiseringen er satt til kl 08:00:00","Exception":null,"ValidationInfoItems":null},"ItemResults":[{"GeneratedId":null,"Status":"Success","Message":"DataLoader with file name \'delfil1.dat\', intials \'tbf\' and time \'29.09.2022 19:01:14\': Loading completed into temp table","Exception":null,"ValidationInfoItems":null},{"GeneratedId":null,"Status":"Success","Message":"ExecutePublish with AutoGodkjennData \'2\', AutoOverskrivData \'1\', Fagansvarlig1 \'tbf\', Fagansvarlig2 \'tbf\', Hovedtabell \'HovedTabellNavn\', Publiseringsdato \'07.01.2023 00:00:00\', Publiseringstid \'08:00\':  Status 0, OK, lasting er registrert med lasteoppdragsnummer:197885 => INFORMASJON. Publiseringen er satt til kl 08:00:00","Exception":null,"ValidationInfoItems":null}]}'
+    response._content = bytes('{"TotalResult":{"GeneratedId":null,"Status":"Success","Message":"ExecutePublish with AutoGodkjennData \'2\', AutoOverskrivData \'1\', Fagansvarlig1 \'tbf\', Fagansvarlig2 \'tbf\', Hovedtabell \'HovedTabellNavn\', Publiseringsdato \'07.01.2023 00:00:00\', Publiseringstid \'08:00\':  Status 0, OK, lasting er registrert med lasteoppdragsnummer:197885 => INFORMASJON. Publiseringen er satt til kl 08:00:00","Exception":null,"ValidationInfoItems":null},"ItemResults":[{"GeneratedId":null,"Status":"Success","Message":"DataLoader with file name \'delfil1.dat\', intials \'tbf\' and time \'29.09.2022 19:01:14\': Loading completed into temp table","Exception":null,"ValidationInfoItems":null},{"GeneratedId":null,"Status":"Success","Message":"ExecutePublish with AutoGodkjennData \'2\', AutoOverskrivData \'1\', Fagansvarlig1 \'tbf\', Fagansvarlig2 \'tbf\', Hovedtabell \'HovedTabellNavn\', Publiseringsdato \'07.01.2023 00:00:00\', Publiseringstid \'08:00\':  Status 0, OK, lasting er registrert med lasteoppdragsnummer:197885 => INFORMASJON. Publiseringen er satt til kl 08:00:00","Exception":null,"ValidationInfoItems":null}]}', "utf8")
+    response.request = requests.PreparedRequest()
+    response.request.headers = {'Authorization': fake_auth(), 'Content-Type': 'multipart/form-data; boundary=12345'}
     return response
 
-
 # Our only get-request is for the "uttrekksbeskrivelse"
-@mock.patch('requests.get', return_value = fake_get_response_uttrekksbeskrivelse_successful())
-@mock.patch('getpass.getpass', return_value = fake_password())
 @pytest.fixture
-def uttrekksbeskrivelse_success(fake_user):
-    return StatbankUttrekksBeskrivelse("10000", fake_user)
+@mock.patch.object(dapla.statbank.StatbankUttrekksBeskrivelse, "_make_request")
+@mock.patch.object(dapla.statbank.StatbankUttrekksBeskrivelse, "_encrypt_request")            
+def uttrekksbeskrivelse_success(test_encrypt, test_make_request):
+    test_make_request.return_value = fake_get_response_uttrekksbeskrivelse_successful()
+    test_encrypt.return_value = fake_post_response_key_service(fake_auth())
+    return dapla.statbank.StatbankUttrekksBeskrivelse("10000", fake_user())
 
-@mock.patch('requests.get', return_value = fake_get_response_uttrekksbeskrivelse_successful())
-@mock.patch('requests.post', side_effect = [fake_post_response_key_service(), 
-                                           fake_post_response_transfer_successful])
-@mock.patch('getpass.getpass', return_value = fake_password())
 @pytest.fixture
-def transfer_success(fake_data, fake_user)
-    return StatbankTransfer(fake_data, "10000", fake_user)
+@mock.patch.object(dapla.statbank.StatbankUttrekksBeskrivelse, "_make_request")
+@mock.patch.object(dapla.statbank.StatbankUttrekksBeskrivelse, "_encrypt_request")  
+@mock.patch.object(dapla.statbank.StatbankTransfer, "_make_transfer_request")
+@mock.patch.object(dapla.statbank.StatbankTransfer, "_encrypt_request")  
+def transfer_success(test_transfer_encrypt, test_transfer_make_request, test_besk_encrypt, test_besk_make_request):
+    test_besk_make_request.return_value = fake_get_response_uttrekksbeskrivelse_successful()
+    test_besk_encrypt.return_value = fake_post_response_key_service(fake_auth())
+    test_transfer_make_request.return_value = fake_post_response_transfer_successful()
+    test_transfer_encrypt.return_value = fake_post_response_key_service(fake_auth())
+    return dapla.statbank.StatbankTransfer(fake_data(), "10000", fake_user())
 
 
-def test_uttrekksbeskrivelse_has_kodelister(uttrekksbeskrivelse_success)
+def test_uttrekksbeskrivelse_has_kodelister(uttrekksbeskrivelse_success):
     # last thing to get filled during __init__ is .kodelister, check that dict has length
-    assert len(uttrekksbeskrivelse.kodelister)
+    assert len(uttrekksbeskrivelse_success.kodelister)
     
 #def test_uttrekksbeskrivelse_validate_data_wrong_deltabell_count():
 #    ...
@@ -139,7 +94,7 @@ def test_uttrekksbeskrivelse_has_kodelister(uttrekksbeskrivelse_success)
 def test_transfer_correct_entry(transfer_success):
     # "Lastenummer" is one of the last things set by __init__ and signifies a correctly loaded data-transfer.
     # Is also used to build urls to webpages showing the ingestion status
-    assert transfer_success.lastenummer.isdigit()
+    assert transfer_success.oppdragsnummer.isdigit()
     
 
 def test_transfer_no_auth_residuals(transfer_success):
@@ -147,12 +102,11 @@ def test_transfer_no_auth_residuals(transfer_success):
     # Important to remove any traces of these before object is handed to user
     
     # Username should be in object (checks integrity of object, and validity of search) 
-    assert len(search__dict__(transfer_success, fake_user))
+    assert len(search__dict__(transfer_success, fake_user(), keep = {}))
     
     # Make sure none of these are in the object for security
-    assert 0 == len(search__dict__(transfer_success, fake_key))
-    assert 0 == len(search__dict__(transfer_success, fake_pass))
-    assert 0 == len(search__dict__(transfer_success, fake_auth[:15]))
+    assert 0 == len(search__dict__(transfer_success, fake_pass(), keep = {}))
+    assert 0 == len(search__dict__(transfer_success, fake_auth()[:15], keep = {}))
     
 def search__dict__(obj, searchterm: str, path = "root", keep = {}):
     """ Recursive search through all nested objects having a __dict__-attribute"""
@@ -174,5 +128,4 @@ def search__dict__(obj, searchterm: str, path = "root", keep = {}):
     # Sending in the wrong password, make sure its handled elegantly
 #    with pytest.raises(Exception):
 #        ...
-        
         

@@ -63,16 +63,20 @@ class StatbankAuth:
             'Accept-Encoding': 'gzip, deflate, br',
             'Accept' : r'*/*',
             }
-
-    def _build_auth(self):
-        # Hør med Bjørn om hvordan dette skal implementeres for å sende passordet
-        response = r.post(os.environ['STATBANK_ENCRYPT_URL'],
+    
+    @staticmethod
+    def _encrypt_request():
+        return r.post(os.environ['STATBANK_ENCRYPT_URL'],
                                  headers={
                                       'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
                                       'Content-type': 'application/json'
                                  }, json={"message": getpass.getpass(f"Lastepassord:")})
+        
+    def _build_auth(self):
+        # Hør med Bjørn om hvordan dette skal implementeres for å sende passordet
+        response = self._encrypt_request()
         try:
-            username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(response.json()['message'], 'UTF-8')
+            username_encryptedpassword = bytes(self.lastebruker, 'UTF-8') + bytes(':', 'UTF-8') + bytes(json.loads(response.text)['message'], 'UTF-8')
         finally:
             del response
         return bytes('Basic ', 'UTF-8') + base64.b64encode(username_encryptedpassword)
@@ -225,13 +229,19 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             raise Exception(validation_errors)
         
         return validation_errors
+    
+    def _make_request(url: str, header: dict):
+        return r.get(filbeskrivelse_url, headers=self.headers)
         
     def _get_uttrekksbeskrivelse(self) -> dict:
         filbeskrivelse_url = self.url+"tableId="+self.tabellid
-        filbeskrivelse = r.get(filbeskrivelse_url, headers=self.headers)
-        print(filbeskrivelse.text)
+        try:
+            filbeskrivelse = self._make_request(filbeskrivelse_url, self.headers)
+        finally:
+            ...
+            #del self.headers
+        #print(filbeskrivelse.text)
         if filbeskrivelse.status_code != 200:
-            del self.headers
             raise ConnectionError(filbeskrivelse)
         # Also deletes / overwrites returned Auth-header from get-request
         filbeskrivelse = json.loads(filbeskrivelse.text)
@@ -370,7 +380,7 @@ class StatbankTransfer(StatbankAuth):
             
             url_load_params = self.urls['loader'] + urllib.parse.urlencode(self.params)
             #print(url_load_params, self.headers, self.body)
-            self.response = r.post(url_load_params, headers = self.headers, data = self.body)
+            self.response = self._make_transfer_request(url_load_params)
             print(self.response)
             if self.response.status_code == 200:
                 del self.response.request.headers  # Auth is stored here also, for some reason
@@ -378,7 +388,10 @@ class StatbankTransfer(StatbankAuth):
             del self.headers  # Cleaning up auth-storing
             
         self._handle_response()
-        
+    
+    def _make_transfer_request(self, url_params: str,):
+        return r.post(url_load_params, headers = self.headers, data = self.body)
+    
     def _validate_original_parameters(self) -> None:
         # if not self.tabellid.isdigit() or len(self.tabellid) != 5:
         #    raise ValueError("Tabellid må være tall, som en streng, og 5 tegn lang.")
