@@ -601,6 +601,7 @@ class StatbankBatchTransfer(StatbankAuth):
                 raise ValueError(f"Transfer-job {i} was not delayed?")
         self.lastebruker = self.jobs[0].lastebruker
         self.transfer()
+        self.transfertime = dt.now().strftime("%Y-%m-%d")
         
     def transfer(self):
         self.headers = self._build_headers()
@@ -609,7 +610,14 @@ class StatbankBatchTransfer(StatbankAuth):
                 job.transfer(self.headers)
         finally: 
             del self.headers
+            
+    def __str__(self):
+        return f'StatbankBatchTransfer with {len(self.jobs)} jobs, lastebruker: {self.lastebruker}, transferred at {self.transfertime}'
         
+    def __repr__(self):
+        transfers = []
+        transfers += ["StatbankTransfer"]*len(self.jobs)
+        return f'StatbankBatchTransfer({transfers})'
         
 ##############################
 # Getting data from Statbank #
