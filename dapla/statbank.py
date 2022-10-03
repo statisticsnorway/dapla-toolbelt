@@ -166,6 +166,13 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
                 del self.headers
         self._split_attributes()
 
+    def __str__(self):
+        deltabellnavn = ",\n".join([f"{i+1}: {x['Filnavn']}" for i, x in enumerate(self.deltabelltitler)])
+        return f'Uttrekksbeskrivelse for statbanktabell {self.tabellid}. \nLastebruker: {self.lastebruker}. \nOversikt deltabeller:\n{deltabellnavn}'
+        
+    def __repr__(self):
+        return f'StatbankUttrekksBeskrivelse(tabellid="{self.tabellid}", lastebruker="{self.lastebruker}")'
+    
     def validate_dfs(self, data, raise_errors: bool = False) -> dict:
         validation_errors = {}
         print("validating...")
@@ -331,6 +338,8 @@ class StatbankTransfer(StatbankAuth):
         The data parsed into the body-shape the Statbank-API expects in the transfer-post-request.
     response: requests.response
         The resulting response from the transfer-request. Headers might be deleted without warning.
+    delay: 
+        Not editable, please dont try. Indicates if the Transfer has been sent yet, or not.
     
     Methods
     -------
@@ -388,11 +397,23 @@ class StatbankTransfer(StatbankAuth):
         if validation: self._validate_original_parameters()
 
         self.urls = self._build_urls()
-        if not delay:
+        if not self.delay:
             self.transfer()
+            
+    def __str__(self):
+        if self.delay:
+            return f'Overføring for statbanktabell {self.tabellid}. \nLastebruker: {self.lastebruker}.\nIkke overført enda.'
+        else:
+            return f'''Overføring for statbanktabell {self.tabellid}. 
+    Lastebruker: {self.lastebruker}.
+    Publisering: {self.publisering}.
+    Lastelogg: {self.urls['gui'] + self.oppdragsnummer}'''
+        
+    def __repr__(self):
+        return f'StatbankTransfer([data], tabellid="{self.tabellid}", lastebruker="{self.lastebruker}")'
     
     @property
-    def delay():
+    def delay(self):
         return self.__delay
             
     def _validate_original_parameters(self) -> None:
@@ -482,8 +503,9 @@ class StatbankTransfer(StatbankAuth):
 
     def transfer(self, headers: dict = {}):
         """The headers-parameter is for a future implemention of a possible BatchTransfer, dont use it please."""
-        if not self.__delay:
-            raise ValueError("Already transferred? Remake the StatbankTransfer-object if intentional.")
+        # In case transfer has already happened, dont transfer again
+        if hasattr(self, "oppdragsnummer"):
+            raise ValueError(f"Already transferred?\n{self.urls['gui'] + self.oppdragsnummer} \nRemake the StatbankTransfer-object if intentional. ")
         if not headers:
             self.headers = self._build_headers()
         else:
@@ -548,9 +570,28 @@ class StatbankTransfer(StatbankAuth):
 class StatbankBatchTransfer(StatbankAuth):
     """
     Takes a bunch of delayed Transfer jobs in a list, so they can all be dispatched at the same time, with one password request.
+        ...
+    
+    Attributes
+    ----------    
+    jobs: 
+        list of delayed StatbankTransfers.
+    lastebruker:
+        extracts the "lastebruker" from the first transfer-job. 
+        All jobs in the batch-transfer must use the same user and password.
+    headers:
+        Deleted without warning. Temporarily holds the headers to Authenticate the transfers.
+    
+    Methods
+    -------
+    transfer():
+        Builds headers (asks for password), calls the transfer function of each StatbankTransfer-job. Deletes headers.
+    
     """    
     def __init__(self,
                 jobs: list = []):
+        if not jobs:
+            raise ValueError("Can't batch-transfer, no transfers, give me a list of delayed StatbankTransfers.")
         self.jobs = jobs
         # Make sure all jobs are delayed StatbankTransfer-objects
         for i, job in enumerate(self.jobs):
@@ -559,11 +600,10 @@ class StatbankBatchTransfer(StatbankAuth):
             if not job.delay:
                 raise ValueError(f"Transfer-job {i} was not delayed?")
         self.lastebruker = self.jobs[0].lastebruker
-        self.headers = self._build_headers()
         self.transfer()
         
-        
     def transfer(self):
+        self.headers = self._build_headers()
         try:
             for job in self.jobs:
                 job.transfer(self.headers)
@@ -579,10 +619,9 @@ def apidata(id_or_url: str = "",
             payload: dict = {"query": [], "response": {"format": "json-stat2"}},
             include_id: bool = False) -> pd.DataFrame:
     """
-    Parameter1: ID, the numeric ID of the statbank-table as a string.
-    Parameter2: full_url, if you are not supplying the id, you can supply the full url
-    Parameter3: Payload, the query to include with the request.
-    Parameter4: If you want to include "codes" in the dataframe, set this to True
+    Parameter1 - id_or_url: The id of the STATBANK-table to get the total query for, or supply the total url, if the table is "internal".
+    Parameter2: Payload, the query to include with the request.
+    Parameter3: If you want to include "codes" in the dataframe, set this to True
     Returns: a pandas dataframe with the table
     """
     if len(id_or_url)==5 and id_or_url.isdigit():
@@ -628,8 +667,7 @@ def apidata(id_or_url: str = "",
 def apidata_all(id_or_url: str = "",
                 include_id: bool = False) -> pd.DataFrame:
     """
-    Parameter1: The numeric ID of the table as a string.
-    Parameter2: If you want to include "codes" in the dataframe, set this to True.
+    Parameter1 - id_or_url: The id of the STATBANK-table to get the total query for, or supply the total url, if the table is "internal".
     Returns: a pandas dataframe with the table
     """
     return apidata(id_or_url, apidata_query_all(id_or_url), 
@@ -637,8 +675,7 @@ def apidata_all(id_or_url: str = "",
         
 def apidata_query_all(id_or_url: str = "") -> dict:
     """
-    Parameter1 - external_id: The id of the STATBANK-table to get the total query for, supply if the table is externally exposed.
-    Parameter2 - full_url: The whole url for the internal table, supply if the table is only internally exposed.
+    Parameter1 - id_or_url: The id of the STATBANK-table to get the total query for, or supply the total url, if the table is "internal".
     Returns: A dict of the prepared query based on all the codes in the table.
     """
     if len(id_or_url)==5 and id_or_url.isdigit():
