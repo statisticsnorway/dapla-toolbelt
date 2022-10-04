@@ -3,9 +3,8 @@
 # Todo
 # - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
-#   - Time formats? ååååMmm = 2022M01
 #   - Rounding of floats? And correct decimal-signifier in data?
-#   - "Prikking"-columns contain only allowed codes
+#   - "Prikking"-columns contain only allowed codes + empty
 # - More Testing (Pytest + mocking requests)
 # - Docstrings / Documentation
 
@@ -166,9 +165,32 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
                 del self.headers
         self._split_attributes()
 
-    def __str__(self):
-        deltabellnavn = ",\n".join([f"{i+1}: {x['Filnavn']}" for i, x in enumerate(self.deltabelltitler)])
-        return f'Uttrekksbeskrivelse for statbanktabell {self.tabellid}. \nLastebruker: {self.lastebruker}. \nOversikt deltabeller:\n{deltabellnavn}'
+    def __str__(self):      
+        variabel_text = ""
+        for i, deltabell in enumerate(self.variabler):
+            variabel_text += f'\nDeltabell (DataFrame) nummer {i+1}: {deltabell["deltabell"]}\n'
+            variabler = [*deltabell["variabler"], *deltabell["statistikkvariabler"]]
+            if 'null_prikk_missing' in deltabell.keys():
+                variabler += deltabell['null_prikk_missing']
+            variabel_text += f'Antall kolonner: {len(variabler)}'
+            for i, variabel in enumerate(variabler):
+                variabel_text += f'\n\tKolonne {i+1}: '
+                if "Kodeliste_text" in variabel.keys():
+                    variabel_text += variabel["Kodeliste_text"]
+                elif "Text" in variabel.keys():
+                    variabel_text += variabel["Text"]
+                elif 'gjelder_for_text' in variabel.keys():
+                    variabel_text += f'Prikking for kolonne {variabel["gjelder_for__kolonner_nummer"]}: {variabel["gjelder_for_text"]}'
+            variabel_text += f'\nEksempellinje: {deltabell["eksempel_linje"]}'
+            
+        return f'''Uttrekksbeskrivelse for statbanktabell {self.tabellid}. 
+        Lastebruker: {self.lastebruker}. 
+        
+        Hele filbeskrivelsen "rå" ligger under .filbeskrivelse
+        Andre attributter: 
+        .deltabelltitler, .kodelister, .prikking, .variabler
+{variabel_text}
+        '''
         
     def __repr__(self):
         return f'StatbankUttrekksBeskrivelse(tabellid="{self.tabellid}", lastebruker="{self.lastebruker}")'
@@ -190,16 +212,22 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             to_validate = [data]
         else:
             validation_errors["deltabell_num"] = ValueError("Deltabeller is shorter than one, weird. Make sure the uttaksbeskrivelse is ok.")
+        if "deltabell_num" not in validation_errors.keys():
+            print("Correct number of DataFrames passed.")
 
         ### Number of columns in data must match beskrivelse
         for deltabell_num, deltabell in enumerate(self.variabler):
             deltabell_navn = deltabell['deltabell']
-            col_num = len(deltabell['variabler']) + len(deltabell['statistikkvariabler'])
+            col_num = len(deltabell['variabler']) + len(deltabell['statistikkvariabler']) # Mangler prikke-kolonner?
             if "null_prikk_missing" in deltabell.keys():
                 col_num += len(deltabell["null_prikk_missing"])
             if len(to_validate[deltabell_num].columns) != col_num:
                 validation_errors[f"col_count_data_{deltabell_num}"] = ValueError(f"Expecting {col_num} columns in datapart {deltabell_num}: {deltabell_navn}")
-        
+        for k in validation_errors.keys():
+            if "col_count_data" in k:
+                  break
+            else:
+                  print("Correct number of columns...")
         
         ### No values outside, warn of missing from codelists on categorical columns
         categorycode_outside = []
@@ -232,10 +260,53 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             print("\n".join(categorycode_outside))
             print()
             validation_errors["categorycode_outside"] = ValueError(categorycode_outside)
+        else:
+            print("No codes in categorical columns outside codelist.")
         if categorycode_missing:
             print("Category codes missing from data (This is ok, just make sure missing data is intentional):")
             print("\n".join(categorycode_missing))
             print()
+        else:
+            print("No codes missing from categorical columns.")
+        
+        
+        # Time-columns should follow time format
+        for i, deltabell in enumerate(self.variabler):
+            for variabel in deltabell['variabler']:
+                if 'Kodeliste_text' in variabel.keys():
+                    if "format = " in variabel["Kodeliste_text"]:
+                        col_num = int(variabel['kolonnenummer']) - 1
+                        timeformat_raw = variabel["Kodeliste_text"].split(" format = ")[1].strip().replace("Å", "å")
+                        timeformat = {
+                            "nums" : [i for i, c in enumerate(timeformat_raw) if c.islower()],
+                            "chars" : {i:c for i, c in enumerate(timeformat_raw) if c.isupper()},
+                            "specials": {i:c for i, c in enumerate(timeformat_raw) if not c.isalnum()}
+                        }
+                        #print(timeformat)
+                        if timeformat['nums']:
+                            for num in timeformat['nums']:
+                                if not all(to_validate[i].iloc[:,col_num].str[num].str.isdigit()):
+                                    validation_errors[f'time_non_digit_column{col_num}'] = f'Character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}'
+                        if timeformat['chars']:
+                            for i, char in timeformat['chars'].items():
+                                if not all(to_validate[i].iloc[:,col_num].str[i] == char):
+                                    validation_errors[f'character_match_column{col_num}'] = f'Should be capitalized character? Character {char}, character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}'
+                        if timeformat['specials']:
+                            for i, special in timeformat['specials'].items():
+                                if not all(to_validate[i].iloc[:,col_num].str[i] == special):
+                                    validation_errors[f'special_character_match_column{col_num}'] = f'Should be the special character {special}, character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}'
+        for k in validation_errors.keys():
+            if 'time_non_digit_column' in k:
+                break
+            elif 'character_match_column' in k:
+                break
+            elif 'special_character_match_column' in k:
+                break
+        else:
+            print("Timeformat validation ok.")
+
+        
+        
         
         if raise_errors and validation_errors:
             raise Exception(validation_errors)
