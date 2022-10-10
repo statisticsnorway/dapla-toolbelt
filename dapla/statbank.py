@@ -3,7 +3,6 @@
 # Todo
 # - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
-#   - "Prikking"-columns contain only allowed codes + empty
 # - More Testing (Pytest + mocking requests)
 # - Docstrings / Documentation
 
@@ -76,11 +75,15 @@ class StatbankAuth:
 
     @staticmethod
     def _encrypt_request():
+        if "test" in os.environ['STATBANK_BASE_URL'].lower():
+            db = "TEST"
+        else:
+            db = "PROD"
         return r.post(os.environ['STATBANK_ENCRYPT_URL'],
                       headers={
                               'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
                               'Content-type': 'application/json'}, 
-                      json={"message": getpass.getpass(f"Lastepassord:")}
+                      json={"message": getpass.getpass(f"Lastepassord ({db}):")}
                      )
 
     @staticmethod
@@ -196,7 +199,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
     
     def validate_dfs(self, data, raise_errors: bool = False) -> dict:
         validation_errors = {}
-        print("validating...")
+        print("\nvalidating...")
         ### Number deltabelltitler should match length of data-iterable
         if len(self.deltabelltitler) > 1:
             if not isinstance(data, list) or not isinstance(data, tuple):
@@ -252,6 +255,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             for kod in kod_unique:
                 if kod not in col_unique:
                     categorycode_missing += [f"Code {kod} missing from column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
+        
         if categorycode_outside:
             print("Codes in data, outside codelist:")
             print("\n".join(categorycode_outside))
@@ -283,15 +287,15 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
                         if timeformat['nums']:
                             for num in timeformat['nums']:
                                 if not all(to_validate[i].iloc[:,col_num].str[num].str.isdigit()):
-                                    validation_errors[f'time_non_digit_column{col_num}'] = f'Character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}'
+                                    validation_errors[f'time_non_digit_column{col_num}'] = ValueError(f'Character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}')
                         if timeformat['chars']:
                             for i, char in timeformat['chars'].items():
                                 if not all(to_validate[i].iloc[:,col_num].str[i] == char):
-                                    validation_errors[f'character_match_column{col_num}'] = f'Should be capitalized character? Character {char}, character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}'
+                                    validation_errors[f'character_match_column{col_num}'] = ValueError(f'Should be capitalized character? Character {char}, character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}')
                         if timeformat['specials']:
                             for i, special in timeformat['specials'].items():
                                 if not all(to_validate[i].iloc[:,col_num].str[i] == special):
-                                    validation_errors[f'special_character_match_column{col_num}'] = f'Should be the special character {special}, character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}'
+                                    validation_errors[f'special_character_match_column{col_num}'] = ValueError(f'Should be the special character {special}, character number {num} in column {col_num} in DataFrame {i}, does not match format {timeformat_raw}')
         for k in validation_errors.keys():
             if 'time_non_digit_column' in k:
                 break
@@ -303,10 +307,26 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             print("Timeformat validation ok.")
 
         
+        # Check "prikking"-columns for codes outside the codelist, allow empty values ""
+        if self.prikking:
+            prikk_codes = [code['Kode'] for code in self.prikking]
+            prikk_codes += [""]
+            for i, deltabell in enumerate(self.variabler):
+                if 'null_prikk_missing' in deltabell.keys():
+                    for prikk_col in deltabell['null_prikk_missing']:
+                        col_num = int(prikk_col['kolonnenummer']) - 1
+                        if not all(to_validate[i].iloc[:,col_num].isin(prikk_codes)):
+                            validation_errors[f'prikke_character_match_column{col_num}'] = ValueError(f'Prikke-code not among allowed prikkecodes: {prikk_codes}, in column {col_num} in DataFrame {i}.')
+        for k in validation_errors.keys():
+            if 'prikke_character_match_column' in k:
+                break
+        else:
+            print("Prikking-codes validation ok / No prikke-columns in use.")
         
         
         if raise_errors and validation_errors:
             raise Exception(validation_errors)
+        print()
         
         return validation_errors
     
