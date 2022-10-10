@@ -3,7 +3,6 @@
 # Todo
 # - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
-#   - Rounding of floats? And correct decimal-signifier in data?
 # - More Testing (Pytest + mocking requests)
 # - Docstrings / Documentation
 
@@ -256,10 +255,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             for kod in kod_unique:
                 if kod not in col_unique:
                     categorycode_missing += [f"Code {kod} missing from column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
-                    
-        ### Check rounding on floats? And correct decimal
         
-        ### Check formatting on time?
         if categorycode_outside:
             print("Codes in data, outside codelist:")
             print("\n".join(categorycode_outside))
@@ -557,6 +553,24 @@ class StatbankTransfer(StatbankAuth):
         deltabeller_filnavn = [x['Filnavn'] for x in self.filbeskrivelse.deltabelltitler]
         if len(deltabeller_filnavn) != len(self.data):
             raise ValueError("Length mismatch between data-iterable and number of Uttaksbeskrivelse deltabellers filnavn.")
+            
+        # Shorten all floats to specified decimal-length and convert to strings
+        for i, deltabell in enumerate(self.filbeskrivelse.variabler):
+            deltabell_navn = deltabell['deltabell']
+            for variabel in deltabell['variabler']:
+                if 'Antall_lagrede_desimaler' in variabel.keys():
+                    col_num = int(variabel["kolonnenummer"])-1
+                    decimal_num = int(variabel['Antall_lagrede_desimaler'])
+                    # Nan-handling?
+                    if self.data[i].dtypes[col_num] != "O":  # IF column already is not an object
+                        print(f"Converting column {col_num} into a string, with {decimal_num} decimals.")
+                        self.data[i].iloc[:,col_num] = (self.data[i].iloc[:,col_num]
+                                                    .astype("Float64")
+                                                    .map('{'+f':,.{decimal_num}f'+'}'.format)
+                                                    .str.replace("<NA>","")
+                                                    .str.replace(".",",")
+                                                   )
+                    
         # Data should be a iterable of pd.DataFrames at this point, reshape to body
         for elem, filename in zip(self.data, deltabeller_filnavn):
             # Replace all nans in data
