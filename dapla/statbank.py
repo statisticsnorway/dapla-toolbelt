@@ -4,7 +4,6 @@
 # - Ability to send a constructed Uttrekksbeskrivelse into Transfer?
 # - Validation on
 #   - Rounding of floats? And correct decimal-signifier in data?
-#   - "Prikking"-columns contain only allowed codes + empty
 # - More Testing (Pytest + mocking requests)
 # - Docstrings / Documentation
 
@@ -77,11 +76,15 @@ class StatbankAuth:
 
     @staticmethod
     def _encrypt_request():
+        if "test" in os.environ['STATBANK_BASE_URL'].lower():
+            db = "TEST"
+        else:
+            db = "PROD"
         return r.post(os.environ['STATBANK_ENCRYPT_URL'],
                       headers={
                               'Authorization': f'Bearer {AuthClient.fetch_personal_token()}',
                               'Content-type': 'application/json'}, 
-                      json={"message": getpass.getpass(f"Lastepassord:")}
+                      json={"message": getpass.getpass(f"Lastepassord ({db}):")}
                      )
 
     @staticmethod
@@ -253,7 +256,9 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             for kod in kod_unique:
                 if kod not in col_unique:
                     categorycode_missing += [f"Code {kod} missing from column number {variabel['kolonnenummer']}, in deltabell number {deltabell_nr}, ({deltabell['deltabell']})"]
-        ### Check rounding on floats?
+                    
+        ### Check rounding on floats? And correct decimal
+        
         ### Check formatting on time?
         if categorycode_outside:
             print("Codes in data, outside codelist:")
@@ -320,7 +325,7 @@ class StatbankUttrekksBeskrivelse(StatbankAuth):
             if 'prikke_character_match_column' in k:
                 break
         else:
-            print("Prikking-codes validation ok.")
+            print("Prikking-codes validation ok / No prikke-columns in use.")
         
         
         if raise_errors and validation_errors:
