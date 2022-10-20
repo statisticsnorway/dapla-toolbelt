@@ -19,7 +19,7 @@ DEPENDENCIES = ["pandas>=1.4.4", "jupyterhub", "gcsfs", "ipython", "lxml", "pyar
 setup(
     name="dapla-toolbelt",
     version="1.3.3",
-    license="Apache Software License",
+    license="MIT",
     description="Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data "
     "platform called Dapla",
     long_description=read("README.md"),
