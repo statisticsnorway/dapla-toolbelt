@@ -25,7 +25,12 @@ class GCSFileSystem(gcsfs.GCSFileSystem):
 
     @staticmethod
     def _should_silently_exclude(self, file_name):
-        from pyarrow.parquet import EXCLUDED_PARQUET_PATHS
+        try:
+            # Constant is moved to core module in Pyarrow 10.0.0
+            from pyarrow.parquet.core import EXCLUDED_PARQUET_PATHS
+        except ImportError:
+            # Fallback for Pyarrow versions <10.0.0
+            from pyarrow.parquet import EXCLUDED_PARQUET_PATHS
 
         return (
             file_name.endswith(".crc")
