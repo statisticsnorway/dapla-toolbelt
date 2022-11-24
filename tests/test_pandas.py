@@ -1,21 +1,48 @@
-import pytest
 import mock
-from dapla.pandas import read_pandas
-from dapla.gcs import GCSFileSystem
+import pandas as pd
+# This import enables mock patching
+from dapla.pandas import AuthClient
+from dapla.pandas import read_pandas, write_pandas, get_storage_options
+from fsspec.implementations.local import LocalFileSystem
+from google.oauth2.credentials import Credentials
 
-@pytest.mark.skip(reason="Slow test")
-@mock.patch('dapla.backports.FileClient')
-def test_read_default_format(file_client_mock):
-    file_client_mock.get_gcs_file_system.return_value = GCSFileSystem()
-    result = read_pandas('gs://anaconda-public-data/nyc-taxi/2015.parquet/part.0.parquet')
+
+def test_read_default_format():
+    fs = LocalFileSystem()
+    result = read_pandas('tests/data/fruits.parquet', fs=fs)
     print(result.head(5))
+    # Should be able to use column name (oranges) and index name (Lily)
+    assert result.get('oranges')['Lily'] == 7
 
 
-@pytest.mark.skip(reason="Slow test")
-@mock.patch('dapla.backports.AuthClient')
-@mock.patch('dapla.backports.FileClient')
-def test_read_default_format(file_client_mock, auth_client_mock):
-    file_client_mock.get_gcs_file_system.return_value = GCSFileSystem()
+@mock.patch('dapla.pandas.AuthClient')
+def test_read_csv_format(auth_client_mock: AuthClient):
     auth_client_mock.fetch_google_credentials.return_value = None
-    result = read_pandas('gs://anaconda-public-data/nyc-taxi/csv/2014/green_tripdata_2014-01.csv', file_format="csv")
+    fs = LocalFileSystem()
+    result = read_pandas('tests/data/fruits.csv', file_format="csv", fs=fs)
     print(result.head(5))
+
+
+@mock.patch('dapla.pandas.AuthClient')
+def test_write_csv_format(auth_client_mock: AuthClient):
+    auth_client_mock.fetch_google_credentials.return_value = None
+    # Create pandas dataframe
+    data = {
+        'apples': [3, 2, 0, 1],
+        'oranges': [0, 3, 7, 2]
+    }
+    df = pd.DataFrame(data, index=['June', 'Robert', 'Lily', 'David'])
+
+    fs = LocalFileSystem()
+    write_pandas(df, 'tests/output/test.csv', file_format="csv", fs=fs)
+
+
+@mock.patch('dapla.pandas.AuthClient')
+def test_get_storage_options(auth_client_mock: AuthClient) -> Credentials:
+    auth_client_mock.fetch_google_credentials.return_value = Credentials(
+        token='dummy_tokan',
+        token_uri='https://oauth2.googleapis.com/token',
+    )
+    result = get_storage_options()
+    assert result is not None
+    assert result['token'].token

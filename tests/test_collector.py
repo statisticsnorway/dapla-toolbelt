@@ -9,7 +9,7 @@ collector_test_url_stop = 'https://mock-collector.no/tasks/1234'
 fake_token = '123456789'
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch('dapla.collector.AuthClient')
 @responses.activate
 def test_initiate_201_response(auth_client_mock):
     auth_client_mock.fetch_personal_token.return_value = fake_token
@@ -26,7 +26,7 @@ def test_initiate_201_response(auth_client_mock):
     assert len(responses.calls) == 1
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch('dapla.collector.AuthClient')
 @responses.activate
 def test_list_tasks_200_response(auth_client_mock):
     auth_client_mock.fetch_personal_token.return_value = fake_token
@@ -38,7 +38,7 @@ def test_list_tasks_200_response(auth_client_mock):
     assert len(responses.calls) == 1
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch('dapla.collector.AuthClient')
 @responses.activate
 def test_stop_task_200_response(auth_client_mock):
     auth_client_mock.fetch_personal_token.return_value = fake_token
