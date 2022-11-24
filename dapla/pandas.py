@@ -3,7 +3,7 @@ from .files import FileClient
 from pandas import read_csv, read_json, read_fwf, DataFrame
 from typing import Any, Dict, List, Optional
 # import this module to trigger import side-effect and register the pyarrow extension types
-import pandas.core.arrays.arrow.extension_types
+import pandas.core.arrays.arrow.extension_types  # noqa: F401
 
 
 def read_pandas(gcs_path: str, file_format: str = "parquet", columns: List[str] = None, **kwargs) -> DataFrame:
