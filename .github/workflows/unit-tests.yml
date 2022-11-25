@@ -55,7 +55,7 @@ jobs:
         uses: schneegans/dynamic-badges-action@v1.4.0
         with:
           auth: ${{ secrets.COVERAGE_BADGE_GIST }}
-          gistID: 0c0c5bdfc360b59254f2c32d65914025
+          gistID: 73205f2f30335801fa2819c31b3ecf79
           filename: pytest-coverage-badge-dapla-toolbelt.json
           label: Coverage
           message: ${{ steps.coverageComment.outputs.coverage }}
