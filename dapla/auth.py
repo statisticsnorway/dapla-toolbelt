@@ -4,6 +4,7 @@ from google.oauth2.credentials import Credentials
 import os
 import requests
 from functools import partial
+from IPython.core.display import display, HTML
 
 
 class AuthClient:
@@ -65,6 +66,5 @@ class AuthError(Exception):
     This is normally due to stale auth session."""
 
     def print_warning(self):
-        from IPython.core.display import display, HTML
         display(HTML('Your session has timed out. Please <a href="/hub/login">log in</a> to continue.'))
 
