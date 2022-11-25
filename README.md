@@ -80,7 +80,7 @@ Upon cloning this project first install necessary dependencies, then run the tes
 #### Install all dependencies
 
 ```shell
-poetry install --all-extras
+poetry install
 ```
 
 ### Add dependencies
