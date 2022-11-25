@@ -31,7 +31,6 @@ def test_fetch_personal_token():
 @mock.patch('dapla.auth.display')
 @responses.activate
 def test_fetch_personal_token_error(mock_display):
-    mock_display
     mock_response = {
         'message': 'There was an error',
     }

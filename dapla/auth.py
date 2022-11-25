@@ -4,7 +4,7 @@ from google.oauth2.credentials import Credentials
 import os
 import requests
 from functools import partial
-from IPython.core.display import display, HTML
+from IPython.display import display, HTML
 
 
 class AuthClient:
