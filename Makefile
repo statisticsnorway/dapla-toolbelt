@@ -3,19 +3,19 @@ default: | help
 
 .PHONY: install-build-tools
 install-build-tools: ## Install required tools for build/dev
-	pip install tox wheel twine bump2version
+	curl -sSL https://install.python-poetry.org | python3 -
+	poetry install
 
 .PHONY: build
-build: ## Build dist
-	python setup.py sdist bdist_wheel
+build: ## Builds a package, as a tarball and a wheel by default.
+	poetry build
 
 .PHONY: test
 test: ## Run tests
-	tox
+	poetry run poe test
 
 .PHONY: clean
 clean: ## Clean all build artifacts
-	rm -rf .tox
 	rm -rf *.egg-info
 	rm -rf dist
 

@@ -1,9 +1,12 @@
 from .auth import AuthClient
 from .files import FileClient
-from pandas import read_csv, read_json, read_fwf
+from pandas import read_csv, read_json, read_fwf, DataFrame
+from typing import Any, Dict, List, Optional
+# import this module to trigger import side-effect and register the pyarrow extension types
+import pandas.core.arrays.arrow.extension_types  # noqa: F401
 
 
-def read_pandas(gcs_path, file_format="parquet", columns=None, **kwargs):
+def read_pandas(gcs_path: str, file_format: str = "parquet", columns: List[str] = None, **kwargs) -> DataFrame:
     """
     Convenience method for reading a dataset from a given GCS path and convert it to a Pandas dataframe.
     :param gcs_path: path to the directory or file you want to get the contents of
@@ -29,10 +32,10 @@ def read_pandas(gcs_path, file_format="parquet", columns=None, **kwargs):
         raise ValueError(f"Invalid file format {file_format}")
 
 
-def write_pandas(df, gcs_path, file_format="parquet", **kwargs):
+def write_pandas(df: DataFrame, gcs_path: str, file_format: str = "parquet", **kwargs) -> DataFrame:
     """
     Convenience method for writing a pandas dataframe to a given GCS path.
-    :param df: the pandas dataset
+    :param df: the pandas' dataset
     :param gcs_path: path to the file you want to write to - must have a suffix that corresponds to the file_format
     :param file_format: file format of file you want to write to
     Other arguments are passed through to the pyarrow write_table method.
@@ -40,7 +43,6 @@ def write_pandas(df, gcs_path, file_format="parquet", **kwargs):
     import pyarrow.parquet
     import pandas.io.parquet
     pandas.io.parquet.BaseImpl.validate_dataframe(df)
-    fs = FileClient.get_gcs_file_system()
 
     if file_format == "parquet":
         # Transfom and write pandas dataframe
@@ -48,6 +50,7 @@ def write_pandas(df, gcs_path, file_format="parquet", **kwargs):
         table = pyarrow.Table.from_pandas(df, preserve_index=True, **from_pandas_kwargs)
         if '.parquet' not in gcs_path:
             raise Exception('Path must be a parquet file')
+        fs = FileClient.get_gcs_file_system()
         with fs.open(gcs_path, mode="wb") as buffer:
             pyarrow.parquet.write_table(
                 table,
@@ -65,7 +68,7 @@ def write_pandas(df, gcs_path, file_format="parquet", **kwargs):
         raise ValueError(f"Invalid file format {file_format}")
 
 
-def get_storage_options():
+def get_storage_options() -> Optional[Dict[str, Any]]:
     """
     Returns the ``storage_options`` that are used in Pandas for specifying extra options for a particular storage
     connection that will be parsed by ``fsspec``. In this case when the URL starts with "gcs://".

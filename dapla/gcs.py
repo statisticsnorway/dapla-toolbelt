@@ -24,6 +24,7 @@ class GCSFileSystem(gcsfs.GCSFileSystem):
         return info["type"] == "directory"
 
     @staticmethod
+    # This code is from from pyarrow.parquet.core
     def _should_silently_exclude(self, file_name):
         try:
             # Constant is moved to core module in Pyarrow 10.0.0

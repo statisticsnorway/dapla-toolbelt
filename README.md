@@ -7,6 +7,9 @@ authentication process is based on the [TokenExchangeAuthenticator](https://gith
 for Jupyterhub.
 
 [![PyPI version](https://img.shields.io/pypi/v/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
+![Unit tests](https://github.com/statisticsnorway/dapla-toolbelt/actions/workflows/unit-tests.yml/badge.svg) 
+![Code coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bjornandre/73205f2f30335801fa2819c31b3ecf79/raw/pytest-coverage-badge-dapla-toolbelt.json) 
+![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![License](https://img.shields.io/pypi/l/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
 
 These operations are supported:
@@ -62,29 +65,75 @@ df.head()  # show first rows of data frame
 
 ## Development
 
-For local development we rely on the command line tool `make`. Execute `make` in the project folder to see the available commands.
+### Prerequisites
 
-### Dependencies
+- Python >3.8 (3.10 is preferred)
+- Poetry, install via `curl -sSL https://install.python-poetry.org | python3 -`
 
-External package dependencies are specified in the `setup.py` file, at `install_requires=`.
+You can also execute `make` in the project folder to see available `make` commands.
+
+### Dependency Management
+
+Poetry is used for dependency management. [Poe the Poet](https://github.com/nat-n/poethepoet) is used for running poe tasks within poetry's virtualenv. 
+Upon cloning this project first install necessary dependencies, then run the tests to verify everything is working.
+
+#### Install all dependencies
+
+```shell
+poetry install --all-extras
+```
+
+### Add dependencies
+
+#### Main
+
+```shell
+poetry add <python package name>
+```
+
+#### Dev
+
+```shell
+poetry add --group dev <python package name>
+```
+
+### Run tests
+
+```shell
+poetry run poe test
+```
+
+### Run project locally in Jupyter
+
+To run the project locally in Jupyter run:
+
+```shell
+poetry run poe jupyter
+```
+
+A Jupyter instance should open in your browser. Open and run the cells in the `demo.ipynb` file.
 
 ### Bumping version
 
-Use `make` to bump the patch, minor version or major version before creating a pull request to the `main` GIT branch.
+Use `make` to bump the *patch*, *minor* version or *major* version before creating a pull request to the `main` GIT branch.
+Or run a poe task like this:
 
-The version number is located in `bumpversion.cfg`, `dapla-toolbelt/dapla-toolbelt/__init__.py` and in `dapla-toolbelt/setup.py`.
+```shell
+poetry run poe bump-patch-version
+```
 
-To bump the version everywhere at once, run `make bump-version-patch`, `make bump-version-minor`, or `make bump-version-major`.
+You can use either `bump-version-patch`, `bump-version-minor`, or `bump-version-major`.
 Bumping must be done with a clean git working space, and automatically commits with the new version number.
 
-### Building and releasing with Azure Pipelines
+Then just run `git push origin --tags` to push the changes and trigger the release process.
+
+### Building and releasing
 
 Before merging your changes into the `main` branch, make sure you have bumped the version like outlined above.
 
-Azure pipelines will build dapla-toolbelt automatically upon pull request-creation, merges, and direct commits to the `main` GIT branch.
-
-Azure pipelines will release a new version of the package to pypi.org automatically when a commit is tagged, 
-for example by a GitHub release.
+An automatic release process will build *dapla-toolbelt* upon pull request-creation, merges, and direct commits to the
+`main` GIT branch. It will also release a new version of the package to **pypi.org** automatically when a commit is 
+tagged, for example by a GitHub release.
 
 ### Building and releasing manually
 
@@ -103,12 +152,13 @@ because even test.pypi.org does not allow re-releases of a previously released v
 Run the following command in order to build, validate, and test package publication by uploading to TestPyPI:
 `make release-test`
 
-You will have to manually enter a username and password for a user registered to [test.pypi.org](https://test.pypi.org) in order for this to work.
+You will have to manually enter a username and password for a user registered to [test.pypi.org](https://test.pypi.org) 
+in order for this to work.
 
 #### Production release
 
 **NB: A manual production release should only be done as a last resort**, if the regular CI/CD pipeline 
-(azure pipeline) does not work, and it's necessary to release regardless.
+does not work, and it's necessary to release regardless.
 
 You have to bump the version of the package (see documentation on "Bumping version" above) to something 
 different from the last release before releasing.
