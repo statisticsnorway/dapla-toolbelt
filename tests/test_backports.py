@@ -1,26 +1,32 @@
 import mock
-from dapla.backports import show
+from dapla.backports import show, details
 from dapla.gcs import GCSFileSystem
 
 
 @mock.patch('dapla.backports.FileClient')
-def test_show_all_subfolders(file_client_mock):
+def test_show_subfolders_and_files(file_client_mock):
     file_client_mock.get_gcs_file_system.return_value = GCSFileSystem()
-    result = show('gs://anaconda-public-data/nyc-taxi/')
-    assert result == ['/nyc-taxi/2015.parquet',
-                      '/nyc-taxi/csv',
-                      '/nyc-taxi/csv/2014',
-                      '/nyc-taxi/csv/2015',
-                      '/nyc-taxi/csv/2016',
-                      '/nyc-taxi/nyc.parquet',
-                      '/nyc-taxi/taxi.parquet']
+    result = show('gs://anaconda-public-data/projects-data')
+    assert result == ['/projects-data/',
+                      '/projects-data/tensorboard/',
+                      '/projects-data/tensorboard/mnist_tutorial.zip']
 
 
 @mock.patch('dapla.backports.FileClient')
-def test_show_leaf_folder(file_client_mock):
+def test_show_leaf_folder_with_file(file_client_mock):
     file_client_mock.get_gcs_file_system.return_value = GCSFileSystem()
-    result = show('gs://anaconda-public-data/nyc-taxi/csv/2014')
-    assert result == ['/nyc-taxi/csv/2014']
+    result = show('gs://anaconda-public-data/iris')
+    assert result == ['/iris/iris.csv']
+
+
+@mock.patch('dapla.backports.FileClient')
+def test_show_leaf_folder_with_file_details(file_client_mock):
+    file_client_mock.get_gcs_file_system.return_value = GCSFileSystem()
+    result = details('gs://anaconda-public-data/iris')
+    assert result == [{'Created': '2017-04-05T21:51:42.503Z',
+                       'Name': '/iris/iris.csv',
+                       'Size': 4636,
+                       'Updated': '2017-04-05T21:51:42.503Z'}]
 
 
 @mock.patch('dapla.backports.FileClient')
