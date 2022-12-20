@@ -1,11 +1,7 @@
 
-import mock
-from dapla.auth import AuthClient
 from dapla.doctor import Doctor
-import unittest
 
 import pytest
-from unittest.mock import Mock
 from unittest.mock import patch
 
 
@@ -67,6 +63,6 @@ def test_gcs_credentials_valid(mock_GCSFileSystem, mock_fetch_google_token):
     mock_GCSFileSystem.side_effect = Exception("Invalid Credentials, 401")
 
     with pytest.raises(Exception):
-        
+
         Doctor.gcs_credentials_valid()
     

@@ -104,18 +104,20 @@ class Doctor:
             return True
 
 
-
     @staticmethod
     def health(cls):
-        
         print("Performing checks...")
         if not cls.jupyterhub_auth_valid():
-            print("You are not logged in or authenticated to JupyterHub")
+            print("You are either not logged in or not authenticated to JupyterHub.")
             exit(1)
         if not cls.check_keycloak_valid():
-            print("abc")
+            print("Your keycloak token seems to be expired.")
+            exit(1)
+        if not cls.gcs_credentials_valid():
+            print("Your GCS credentials seem to be invalid. Dapla Doctor could not fetch GCS bucket.")
+            exit(1)
+        if not cls.bucket_access():
+            print("You do not seem to have access to a common GCS bucket.")
             exit(1)
 
 
-    if __name__ == "__main__":
-        health()
