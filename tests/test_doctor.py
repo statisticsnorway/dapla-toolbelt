@@ -1,67 +1,72 @@
 
 import mock
-from dapla.doctor import bucket_access, gcs_credentials_valid
 from dapla.auth import AuthClient
+from dapla.doctor import Doctor
+import unittest
 
-
+import pytest
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import pytest
 
 
-@mock.patch('my_module.storage')
-@mock.patch('my_module.AuthClient')
-def test_bucket_access(mock_AuthClient, mock_storage):
-    # Set up the mock storage.Client object
-    mock_client = mock.MagicMock()
-    mock_storage.Client.return_value = mock_client
+@patch('dapla.doctor.AuthClient.fetch_local_user')
+def test_jupyterhub_auth_valid(mock_fetch_local_user):
+    # Test authenticated user
+    mock_fetch_local_user.return_value = "test_user"
+    result = Doctor.jupyterhub_auth_valid()
+    assert result == True
 
-    mock_credentials = mock.MagicMock()
-    mock_AuthClient.fetch_google_credentials.return_value = mock_credentials
-
-    # Test accessing a bucket that exists
-    mock_client.get_bucket.return_value = True
-    assert bucket_access() == True
-
-    # Test accessing a bucket that does not exist
-    mock_client.get_bucket.side_effect = Exception
-    assert bucket_access() == False
+    # Test unauthenticated user
+    mock_fetch_local_user.side_effect = Exception("Test exception")
+    result = Doctor.jupyterhub_auth_valid()
+    assert result == False
 
 
-@mock.patch('my_module.Credentials')
-@mock.patch('my_module.AuthClient')
-@mock.patch('my_module.GCSFileSystem')
-def test_gcs_credentials_valid(mock_GCSFileSystem, mock_AuthClient, mock_Credentials):
-    # Set up the mock google token
-    mock_google_token = mock.MagicMock()
-    mock_AuthClient.fetch_google_token.return_value = mock_google_token
+@patch('dapla.doctor.AuthClient.fetch_personal_token')
+@patch('dapla.doctor.Doctor._is_token_expired')
+def test_keycloak_token_valid(mock_is_token_expired, mock_fetch_personal_token):
+    # Test valid token
+    mock_fetch_personal_token.return_value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    mock_is_token_expired.return_value = False
+    result = Doctor.keycloak_token_valid(Doctor)
+    assert result == True
 
-    # Set up the mock credentials object
-    mock_credentials = mock.MagicMock()
-    mock_Credentials.return_value = mock_credentials
-
-    # Set up the mock GCSFileSystem object
-    mock_file = mock.MagicMock()
-    mock_GCSFileSystem.return_value = mock_file
-
-    # Test accessing a GCS service with valid credentials
-    mock_file.ls.return_value = True
-    assert gcs_credentials_valid() == True
-
-    # Test accessing a GCS service with invalid credentials
-    mock_file.ls.side_effect = HttpError("Invalid Credentials, 401")
-    assert gcs_credentials_valid() == False
+    # Test invalid token
+    mock_is_token_expired.return_value = True
+    result = Doctor.keycloak_token_valid(Doctor)
+    assert result == False
 
 
-@patch('AuthClient.fetch_local_user')
-def test_jupyterhub_auth_valid(self, mock_fetch_local_user):
-    # Test successful authentication
-    mock_fetch_local_user.return_value = "user"
-    result = AuthClient.jupyterhub_auth_valid()
-    self.assertTrue(result)
+@patch('dapla.doctor.AuthClient.fetch_google_credentials')
+@patch('dapla.doctor.storage.Client')
+def test_bucket_access(mock_client, mock_fetch_google_credentials):
+    # Test successful bucket access
+    mock_fetch_google_credentials.return_value = "test_credentials"
+    mock_client.return_value.get_bucket.return_value = "test_bucket"
+    result = Doctor.bucket_access()
+    assert result == True
 
-    # Test failed authentication
-    mock_fetch_local_user.side_effect = Exception("Error fetching user")
-    result = AuthClient.jupyterhub_auth_valid()
-    self.assertFalse(result)
+    # Test unsuccessful bucket access
+    mock_fetch_google_credentials.return_value = "test_credentials"
+    mock_client.return_value.get_bucket.side_effect = Exception("Test exception")
+    result = Doctor.bucket_access()
+    assert result == False
+
+
+@patch('dapla.doctor.AuthClient.fetch_google_token')
+@patch('dapla.doctor.GCSFileSystem')
+def test_gcs_credentials_valid(mock_GCSFileSystem, mock_fetch_google_token):
+    # Test valid credentials
+    mock_fetch_google_token.return_value = "test_token"
+    mock_GCSFileSystem.return_value.ls.return_value = "test_listing"
+    result = Doctor.gcs_credentials_valid()
+    assert result == True
+
+    # Test invalid credentials
+    mock_GCSFileSystem.side_effect = Exception("Invalid Credentials, 401")
+
+    with pytest.raises(Exception):
+        
+        Doctor.gcs_credentials_valid()
+    

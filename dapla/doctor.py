@@ -5,6 +5,7 @@ from dapla.gcs import GCSFileSystem
 from google.oauth2.credentials import Credentials
 import logging
 import jwt
+import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -29,29 +30,36 @@ class Doctor:
 
 
     @staticmethod
-    def keycloak_token_valid():
+    def keycloak_token_valid(cls):
         """Checks whether the keycloak token is valid by attempting to access a keycloak-token protected service
         """
-        algorithms = [
-            "HS256",
-            "HS384",
-            "HS512",
-            "RS256",
-            "RS384",
-            "RS512",
-            "ES256",
-            "ES384",
-            "ES512",
-            "none",
-        ]
+        algorithms = ["RS256"]
 
         keycloak_token = AuthClient.fetch_personal_token()
 
-        claims = jwt.decode(keycloak_token, algorithms=algorithms verify=False)
+        claims = jwt.decode(keycloak_token, algorithms=algorithms, options={"verify_signature": False})
 
-        
-        
+        if not cls._is_token_expired(claims):
+            return True
+        else:
+            return False
+  
 
+    @staticmethod
+    def _is_token_expired(token):
+        try:
+            # get the expiry time from the payload
+            expiry_time = token['exp']
+
+            # convert the expiry time to a datetime object
+            expiry_time = datetime.datetime.fromtimestamp(expiry_time)
+
+            # if the current time is greater than the expiry time, the token is expired
+            return datetime.datetime.now() > expiry_time
+        except KeyError:
+            # if the token does not have an expiry time (exp claim), consider it not expired
+            return False
+        
 
     @staticmethod
     def gcs_credentials_valid():
@@ -98,14 +106,15 @@ class Doctor:
 
 
     @staticmethod
-    def health():
+    def health(cls):
         
         print("Performing checks...")
-        if not jupyterhub_auth_valid():
+        if not cls.jupyterhub_auth_valid():
             print("You are not logged in or authenticated to JupyterHub")
             exit(1)
-        if not check_keycloak_valid():
-            print()
+        if not cls.check_keycloak_valid():
+            print("abc")
+            exit(1)
 
 
     if __name__ == "__main__":
