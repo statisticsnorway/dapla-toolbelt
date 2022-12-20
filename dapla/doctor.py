@@ -3,12 +3,17 @@ from gcsfs.retry import HttpError
 from dapla.auth import AuthClient
 from dapla.gcs import GCSFileSystem
 from google.oauth2.credentials import Credentials
+import logging
+import jwt
+
+
+logger = logging.getLogger(__name__)
 
 
 class Doctor:
-    """Class of functions tha perform checks on Dapla such as whether the user is authenticated on Dapla,
-    whether the keycloak-token is valid and whether user has access to GCS. Each method can be run 
-    individually or collectively with the 'health' method. Should give users 
+    """Class of functions that perform checks on Dapla. Checks whether user is authenticated,
+    if the keycloak-token is valid and if user has access to GCS. Each method can be run 
+    individually or collectively with the 'health' method.
     """
     @staticmethod
     def jupyterhub_auth_valid():
@@ -27,9 +32,24 @@ class Doctor:
     def keycloak_token_valid():
         """Checks whether the keycloak token is valid by attempting to access a keycloak-token protected service
         """
+        algorithms = [
+            "HS256",
+            "HS384",
+            "HS512",
+            "RS256",
+            "RS384",
+            "RS512",
+            "ES256",
+            "ES384",
+            "ES512",
+            "none",
+        ]
+
         keycloak_token = AuthClient.fetch_personal_token()
 
-        print(type(keycloak_token))
+        claims = jwt.decode(keycloak_token, algorithms=algorithms verify=False)
+
+        
         
 
 
@@ -51,6 +71,8 @@ class Doctor:
         except HttpError as ex:
             if str(ex) == "Invalid Credentials, 401":
                 return False
+            else:
+                logger.exception(ex)
         
         return True
 
