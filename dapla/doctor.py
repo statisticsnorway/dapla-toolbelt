@@ -4,7 +4,9 @@ from dapla.auth import AuthClient
 from dapla.gcs import GCSFileSystem
 from google.oauth2.credentials import Credentials
 import logging
+import os
 import jwt
+import requests
 import datetime
 
 
@@ -72,17 +74,16 @@ class Doctor:
         credentials = Credentials(token=google_token,token_uri="https://oauth2.googleapis.com/token")
 
         try:
-            # Attempt to access a google-token protected service
-            file = GCSFileSystem(token=credentials)
-            file.ls("stat-poc-2-source-data") # Should be changed to a common storage bucket
-                
+            response = requests.get("https://oauth2.googleapis.com/tokeninfo?access_token=%s" % google_token)
         except HttpError as ex:
+           
             if str(ex) == "Invalid Credentials, 401":
                 return False
             else:
                 logger.exception(ex)
-        
+
         return True
+
 
     
     @staticmethod
@@ -92,12 +93,15 @@ class Doctor:
         # Fetch google credentials and create client object
         client = storage.Client(credentials=AuthClient.fetch_google_credentials())
 
-        # The bucket to be accessed
-        bucket_name = 'stat-poc-2-source-data'
+        # Set the bucket that is to be accessed
+        if os.environ['CLUSTER_ID'] == "staging-bip-app":
+            bucket = 'ssb-staging-dapla-felles-data-delt'
+        else:
+            bucket = 'ssb-prod-dapla-felles-data-delt'
 
         try:
             # Attempt to access the bucket
-            client.get_bucket(bucket_name)
+            client.get_bucket(bucket)
         except:
             return False
         else:
