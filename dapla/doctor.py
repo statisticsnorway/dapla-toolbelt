@@ -70,9 +70,6 @@ class Doctor:
         # Fetch the google token
         google_token = AuthClient.fetch_google_token()
 
-        # Create the credentials object
-        credentials = Credentials(token=google_token,token_uri="https://oauth2.googleapis.com/token")
-
         try:
             response = requests.get("https://oauth2.googleapis.com/tokeninfo?access_token=%s" % google_token)
         except HttpError as ex:
