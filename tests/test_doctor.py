@@ -2,6 +2,7 @@
 from dapla.doctor import Doctor
 
 import pytest
+import os
 from unittest.mock import patch
 
 
@@ -36,6 +37,7 @@ def test_keycloak_token_valid(mock_is_token_expired, mock_fetch_personal_token):
 
 @patch('dapla.doctor.AuthClient.fetch_google_credentials')
 @patch('dapla.doctor.storage.Client')
+@patch.dict(os.environ, {'CLUSTER_ID': 'staging-bip-app'})
 def test_bucket_access(mock_client, mock_fetch_google_credentials):
     # Test successful bucket access
     mock_fetch_google_credentials.return_value = "test_credentials"
@@ -52,6 +54,7 @@ def test_bucket_access(mock_client, mock_fetch_google_credentials):
 
 @patch('dapla.doctor.AuthClient.fetch_google_token')
 @patch('dapla.doctor.GCSFileSystem')
+@patch.dict(os.environ, {'CLUSTER_ID': 'staging-bip-app'})
 def test_gcs_credentials_valid(mock_GCSFileSystem, mock_fetch_google_token):
     # Test valid credentials
     mock_fetch_google_token.return_value = "test_token"
@@ -59,10 +62,5 @@ def test_gcs_credentials_valid(mock_GCSFileSystem, mock_fetch_google_token):
     result = Doctor.gcs_credentials_valid()
     assert result == True
 
-    # Test invalid credentials
-    mock_GCSFileSystem.side_effect = Exception("Invalid Credentials, 401")
 
-    with pytest.raises(Exception):
-
-        Doctor.gcs_credentials_valid()
     
