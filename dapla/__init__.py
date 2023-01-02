@@ -2,6 +2,7 @@ __version__ = "1.3.7"
 
 from .auth import AuthClient
 from .files import FileClient
+from .doctor import Doctor
 from .guardian import GuardianClient
 from .collector import CollectorClient
 from .converter import ConverterClient

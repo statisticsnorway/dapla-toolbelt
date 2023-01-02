@@ -32,23 +32,15 @@ class Doctor:
 
 
     @staticmethod
-    def keycloak_token_valid(cls):
+    def keycloak_token_valid():
         """Checks whether the keycloak token is valid by attempting to access a keycloak-token protected service
         """
         algorithms = ["RS256"]
 
         keycloak_token = AuthClient.fetch_personal_token()
 
-        claims = jwt.decode(keycloak_token, algorithms=algorithms, options={"verify_signature": False})
+        token = jwt.decode(keycloak_token, algorithms=algorithms, options={"verify_signature": False})
 
-        if not cls._is_token_expired(claims):
-            return True
-        else:
-            return False
-  
-
-    @staticmethod
-    def _is_token_expired(token):
         try:
             # get the expiry time from the payload
             expiry_time = token['exp']
@@ -57,14 +49,15 @@ class Doctor:
             expiry_time = datetime.datetime.fromtimestamp(expiry_time)
 
             # if the current time is greater than the expiry time, the token is expired
-            return datetime.datetime.now() > expiry_time
+            if datetime.datetime.now() > expiry_time:
+		return False
         except KeyError:
             # if the token does not have an expiry time (exp claim), consider it not expired
-            return False
-        
+            return True
+
 
     @staticmethod
-    def gcs_credentials_valid():
+    def gcs_credentials_valid(cls):
         """Checks whether the users google cloud storage token is valid by accessing a GCS service.
         """
         # Fetch the google token
@@ -105,13 +98,13 @@ class Doctor:
             return True
 
 
-    @staticmethod
+    @classmethod
     def health(cls):
         print("Performing checks...")
         if not cls.jupyterhub_auth_valid():
             print("You are either not logged in or not authenticated to JupyterHub.")
             exit(1)
-        if not cls.check_keycloak_valid():
+        if not cls.keycloak_token_valid():
             print("Your keycloak token seems to be expired.")
             exit(1)
         if not cls.gcs_credentials_valid():
