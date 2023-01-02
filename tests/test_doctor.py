@@ -26,12 +26,12 @@ def test_keycloak_token_valid(mock_is_token_expired, mock_fetch_personal_token):
     # Test valid token
     mock_fetch_personal_token.return_value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
     mock_is_token_expired.return_value = False
-    result = Doctor.keycloak_token_valid(Doctor)
+    result = Doctor.keycloak_token_valid()
     assert result == True
 
     # Test invalid token
     mock_is_token_expired.return_value = True
-    result = Doctor.keycloak_token_valid(Doctor)
+    result = Doctor.keycloak_token_valid()
     assert result == False
 
 

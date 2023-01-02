@@ -32,16 +32,17 @@ class Doctor:
 
 
     @staticmethod
-    def keycloak_token_valid(cls):
+    def keycloak_token_valid():
         """Checks whether the keycloak token is valid by attempting to access a keycloak-token protected service
         """
+        print("Checking that your keycloak token is valid...")
         algorithms = ["RS256"]
 
         keycloak_token = AuthClient.fetch_personal_token()
 
         claims = jwt.decode(keycloak_token, algorithms=algorithms, options={"verify_signature": False})
 
-        if not cls._is_token_expired(claims):
+        if not Doctor._is_token_expired(claims):
             return True
         else:
             return False
@@ -67,6 +68,8 @@ class Doctor:
     def gcs_credentials_valid():
         """Checks whether the users google cloud storage token is valid by accessing a GCS service.
         """
+        print("Checking your Google Cloud Storage credentials...")
+
         # Fetch the google token
         google_token = AuthClient.fetch_google_token()
 
@@ -87,6 +90,8 @@ class Doctor:
     def bucket_access():
         """Checks whether user has access to a common google bucket.
         """
+        print("Checking that you have access to a common Google Cloud Storage bucket...")
+
         # Fetch google credentials and create client object
         client = storage.Client(credentials=AuthClient.fetch_google_credentials())
 
@@ -105,13 +110,13 @@ class Doctor:
             return True
 
 
-    @staticmethod
+    @classmethod
     def health(cls):
         print("Performing checks...")
         if not cls.jupyterhub_auth_valid():
             print("You are either not logged in or not authenticated to JupyterHub.")
             exit(1)
-        if not cls.check_keycloak_valid():
+        if not cls.keycloak_token_valid():
             print("Your keycloak token seems to be expired.")
             exit(1)
         if not cls.gcs_credentials_valid():
@@ -120,3 +125,4 @@ class Doctor:
         if not cls.bucket_access():
             print("You do not seem to have access to a common GCS bucket.")
             exit(1)
+        print("Everything seems to be in order.")
