@@ -1,0 +1,22 @@
+<data>
+    <student name="Dolly">
+        <email>dolly@mail.com</email>
+        <grade>A</grade>
+        <age>23</age>
+    </student>
+    <student name="Petter smart">
+        <email>smart@mail.com</email>
+        <grade>B</grade>
+        <age>27</age>
+    </student>
+    <student name="Donald">
+        <email>donald@mail.com</email>
+        <grade>C</grade>
+        <age>26</age>
+    </student>
+    <student name="Skrue">
+        <email>skrue@mail.com</email>
+        <grade>A</grade>
+        <age>25</age>
+    </student>
+</data>
