@@ -1,6 +1,6 @@
 from .auth import AuthClient
 from .files import FileClient
-from pandas import read_csv, read_json, read_fwf, DataFrame
+from pandas import read_csv, read_json, read_fwf, DataFrame, read_xml
 from typing import Any, Dict, List, Optional
 # import this module to trigger import side-effect and register the pyarrow extension types
 import pandas.core.arrays.arrow.extension_types  # noqa: F401
@@ -28,6 +28,8 @@ def read_pandas(gcs_path: str, file_format: str = "parquet", columns: List[str] 
         return read_csv(gcs_path, storage_options=get_storage_options(), **kwargs)
     elif file_format == "fwf":
         return read_fwf(gcs_path, storage_options=get_storage_options(), **kwargs)
+    elif file_format == "xml":
+        return read_xml(gcs_path, storage_options=get_storage_options(), **kwargs)
     else:
         raise ValueError(f"Invalid file format {file_format}")
 
@@ -77,4 +79,3 @@ def get_storage_options() -> Optional[Dict[str, Any]]:
     """
     token = AuthClient.fetch_google_credentials()
     return {"token": token} if token is not None else None
-
