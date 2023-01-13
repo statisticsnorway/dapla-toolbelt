@@ -1,12 +1,16 @@
-from .auth import AuthClient
-from .files import FileClient
-from pandas import read_csv, read_json, read_fwf, DataFrame, read_xml
 from typing import Any, Dict, List, Optional
+
 # import this module to trigger import side-effect and register the pyarrow extension types
 import pandas.core.arrays.arrow.extension_types  # noqa: F401
+from pandas import DataFrame, read_csv, read_fwf, read_json, read_xml
+
+from .auth import AuthClient
+from .files import FileClient
 
 
-def read_pandas(gcs_path: str, file_format: str = "parquet", columns: List[str] = None, **kwargs) -> DataFrame:
+def read_pandas(
+    gcs_path: str, file_format: str = "parquet", columns: List[str] = None, **kwargs
+) -> DataFrame:
     """
     Convenience method for reading a dataset from a given GCS path and convert it to a Pandas dataframe.
     :param gcs_path: path to the directory or file you want to get the contents of
@@ -19,9 +23,12 @@ def read_pandas(gcs_path: str, file_format: str = "parquet", columns: List[str] 
     """
     if file_format == "parquet":
         import pyarrow.parquet as pq
+
         fs = FileClient.get_gcs_file_system()
         parquet_ds = pq.ParquetDataset(gcs_path, filesystem=fs)
-        return parquet_ds.read_pandas(columns=columns).to_pandas(split_blocks=False, self_destruct=True, **kwargs)
+        return parquet_ds.read_pandas(columns=columns).to_pandas(
+            split_blocks=False, self_destruct=True, **kwargs
+        )
     elif file_format == "json":
         return read_json(gcs_path, storage_options=get_storage_options(), **kwargs)
     elif file_format == "csv":
@@ -34,7 +41,9 @@ def read_pandas(gcs_path: str, file_format: str = "parquet", columns: List[str] 
         raise ValueError(f"Invalid file format {file_format}")
 
 
-def write_pandas(df: DataFrame, gcs_path: str, file_format: str = "parquet", **kwargs) -> DataFrame:
+def write_pandas(
+    df: DataFrame, gcs_path: str, file_format: str = "parquet", **kwargs
+) -> DataFrame:
     """
     Convenience method for writing a pandas dataframe to a given GCS path.
     :param df: the pandas' dataset
@@ -43,21 +52,23 @@ def write_pandas(df: DataFrame, gcs_path: str, file_format: str = "parquet", **k
     Other arguments are passed through to the pyarrow write_table method.
     """
     import pyarrow.parquet
+
     import pandas.io.parquet
+
     pandas.io.parquet.BaseImpl.validate_dataframe(df)
 
     if file_format == "parquet":
         # Transfom and write pandas dataframe
         from_pandas_kwargs = {"schema": kwargs.pop("schema", None)}
         table = pyarrow.Table.from_pandas(df, preserve_index=True, **from_pandas_kwargs)
-        if '.parquet' not in gcs_path:
-            raise Exception('Path must be a parquet file')
+        if ".parquet" not in gcs_path:
+            raise ValueError("Path must be a parquet file")  # noqa: TC003
         fs = FileClient.get_gcs_file_system()
         with fs.open(gcs_path, mode="wb") as buffer:
             pyarrow.parquet.write_table(
                 table,
                 buffer,
-                flavor={'spark'},
+                flavor={"spark"},
                 compression="snappy",
                 coerce_timestamps="ms",
                 **kwargs,
@@ -66,6 +77,8 @@ def write_pandas(df: DataFrame, gcs_path: str, file_format: str = "parquet", **k
         df.to_json(gcs_path, storage_options=get_storage_options(), **kwargs)
     elif file_format == "csv":
         df.to_csv(gcs_path, storage_options=get_storage_options(), **kwargs)
+    elif file_format == "xml":
+        df.to_xml(gcs_path, storage_options=get_storage_options(), **kwargs)
     else:
         raise ValueError(f"Invalid file format {file_format}")
 
