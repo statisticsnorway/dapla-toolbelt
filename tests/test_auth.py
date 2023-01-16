@@ -1,5 +1,6 @@
 import mock
 import responses
+from datetime import datetime, timedelta
 
 from dapla.auth import AuthClient
 
@@ -65,7 +66,8 @@ def test_fetch_google_token():
         'access_token': 'fake_access_token',
         'exchanged_tokens': {
             'google': {
-                'access_token': 'google_token'
+                'access_token': 'google_token',
+                'exp': round((datetime.today() + timedelta(hours=1)).timestamp())
             }
         }
     }
@@ -85,7 +87,8 @@ def test_fetch_google_credentials():
         'access_token': 'fake_access_token',
         'exchanged_tokens': {
             'google': {
-                'access_token': 'google_token'
+                'access_token': 'google_token',
+                'exp': round((datetime.today() + timedelta(hours=1)).timestamp())
             }
         }
     }
