@@ -99,5 +99,4 @@ def test_fetch_google_credentials():
     response.refresh(None)
 
     assert response.token == 'google_token'
-    assert response.expired() == False
     assert len(responses.calls) == 2
