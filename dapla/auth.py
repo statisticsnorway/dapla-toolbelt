@@ -11,6 +11,7 @@ class AuthClient:
     """
     A client class that connects to the AuthHandler to retrieve user and auth state info
     """
+
     @staticmethod
     def fetch_local_user():
         # Helps getting the correct ssl configs
@@ -41,13 +42,21 @@ class AuthClient:
     @staticmethod
     def fetch_google_credentials():
         if AuthClient.is_ready():
-            credentials = Credentials(
-                token=AuthClient.fetch_google_token(),
-                token_uri="https://oauth2.googleapis.com/token",
-            )
+            try:
+                credentials = Credentials(
+                    token=AuthClient.fetch_local_user()['exchanged_tokens']['google']['access_token'],
+                    expiry=AuthClient.fetch_local_user()['exchanged_tokens']['google']['exp'],
+                    token_uri="https://oauth2.googleapis.com/token",
+                )
+            except AuthError as err:
+                err.print_warning()
 
-            def _refresh(self, request):
-                self.token = AuthClient.fetch_google_token()
+            def _refresh(self, _request):
+                try:
+                    self.token = AuthClient.fetch_local_user()['exchanged_tokens']['google']['access_token']
+                    self.expiry = AuthClient.fetch_local_user()['exchanged_tokens']['google']['exp']
+                except AuthError as err:
+                    err.print_warning()
 
             credentials.refresh = partial(_refresh, credentials)
             return credentials
@@ -67,4 +76,3 @@ class AuthError(Exception):
 
     def print_warning(self):
         display(HTML('Your session has timed out. Please <a href="/hub/login">log in</a> to continue.'))
-
