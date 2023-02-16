@@ -37,7 +37,7 @@ class TestPubSub(unittest.TestCase):
 
     @unittest.mock.patch("dapla.pubsub._get_list_of_blobs_with_prefix")
     def test_publish_gcs_objects_to_pubsub(self, mock_list):
-        # Checks if a EmptyListException is raised when no files are returned by _get_list_of_blobs_with_prefix
+        # Checks if a EmptyListError is raised when no files are returned by _get_list_of_blobs_with_prefix
         mock_list.return_value = []
         with self.assertRaises(dapla.pubsub.EmptyListError):
             publish_gcs_objects_to_pubsub(
