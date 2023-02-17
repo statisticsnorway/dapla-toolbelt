@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dapla-toolbelt"
-version = "1.4.0"
+version = "1.5.0"
 description = "Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data platform called Dapla"
 authors = ["Statistics Norway <stat-dev@ssb.no>"]
 license = "MIT"
