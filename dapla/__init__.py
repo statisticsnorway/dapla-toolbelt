@@ -9,4 +9,4 @@ from .files import FileClient
 from .guardian import GuardianClient
 from .jupyterhub import generate_api_token
 from .pandas import read_pandas, write_pandas
-from .pubsub import publish_gcs_objects_to_pubsub
+from .pubsub import trigger_source_data_processing
