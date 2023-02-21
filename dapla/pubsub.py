@@ -1,4 +1,5 @@
 import json
+import re
 from concurrent import futures
 from typing import Callable, Iterator
 
@@ -15,7 +16,7 @@ def _get_list_of_blobs_with_prefix(
     bucket_name: str, folder_prefix: str
 ) -> Iterator[storage.Blob]:
     """
-    Helper function that gets an list of Blob objects in a Google Cloud Storage bucket that have a certain prefix.
+    Helper function that gets a list of Blob objects in a Google Cloud Storage bucket that has a certain prefix.
 
     Args:
         bucket_name (str): The name of the Google Cloud Storage bucket to get blobs from.
@@ -77,7 +78,7 @@ def _get_callback(
     return callback
 
 
-def publish_gcs_objects_to_pubsub(
+def _publish_gcs_objects_to_pubsub(
     project_id: str, bucket_id: str, folder_prefix: str, topic_id: str
 ):
     """Publishes messages to a Pub/Sub topic for all objects in a Google Cloud Storage bucket with a given prefix.
@@ -122,3 +123,49 @@ def publish_gcs_objects_to_pubsub(
     # Wait for all the publish futures to resolve before exiting.
     futures.wait(publish_futures, return_when=futures.ALL_COMPLETED)
     print(f"Messages published to {topic_path}")
+
+
+def _extract_project_name(project_id):
+    """Extracts the project name from a project ID.
+
+    The project ID is expected to be in the format "<project-name>-<unique-id>".
+    This function extracts the project name by matching the project ID up to the
+    last hyphen, and removing everything after it.
+
+    Args:
+        project_id (str): The GCP project ID to extract the name from.
+
+    Returns:
+        str: The GCP project name extracted from the project ID.
+
+    Raises:
+        ValueError: If the project ID is not in the expected format.
+    """
+    match = re.match(r"^(.*)-[^-]+$", project_id)
+    if match:
+        return match.group(1)
+    else:
+        raise ValueError(
+            f"Invalid project ID: {project_id}, The project ID is expected to be in the format "
+            f"<project-name>-<unique-id>"
+        )
+
+
+def trigger_source_data_processing(
+    project_id: str, source_name: str, folder_prefix: str
+):
+    """Triggers a source data processing service with every file that has a given prefix.
+
+    Args:
+        project_id (str): The ID of Google Cloud project containing the source.
+        folder_prefix (str): The folder prefix of the files to be processed.
+        source_name (str): The name of source that should process the files.
+    """
+
+    project_name = _extract_project_name(project_id)
+
+    bucket_suffix = "-data-kilde"
+    bucket_id = f"ssb-{project_name}{bucket_suffix}"
+    topic_id = f"{source_name}-update"
+
+    _publish_gcs_objects_to_pubsub(project_id, bucket_id, folder_prefix, topic_id)
