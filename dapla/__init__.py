@@ -1,4 +1,4 @@
-__version__ = "1.6.0"
+__version__ = "1.6.1"
 
 from .auth import AuthClient
 from .backports import details, show
