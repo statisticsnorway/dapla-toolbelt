@@ -25,7 +25,12 @@ def read_pandas(
         import pyarrow.parquet as pq
 
         fs = FileClient.get_gcs_file_system()
-        parquet_ds = pq.ParquetDataset(gcs_path, filesystem=fs)
+        parquet_ds = pq.ParquetDataset(
+            # use_legacy_dataset as workaround for https://github.com/apache/arrow/issues/30481
+            gcs_path,
+            filesystem=fs,
+            use_legacy_dataset=True,
+        )
         return parquet_ds.read_pandas(columns=columns).to_pandas(
             split_blocks=False, self_destruct=True, **kwargs
         )
