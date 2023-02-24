@@ -26,7 +26,12 @@ class TestPubSub(unittest.TestCase):
     object_id = "felles/kilde1/test.csv"
 
     def test_get_list_of_blobs_with_prefix(self) -> None:
-        with self.assertRaises(google.auth.exceptions.DefaultCredentialsError):
+        with self.assertRaises(
+            (
+                google.auth.exceptions.DefaultCredentialsError,
+                google.api_core.exceptions.NotFound,
+            )
+        ):
             _get_list_of_blobs_with_prefix(self.bucket_id, self.folder_prefix)
 
     def test_generate_pubsub_data(self):

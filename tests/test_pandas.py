@@ -56,6 +56,14 @@ def test_read_xml_format(auth_client_mock: AuthClient, file_client_mock: FileCli
 
 
 @mock.patch("dapla.pandas.FileClient")
+def test_read_partitioned_parquet(file_client_mock: FileClient):
+    file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    result = read_pandas("tests/data/partition")
+    print(result.head(5))
+    assert result.get("innskudd")[1] == 2000
+
+
+@mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
 def test_write_xml_format(auth_client_mock: AuthClient, file_client_mock: FileClient):
     auth_client_mock.fetch_google_credentials.return_value = None
