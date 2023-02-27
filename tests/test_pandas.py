@@ -18,6 +18,7 @@ from dapla.pandas import (
 @mock.patch("dapla.pandas.FileClient")
 def test_read_default_format(file_client_mock: FileClient):
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/fruits.parquet"
     result = read_pandas("tests/data/fruits.parquet")
     print(result.head(5))
     # Should be able to use column name (oranges) and index name (Lily)
@@ -58,6 +59,7 @@ def test_read_xml_format(auth_client_mock: AuthClient, file_client_mock: FileCli
 @mock.patch("dapla.pandas.FileClient")
 def test_read_partitioned_parquet(file_client_mock: FileClient):
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/partition"
     result = read_pandas("tests/data/partition")
     print(result.head(5))
     assert result.get("innskudd")[1] == 2000
