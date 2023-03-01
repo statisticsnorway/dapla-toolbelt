@@ -22,20 +22,18 @@ def read_pandas(
     Other arguments are passed through to the to_pandas method.
     """
     if file_format == "parquet":
-        import warnings
         import pyarrow.parquet as pq
 
         fs = FileClient.get_gcs_file_system()
 
-        # Suppress warning for use of legacy dataset
-        with warnings.catch_warnings():
-            warnings.simplefilter(action="ignore", category=FutureWarning)
-            parquet_ds = pq.ParquetDataset(
-                # use_legacy_dataset as workaround for https://github.com/apache/arrow/issues/30481
-                gcs_path,
-                filesystem=fs,
-                use_legacy_dataset=True,
-            )
+        # Workaround for https://github.com/apache/arrow/issues/30481
+        gcs_path = FileClient._remove_gcs_uri_prefix(gcs_path)
+
+        parquet_ds = pq.ParquetDataset(
+            gcs_path,
+            filesystem=fs,
+            use_legacy_dataset=False,
+        )
         return parquet_ds.read_pandas(columns=columns).to_pandas(
             split_blocks=False, self_destruct=True, **kwargs
         )
