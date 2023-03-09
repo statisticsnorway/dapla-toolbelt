@@ -166,6 +166,6 @@ def trigger_source_data_processing(
 
     bucket_suffix = "-data-kilde"
     bucket_id = f"ssb-{project_name}{bucket_suffix}"
-    topic_id = f"{source_name}-update"
+    topic_id = f"update-{source_name}"
 
     _publish_gcs_objects_to_pubsub(project_id, bucket_id, folder_prefix, topic_id)
