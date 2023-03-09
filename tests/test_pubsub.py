@@ -21,7 +21,7 @@ class TestPubSub(unittest.TestCase):
     project_id = "prod-demo-fake-D869"
     bucket_id = "ssb-prod-demo-fake-data-kilde"
     folder_prefix = "felles/kilde1"
-    topic_id = "kilde1-update"
+    topic_id = "update-kilde1"
     source_folder_name = "kilde1"
     object_id = "felles/kilde1/test.csv"
 
