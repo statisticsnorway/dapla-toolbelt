@@ -7,7 +7,7 @@ from .auth import AuthClient
 class GuardianClient:
     @staticmethod
     def call_api(api_endpoint_url: str, maskinporten_client_id: str, scopes: str,
-                 guardian_endpoint_url: str = 'https://guardian.dapla.ssb.no/maskinporten/access-token',
+                 guardian_endpoint_url: str = 'http://maskinporten-guardian.dapla.svc.cluster.local/maskinporten/access-token',
                  keycloak_token: str = None) -> Any:
         """
         Call an external API using the maskinporten guardian
