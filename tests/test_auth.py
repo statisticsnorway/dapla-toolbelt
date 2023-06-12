@@ -67,7 +67,7 @@ def test_fetch_google_token():
         'exchanged_tokens': {
             'google': {
                 'access_token': 'google_token',
-                'exp': round((datetime.today() + timedelta(hours=1)).timestamp())
+                'exp': round((datetime.now() + timedelta(hours=1)).timestamp())
             }
         }
     }
@@ -88,7 +88,7 @@ def test_fetch_google_credentials():
         'exchanged_tokens': {
             'google': {
                 'access_token': 'google_token',
-                'exp': round((datetime.utcnow() + timedelta(hours=1)).replace(tzinfo=timezone.utc).timestamp())
+                'exp': round((datetime.now() + timedelta(hours=1)).timestamp())
             }
         }
     }
@@ -110,7 +110,7 @@ def test_fetch_google_credentials_expired():
         'exchanged_tokens': {
             'google': {
                 'access_token': 'google_token',
-                'exp': round((datetime.utcnow() - timedelta(hours=1)).replace(tzinfo=timezone.utc).timestamp())
+                'exp': round((datetime.now() - timedelta(hours=1)).timestamp())
             }
         }
     }
