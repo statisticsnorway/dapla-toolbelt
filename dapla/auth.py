@@ -47,7 +47,7 @@ class AuthClient:
                 local_user = AuthClient.fetch_local_user()
                 credentials = Credentials(
                     token=local_user['exchanged_tokens']['google']['access_token'],
-                    expiry=datetime.fromtimestamp(local_user['exchanged_tokens']['google']['exp']),
+                    expiry=datetime.utcfromtimestamp(local_user['exchanged_tokens']['google']['exp']),
                     token_uri="https://oauth2.googleapis.com/token",
                 )
             except AuthError as err:
@@ -57,7 +57,7 @@ class AuthClient:
                 try:
                     user = AuthClient.fetch_local_user()
                     self.token = user['exchanged_tokens']['google']['access_token']
-                    self.expiry = datetime.fromtimestamp(user['exchanged_tokens']['google']['exp'])
+                    self.expiry = datetime.utcfromtimestamp(user['exchanged_tokens']['google']['exp'])
                 except AuthError as err:
                     err.print_warning()
 
