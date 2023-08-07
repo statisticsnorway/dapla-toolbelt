@@ -80,6 +80,24 @@ def test_fetch_google_token():
     assert len(responses.calls) == 1
 
 
+@mock.patch.dict('dapla.auth.os.environ', {
+    'OIDC_TOKEN_EXCHANGE_URL': auth_endpoint_url,
+    'OIDC_TOKEN': 'fake_access_token'}, clear=True)
+@responses.activate
+def test_fetch_google_token():
+    mock_response = {
+        'access_token': 'google_token',
+        'accessTokenExpiration': round((datetime.now() + timedelta(hours=1)).timestamp())
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
+
+    client = AuthClient()
+    response = client.fetch_google_token()
+
+    assert response == 'google_token'
+    assert len(responses.calls) == 1
+
+
 @mock.patch.dict('dapla.auth.os.environ', {'LOCAL_USER_PATH': auth_endpoint_url}, clear=True)
 @responses.activate
 def test_fetch_google_credentials():
