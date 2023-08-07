@@ -15,16 +15,34 @@ class AuthClient:
 
     @staticmethod
     def fetch_local_user():
-        # Helps getting the correct ssl configs
-        hub = HubAuth()
-        response = requests.get(os.environ['LOCAL_USER_PATH'],
-                                headers={
-                                    'Authorization': 'token %s' % hub.api_token
-                                }, cert=(hub.certfile, hub.keyfile), verify=hub.client_ca, allow_redirects=False)
-        if response.status_code == 200:
-            return response.json()
+        if AuthClient.is_oidc_token():
+            response = requests.get(os.environ['OIDC_TOKEN_EXCHANGE_URL'],
+                                    headers={
+                                        'Authorization': 'Bearer %s' % os.environ['OIDC_TOKEN']
+                                    })
+            if response.status_code == 200:
+                return {
+                    'access_token': os.environ['OIDC_TOKEN'],
+                    'exchanged_tokens': {
+                        'google': {
+                            'access_token': response.json()['access_token'],
+                            'exp': response.json()['accessTokenExpiration']
+                        }
+                    }
+                }
+            else:
+                raise AuthError
         else:
-            raise AuthError
+            # Helps getting the correct ssl configs
+            hub = HubAuth()
+            response = requests.get(os.environ['LOCAL_USER_PATH'],
+                                    headers={
+                                        'Authorization': 'token %s' % hub.api_token
+                                    }, cert=(hub.certfile, hub.keyfile), verify=hub.client_ca, allow_redirects=False)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                raise AuthError
 
     @staticmethod
     def fetch_personal_token():
@@ -70,7 +88,11 @@ class AuthClient:
 
     @staticmethod
     def is_ready():
-        return 'LOCAL_USER_PATH' in os.environ
+        return 'LOCAL_USER_PATH' in os.environ or 'OIDC_TOKEN' in os.environ
+
+    @staticmethod
+    def is_oidc_token():
+        return 'OIDC_TOKEN' in os.environ
 
 
 class AuthError(Exception):
