@@ -27,7 +27,7 @@ lxml = "^4.9.1"
 ipython = "^8.10.0"
 jupyterhub = "^3.0.0"
 google-cloud-storage = "^2.7.0"
-PyJWT = "^2.6.0"
+pyjwt = "^2.6.0"
 google-cloud-pubsub = "^2.14.1"
 
 [tool.poetry.group.dev.dependencies]
