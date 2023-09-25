@@ -18,7 +18,7 @@ class AuthClient:
     @staticmethod
     def fetch_local_user():
         if AuthClient.is_oidc_token():
-            response = requests.get(
+            response = requests.post(
                 os.environ["OIDC_TOKEN_EXCHANGE_URL"],
                 data={
                     "subject_token": os.environ["OIDC_TOKEN"],
