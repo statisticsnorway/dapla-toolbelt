@@ -1,14 +1,14 @@
 # dapla-toolbelt
 
-Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data platform called 
+Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data platform called
 `Dapla`. It contains support for authenticated access to Google Services such as Google Cloud Storage (GCS) and custom
-Dapla services such as [Maskinporten Guardian](https://github.com/statisticsnorway/maskinporten-guardian). The 
+Dapla services such as [Maskinporten Guardian](https://github.com/statisticsnorway/maskinporten-guardian). The
 authentication process is based on the [TokenExchangeAuthenticator](https://github.com/statisticsnorway/jupyterhub-extensions/tree/main/TokenExchangeAuthenticator)
 for Jupyterhub.
 
 [![PyPI version](https://img.shields.io/pypi/v/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
-![Unit tests](https://github.com/statisticsnorway/dapla-toolbelt/actions/workflows/unit-tests.yml/badge.svg) 
-![Code coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bjornandre/73205f2f30335801fa2819c31b3ecf79/raw/pytest-coverage-badge-dapla-toolbelt.json) 
+![Unit tests](https://github.com/statisticsnorway/dapla-toolbelt/actions/workflows/unit-tests.yml/badge.svg)
+![Code coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bjornandre/73205f2f30335801fa2819c31b3ecf79/raw/pytest-coverage-badge-dapla-toolbelt.json)
 ![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![License](https://img.shields.io/pypi/l/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
 
@@ -19,9 +19,9 @@ These operations are supported:
 * Load a file (CSV, JSON or XML) from GCS into a pandas dataframe
 * Save contents of a data frame into a file (CSV, JSON, XML) in GCS
 
-When the user gives the path to a resource, they do not need to give the GCS uri, only the path. 
-This just means users don't have to prefix a path with "gs://". 
-It is implicitly understood that all resources accessed with this tool are located in GCS, 
+When the user gives the path to a resource, they do not need to give the GCS uri, only the path.
+This just means users don't have to prefix a path with "gs://".
+It is implicitly understood that all resources accessed with this tool are located in GCS,
 with the first level of the path being a GCS bucket name.
 
 ## Installation
@@ -74,7 +74,7 @@ You can also execute `make` in the project folder to see available `make` comman
 
 ### Dependency Management
 
-Poetry is used for dependency management. [Poe the Poet](https://github.com/nat-n/poethepoet) is used for running poe tasks within poetry's virtualenv. 
+Poetry is used for dependency management. [Poe the Poet](https://github.com/nat-n/poethepoet) is used for running poe tasks within poetry's virtualenv.
 Upon cloning this project first install necessary dependencies, then run the tests to verify everything is working.
 
 #### Install all dependencies
@@ -119,7 +119,7 @@ Use `make` to bump the *patch*, *minor* version or *major* version before creati
 Or run a poe task like this:
 
 ```shell
-poetry run poe bump-patch-version
+poetry run poe bump-version-patch
 ```
 
 You can use either `bump-version-patch`, `bump-version-minor`, or `bump-version-major`.
@@ -132,7 +132,7 @@ Then just run `git push origin --tags` to push the changes and trigger the relea
 Before merging your changes into the `main` branch, make sure you have bumped the version like outlined above.
 
 An automatic release process will build *dapla-toolbelt* upon pull request-creation, merges, and direct commits to the
-`main` GIT branch. It will also release a new version of the package to **pypi.org** automatically when a commit is 
+`main` GIT branch. It will also release a new version of the package to **pypi.org** automatically when a commit is
 tagged, for example by a GitHub release.
 
 ### Building and releasing manually
@@ -146,22 +146,22 @@ Run this (replacing <SEMVER> with your current version number) to check the cont
 
 #### Test release
 
-You have to bump the version of the package (see documentation on "Bumping version" above) before releasing, 
+You have to bump the version of the package (see documentation on "Bumping version" above) before releasing,
 because even test.pypi.org does not allow re-releases of a previously released version.
 
 Run the following command in order to build, validate, and test package publication by uploading to TestPyPI:
 `make release-test`
 
-You will have to manually enter a username and password for a user registered to [test.pypi.org](https://test.pypi.org) 
+You will have to manually enter a username and password for a user registered to [test.pypi.org](https://test.pypi.org)
 in order for this to work.
 
 #### Production release
 
-**NB: A manual production release should only be done as a last resort**, if the regular CI/CD pipeline 
+**NB: A manual production release should only be done as a last resort**, if the regular CI/CD pipeline
 does not work, and it's necessary to release regardless.
 
-You have to bump the version of the package (see documentation on "Bumping version" above) to something 
+You have to bump the version of the package (see documentation on "Bumping version" above) to something
 different from the last release before releasing.
 
-In order to publish a new version of the package to PyPI for real, run `make release`. 
-Authenticate by manually entering your [pypi.org](https://pypi.org) username and password. 
+In order to publish a new version of the package to PyPI for real, run `make release`.
+Authenticate by manually entering your [pypi.org](https://pypi.org) username and password.
