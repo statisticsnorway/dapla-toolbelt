@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # import this module to trigger import side-effect and register the pyarrow extension types
 import pandas.core.arrays.arrow.extension_types  # noqa: F401
@@ -9,11 +9,12 @@ from .files import FileClient
 
 
 def read_pandas(
-    gcs_path: str, file_format: str = "parquet", columns: List[str] = None, **kwargs
+    gcs_path: Union[str, List[str]], file_format: str = "parquet", columns: List[str] = None, **kwargs
 ) -> DataFrame:
     """
     Convenience method for reading a dataset from a given GCS path and convert it to a Pandas dataframe.
-    :param gcs_path: path to the directory or file you want to get the contents of
+    :param gcs_path: path or paths to the directory or file you want to get the contents of.
+        Support multiple paths if reading parquet format.
     :param file_format: the expected file format. All file formats other than "parquet" are delegated to Pandas'
         methods like read_json, read_csv, etc.
     :param columns: If not None, only these columns will be read
