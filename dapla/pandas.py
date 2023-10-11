@@ -9,7 +9,8 @@ from .files import FileClient
 
 
 def read_pandas(
-    gcs_path: Union[str, List[str]], file_format: str = "parquet", columns: List[str] = None, **kwargs
+    gcs_path: Union[str, List[str]], file_format: str = "parquet", columns: List[str] = None,
+    filters: List[Tuple] = None, **kwargs
 ) -> DataFrame:
     """
     Convenience method for reading a dataset from a given GCS path and convert it to a Pandas dataframe.
@@ -18,6 +19,9 @@ def read_pandas(
     :param file_format: the expected file format. All file formats other than "parquet" are delegated to Pandas'
         methods like read_json, read_csv, etc.
     :param columns: If not None, only these columns will be read
+    :param filters: Add row filter to process when reading parquet. The filter
+        should follow pyarrow methods. See examples in the docs:
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetDataset.html#pyarrow.parquet.ParquetDataset
     :return: a pandas dataframe
 
     Other arguments are passed through to the to_pandas method.
@@ -34,6 +38,7 @@ def read_pandas(
             gcs_path,
             filesystem=fs,
             use_legacy_dataset=False,
+            filters=filters
         )
         return parquet_ds.read_pandas(columns=columns).to_pandas(
             split_blocks=False, self_destruct=True, **kwargs
