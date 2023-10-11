@@ -26,6 +26,24 @@ def test_read_default_format(file_client_mock: FileClient):
 
 
 @mock.patch("dapla.pandas.FileClient")
+def test_read_parquet_format_with_filterings(file_client_mock: FileClient):
+    file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/fruits.parquet"
+    col_filter = 'oranges'
+    row_filter = [(col_filter, '==', 7)]
+    result = read_pandas(
+        gcs_path="tests/data/fruits.parquet",
+        columns=[col_filter],
+        filters=row_filter
+                        ).reset_index().to_dict('records')
+    print(result)
+    # Should be able to use column name (oranges) and index name (Lily)
+    assert len(result) == 1
+    assert len(result[0].keys()) == 2
+    assert result[0][col_filter] == 7
+
+
+@mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
 def test_read_csv_format(auth_client_mock: AuthClient, file_client_mock: FileClient):
     auth_client_mock.fetch_google_credentials.return_value = None
