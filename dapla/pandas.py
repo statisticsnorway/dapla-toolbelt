@@ -32,7 +32,12 @@ def read_pandas(
         fs = FileClient.get_gcs_file_system()
 
         # Workaround for https://github.com/apache/arrow/issues/30481
-        gcs_path = FileClient._remove_gcs_uri_prefix(gcs_path)
+        if isinstance(gcs_path, list):
+            gcs_path = [
+                FileClient._remove_gcs_uri_prefix(file) for file in gcs_path
+                       ]
+        else:
+            gcs_path = FileClient._remove_gcs_uri_prefix(gcs_path)
 
         parquet_ds = pq.ParquetDataset(
             gcs_path,
