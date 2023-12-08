@@ -74,7 +74,7 @@ class TestPubSub(unittest.TestCase):
 
         # Check that _publish_gcs_objects_to_pubsub has been called with expected parameters
         mock_publish_gcs_objects_to_pubsub.assert_called_with(
-            self.project_id, self.bucket_id, self.folder_prefix, self.topic_id
+            self.project_id, self.bucket_id, self.folder_prefix, topic_id=self.topic_id
         )
 
     @unittest.mock.patch("dapla.pubsub._publish_gcs_objects_to_pubsub")
@@ -94,7 +94,7 @@ class TestPubSub(unittest.TestCase):
             kuben_project_id,
             "ssb-my-team-data-kilde-test",
             self.folder_prefix,
-            self.topic_id,
+            topic_id=self.topic_id,
         )
 
 
