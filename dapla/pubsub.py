@@ -165,11 +165,11 @@ def trigger_source_data_processing(
 
     project_name = _extract_project_name(project_id)
 
-    if not kuben:
-        bucket_id = f"ssb-{project_name}-data-kilde"
-        topic_id = f"update-{source_name}"
-    else:
+    if kuben:
         bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-test"
-        topic_id = f"update-{source_name}"
+    else:
+        bucket_id = f"ssb-{project_name}-data-kilde"
 
-    _publish_gcs_objects_to_pubsub(project_id, bucket_id, folder_prefix, topic_id)
+    _publish_gcs_objects_to_pubsub(
+        project_id, bucket_id, folder_prefix, topic_id=f"update-{source_name}"
+    )
