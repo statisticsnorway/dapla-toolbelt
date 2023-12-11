@@ -152,7 +152,7 @@ def _extract_project_name(project_id):
 
 
 def trigger_source_data_processing(
-    project_id: str, source_name: str, folder_prefix: str
+    project_id: str, source_name: str, folder_prefix: str, kuben: bool = False
 ):
     """Triggers a source data processing service with every file that has a given prefix.
 
@@ -160,12 +160,16 @@ def trigger_source_data_processing(
         project_id (str): The ID of Google Cloud project containing the source.
         folder_prefix (str): The folder prefix of the files to be processed.
         source_name (str): The name of source that should process the files.
+        kuben (bool): Whether the team is on kuben or legacy.
     """
 
     project_name = _extract_project_name(project_id)
 
-    bucket_suffix = "-data-kilde"
-    bucket_id = f"ssb-{project_name}{bucket_suffix}"
-    topic_id = f"update-{source_name}"
+    if kuben:
+        bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-test"
+    else:
+        bucket_id = f"ssb-{project_name}-data-kilde"
 
-    _publish_gcs_objects_to_pubsub(project_id, bucket_id, folder_prefix, topic_id)
+    _publish_gcs_objects_to_pubsub(
+        project_id, bucket_id, folder_prefix, topic_id=f"update-{source_name}"
+    )
