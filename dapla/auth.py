@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 
 import google.auth
@@ -29,12 +29,18 @@ class AuthClient:
                 },
             )
             if response.status_code == 200:
+                # The 'exp' field is not provided in the token exchange response.
+                # 'exp' is calculated by adding 'expires_in' seconds to the current UTC time,
+                # resulting in a POSIX timestamp representing the expiration time.
+                exp = (
+                    datetime.utcnow() + timedelta(seconds=response.json()["expires_in"])
+                ).timestamp()
                 return {
                     "access_token": os.environ["OIDC_TOKEN"],
                     "exchanged_tokens": {
                         "google": {
                             "access_token": response.json()["access_token"],
-                            "exp": response.json()["expires_in"],
+                            "exp": exp,
                         }
                     },
                 }
