@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import partial
 
 import google.auth
@@ -33,7 +33,8 @@ class AuthClient:
                 # 'exp' is calculated by adding 'expires_in' seconds to the current UTC time,
                 # resulting in a POSIX timestamp representing the expiration time.
                 exp = (
-                    datetime.utcnow() + timedelta(seconds=response.json()["expires_in"])
+                    datetime.now(timezone.utc)
+                    + timedelta(seconds=response.json()["expires_in"])
                 ).timestamp()
                 return {
                     "access_token": os.environ["OIDC_TOKEN"],
