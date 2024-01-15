@@ -146,7 +146,13 @@ def mypy(session: Session) -> None:
     session.install("mypy", "pytest")
     session.run("mypy", *args)
     if not session.posargs:
-        session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
+        session.run(
+            "mypy",
+            f"--python-executable={sys.executable}",
+            "noxfile.py",
+            "--config-file",
+            "pyproject.toml",
+        )
 
 
 @session(python=python_versions)
