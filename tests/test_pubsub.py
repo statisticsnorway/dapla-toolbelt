@@ -1,13 +1,12 @@
-import concurrent
 import json
 import unittest
+from unittest.mock import MagicMock
 from unittest.mock import Mock
 
-import google
 import pytest
-from google.cloud.pubsub_v1.publisher.futures import (  # type: ignore [import-untyped]
-    Future as PubSubFuture,
-)
+from google.api_core.exceptions import NotFound
+from google.auth.exceptions import DefaultCredentialsError
+from google.cloud import pubsub_v1
 
 import dapla.pubsub
 from dapla.pubsub import _extract_project_name
@@ -28,8 +27,8 @@ class TestPubSub(unittest.TestCase):
     def test_get_list_of_blobs_with_prefix(self) -> None:
         with self.assertRaises(
             (
-                google.auth.exceptions.DefaultCredentialsError,
-                google.api_core.exceptions.NotFound,
+                DefaultCredentialsError,
+                NotFound,
             )
         ):
             _get_list_of_blobs_with_prefix(self.bucket_id, self.folder_prefix)
@@ -53,14 +52,15 @@ class TestPubSub(unittest.TestCase):
             )
 
     def test_get_callback(self) -> None:
-        publish_future = PubSubFuture()
+        publish_future = MagicMock(
+            side_effect=pubsub_v1.publisher.futures.Future.result
+        )
         # Create a callback function using the _get_callback helper function
         callback = _get_callback(publish_future, "blob_name", timeout=1)
 
         # Call the callback function with the mock future object
-        with pytest.raises(concurrent.futures.TimeoutError):
-            callback(publish_future)
-            publish_future.result.assert_called_with(timeout=1)
+        callback(publish_future)
+        publish_future.result.assert_called_with(timeout=1)
 
     @unittest.mock.patch("dapla.pubsub._publish_gcs_objects_to_pubsub")
     def test_trigger_source_data_processing(

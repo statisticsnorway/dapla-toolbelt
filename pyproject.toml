@@ -59,9 +59,6 @@ responses = ">=0.24.0"
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 
-[tool.poetry.scripts]
-dapla-toolbelt = "dapla.__main__:main"
-
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 tests = ["tests", "*/tests"]
@@ -136,6 +133,7 @@ force-single-line = true
 
 [tool.ruff.mccabe]
 max-complexity = 15
+
 
 [tool.ruff.pydocstyle]
 convention = "google"  # You can also use "numpy".
