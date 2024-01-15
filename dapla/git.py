@@ -1,7 +1,8 @@
 from pathlib import Path
+from typing import Optional
 
 
-def repo_root_dir(directory: Path | str = Path.cwd()) -> Path:
+def repo_root_dir(directory: Optional[Path | str] = None) -> Path:
     """Find the root directory of a git repo, searching upwards from a given path.
 
     Args:
@@ -14,7 +15,7 @@ def repo_root_dir(directory: Path | str = Path.cwd()) -> Path:
     Raises:
         RuntimeError: If no .git directory is found when searching upwards.
 
-    Example
+    Example:
     --------
     >>> import dapla as dp
     >>> import tomli
@@ -23,6 +24,9 @@ def repo_root_dir(directory: Path | str = Path.cwd()) -> Path:
     >>> with open(config_file, mode="rb") as fp:
     >>>     config = tomli.load(fp)
     """
+    if directory is None:
+        directory = Path.cwd()
+
     if isinstance(directory, str):
         directory = Path(directory)
 

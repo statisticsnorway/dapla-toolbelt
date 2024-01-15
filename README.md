@@ -1,4 +1,29 @@
-# dapla-toolbelt
+# Dapla Toolbelt
+
+[![PyPI](https://img.shields.io/pypi/v/dapla-toolbelt.svg)][pypi status]
+[![Status](https://img.shields.io/pypi/status/dapla-toolbelt.svg)][pypi status]
+[![Python Version](https://img.shields.io/pypi/pyversions/dapla-toolbelt)][pypi status]
+[![License](https://img.shields.io/pypi/l/dapla-toolbelt)][license]
+
+[![Documentation](https://github.com/statisticsnorway/dapla-toolbelt/actions/workflows/docs.yml/badge.svg)][documentation]
+[![Tests](https://github.com/statisticsnorway/dapla-toolbelt/actions/workflows/tests.yml/badge.svg)][tests]
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=statisticsnorway_dapla-toolbelt&metric=coverage)][sonarcov]
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=statisticsnorway_dapla-toolbelt&metric=alert_status)][sonarquality]
+
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
+[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)][poetry]
+
+[pypi status]: https://pypi.org/project/dapla-toolbelt/
+[documentation]: https://statisticsnorway.github.io/dapla-toolbelt
+[tests]: https://github.com/statisticsnorway/dapla-toolbelt/actions?workflow=Tests
+
+[sonarcov]: https://sonarcloud.io/summary/overall?id=statisticsnorway_dapla-toolbelt
+[sonarquality]: https://sonarcloud.io/summary/overall?id=statisticsnorway_dapla-toolbelt
+[pre-commit]: https://github.com/pre-commit/pre-commit
+[black]: https://github.com/psf/black
+[poetry]: https://python-poetry.org/
 
 Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data platform called
 `Dapla`. It contains support for authenticated access to Google Services such as Google Cloud Storage (GCS) and custom
@@ -6,11 +31,7 @@ Dapla services such as [Maskinporten Guardian](https://github.com/statisticsnorw
 authentication process is based on the [TokenExchangeAuthenticator](https://github.com/statisticsnorway/jupyterhub-extensions/tree/main/TokenExchangeAuthenticator)
 for Jupyterhub.
 
-[![PyPI version](https://img.shields.io/pypi/v/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
-![Unit tests](https://github.com/statisticsnorway/dapla-toolbelt/actions/workflows/unit-tests.yml/badge.svg)
-![Code coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bjornandre/73205f2f30335801fa2819c31b3ecf79/raw/pytest-coverage-badge-dapla-toolbelt.json)
-![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
-[![License](https://img.shields.io/pypi/l/dapla-toolbelt.svg)](https://pypi.python.org/pypi/dapla-toolbelt/)
+## Features
 
 These operations are supported:
 * List contents of a bucket
@@ -24,11 +45,20 @@ This just means users don't have to prefix a path with "gs://".
 It is implicitly understood that all resources accessed with this tool are located in GCS,
 with the first level of the path being a GCS bucket name.
 
+## Requirements
+
+- Python >3.8 (3.10 is preferred)
+- Poetry, install via `curl -sSL https://install.python-poetry.org | python3 -`
+
 ## Installation
 
-`pip install dapla-toolbelt`
+You can install _Dapla Toolbelt_ via [pip] from [PyPI]:
 
-## Usage Examples
+```console
+pip install dapla-toolbelt
+```
+
+## Usage
 
 ``` python
 from dapla import FileClient
@@ -63,105 +93,33 @@ df.head()  # show first rows of data frame
 
 ```
 
-## Development
+## Contributing
 
-### Prerequisites
+Contributions are very welcome.
+To learn more, see the [Contributor Guide].
 
-- Python >3.8 (3.10 is preferred)
-- Poetry, install via `curl -sSL https://install.python-poetry.org | python3 -`
+## License
 
-You can also execute `make` in the project folder to see available `make` commands.
+Distributed under the terms of the [MIT license][license],
+_Dapla Toolbelt_ is free and open source software.
 
-### Dependency Management
+## Issues
 
-Poetry is used for dependency management. [Poe the Poet](https://github.com/nat-n/poethepoet) is used for running poe tasks within poetry's virtualenv.
-Upon cloning this project first install necessary dependencies, then run the tests to verify everything is working.
+If you encounter any problems,
+please [file an issue] along with a detailed description.
 
-#### Install all dependencies
+## Credits
 
-```shell
-poetry install
-```
+This project was generated from [Statistics Norway]'s [SSB PyPI Template].
 
-### Add dependencies
+[statistics norway]: https://www.ssb.no/en
+[pypi]: https://pypi.org/
+[ssb pypi template]: https://github.com/statisticsnorway/ssb-pypitemplate
+[file an issue]: https://github.com/statisticsnorway/dapla-toolbelt/issues
+[pip]: https://pip.pypa.io/
 
-#### Main
+<!-- github-only -->
 
-```shell
-poetry add <python package name>
-```
-
-#### Dev
-
-```shell
-poetry add --group dev <python package name>
-```
-
-### Run tests
-
-```shell
-poetry run poe test
-```
-
-### Run project locally in Jupyter
-
-To run the project locally in Jupyter run:
-
-```shell
-poetry run poe jupyter
-```
-
-A Jupyter instance should open in your browser. Open and run the cells in the `demo.ipynb` file.
-
-### Bumping version
-
-Use `make` to bump the *patch*, *minor* version or *major* version before creating a pull request to the `main` GIT branch.
-Or run a poe task like this:
-
-```shell
-poetry run poe bump-version-patch
-```
-
-You can use either `bump-version-patch`, `bump-version-minor`, or `bump-version-major`.
-Bumping must be done with a clean git working space, and automatically commits with the new version number.
-
-Then just run `git push origin --tags` to push the changes and trigger the release process.
-
-### Building and releasing
-
-Before merging your changes into the `main` branch, make sure you have bumped the version like outlined above.
-
-An automatic release process will build *dapla-toolbelt* upon pull request-creation, merges, and direct commits to the
-`main` GIT branch. It will also release a new version of the package to **pypi.org** automatically when a commit is
-tagged, for example by a GitHub release.
-
-### Building and releasing manually
-
-Run `make build` to build a wheel and a source distribution.
-
-Run `make release-validate` to do all that AND validate it for release.
-
-Run this (replacing <SEMVER> with your current version number) to check the contents of your wheel:
-`tar tzf dist/dapla-toolbelt-<SEMVER>.tar.gz`
-
-#### Test release
-
-You have to bump the version of the package (see documentation on "Bumping version" above) before releasing,
-because even test.pypi.org does not allow re-releases of a previously released version.
-
-Run the following command in order to build, validate, and test package publication by uploading to TestPyPI:
-`make release-test`
-
-You will have to manually enter a username and password for a user registered to [test.pypi.org](https://test.pypi.org)
-in order for this to work.
-
-#### Production release
-
-**NB: A manual production release should only be done as a last resort**, if the regular CI/CD pipeline
-does not work, and it's necessary to release regardless.
-
-You have to bump the version of the package (see documentation on "Bumping version" above) to something
-different from the last release before releasing.
-
-In order to publish a new version of the package to PyPI for real, run `make release`.
-Authenticate by manually entering your [pypi.org](https://pypi.org) username and password.
+[license]: https://github.com/statisticsnorway/dapla-toolbelt/blob/main/LICENSE
+[contributor guide]: https://github.com/statisticsnorway/dapla-toolbelt/blob/main/CONTRIBUTING.md
+[reference guide]: https://statisticsnorway.github.io/dapla-toolbelt/reference.html

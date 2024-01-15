@@ -1,0 +1,30 @@
+{
+  "template": "https://github.com/statisticsnorway/ssb-pypitemplate.git",
+  "commit": "ade308e2279e8de90c4ba67d8148e984b3465d36",
+  "checkout": "2023.12.11",
+  "context": {
+    "cookiecutter": {
+      "project_name": "dapla-toolbelt",
+      "package_name": "dapla",
+      "friendly_name": "Dapla Toolbelt",
+      "copyright_owner": "Statistics Norway",
+      "copyright_year": "2024",
+      "author": "Dapla Developers",
+      "email": "dapla-platform-developers@ssb.no",
+      "github_organization": "statisticsnorway",
+      "version": "2.0.0",
+      "license": "MIT",
+      "development_status": "Development Status :: 5 - Production/Stable",
+      "code_quality_level": "Medium",
+      "_copy_without_render": [
+        "*.rst_t"
+      ],
+      "_jinja2_env_vars": {
+        "lstrip_blocks": true,
+        "trim_blocks": true
+      },
+      "_template": "https://github.com/statisticsnorway/ssb-pypitemplate.git"
+    }
+  },
+  "directory": null
+}

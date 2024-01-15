@@ -1,9 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from unittest import mock
+from unittest.mock import Mock
 
+import pytest
 import responses
 
+import dapla
 from dapla.auth import AuthClient
+from dapla.auth import AuthError
 
 auth_endpoint_url = "https://mock-auth.no/user"
 
@@ -11,16 +16,16 @@ auth_endpoint_url = "https://mock-auth.no/user"
 @mock.patch.dict(
     "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
 )
-def test_is_ready():
+def test_is_ready() -> None:
     client = AuthClient()
-    assert client.is_ready()
+    assert client._is_ready()
 
 
 @mock.patch.dict(
     "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
 )
 @responses.activate
-def test_fetch_personal_token():
+def test_fetch_personal_token() -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
@@ -38,41 +43,46 @@ def test_fetch_personal_token():
 )
 @mock.patch("dapla.auth.display")
 @responses.activate
-def test_fetch_personal_token_error(mock_display):
+def test_fetch_personal_token_error(mock_display: Mock) -> None:
     mock_response = {
         "message": "There was an error",
     }
     responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=404)
-
-    client = AuthClient()
-    client.fetch_personal_token()
+    with pytest.raises(AuthError):
+        client = AuthClient()
+        client.fetch_personal_token()
     # Assert that an error was displayed
     mock_display.assert_called_once()
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
+    "dapla.auth.os.environ",
+    {"OIDC_TOKEN_EXCHANGE_URL": auth_endpoint_url, "OIDC_TOKEN": "dummy_token"},
+    clear=True,
 )
 @mock.patch("dapla.auth.display")
 @responses.activate
-def test_fetch_google_token_error(mock_display):
-    mock_display
-    mock_response = {
-        "message": "There was an error",
-    }
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=404)
+def test_fetch_google_token_exchange_error(mock_display: Mock) -> None:
+    mock_response = Mock()
+    mock_response.status = 404
 
-    client = AuthClient()
-    client.fetch_google_token()
-    # Assert that an error was displayed
-    mock_display.assert_called_once()
+    mock_google_request = Mock()
+    mock_google_request.return_value = mock_response
+    with mock.patch.object(
+        dapla.auth.GoogleAuthRequest,  # type: ignore [attr-defined]
+        "__call__",
+        mock_response,
+    ):
+        with pytest.raises(AuthError):
+            client = AuthClient()
+            client.fetch_google_token_from_oidc_exchange(mock_google_request, [])
 
 
 @mock.patch.dict(
     "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
 )
 @responses.activate
-def test_fetch_google_token_dapla_jupyter():
+def test_fetch_google_token_dapla_jupyter() -> None:
     mock_response = {
         "access_token": "fake_access_token",
         "exchanged_tokens": {
@@ -97,69 +107,73 @@ def test_fetch_google_token_dapla_jupyter():
     clear=True,
 )
 @responses.activate
-def test_fetch_google_token_dapla_lab():
-    mock_response = {
+def test_fetch_google_token_from_exchange_dapla_lab() -> None:
+    mock_response = Mock()
+    mock_response.data = {
         "access_token": "google_token",
         "expires_in": round((datetime.now() + timedelta(hours=1)).timestamp()),
     }
-    responses.add(responses.POST, auth_endpoint_url, json=mock_response, status=200)
+    mock_response.status = 200
+    mock_google_request = Mock()
+    mock_google_request.return_value = mock_response
+    with mock.patch.object(
+        dapla.auth.GoogleAuthRequest,  # type: ignore [attr-defined]
+        "__call__",
+        mock_response,
+    ):
+        client = AuthClient()
+        token, _expiry = client.fetch_google_token_from_oidc_exchange(
+            mock_google_request, []
+        )
 
-    client = AuthClient()
-    response = client.fetch_google_token()
-
-    assert response == "google_token"
-    assert len(responses.calls) == 1
+        assert token == "google_token"
 
 
+@mock.patch("dapla.auth.AuthClient.fetch_google_token_from_oidc_exchange")
 @mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
+    "dapla.auth.os.environ",
+    {"LOCAL_USER_PATH": auth_endpoint_url},
+    clear=True,
 )
 @responses.activate
-def test_fetch_google_credentials():
-    mock_response = {
-        "access_token": "fake_access_token",
-        "exchanged_tokens": {
-            "google": {
-                "access_token": "google_token",
-                "exp": round((datetime.now() + timedelta(hours=1)).timestamp()),
-            }
-        },
-    }
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
+def test_fetch_google_credentials(
+    fetch_google_token_from_oidc_exchange_mock: Mock,
+) -> None:
+    fetch_google_token_from_oidc_exchange_mock.return_value = (
+        "google_token",
+        datetime.now() + timedelta(hours=1),
+    )
 
     client = AuthClient()
     response = client.fetch_google_credentials()
     response.refresh(None)
 
     assert response.token == "google_token"
-    assert len(responses.calls) == 2
     assert not response.expired
 
 
+@mock.patch("dapla.auth.AuthClient.fetch_google_token_from_oidc_exchange")
 @mock.patch.dict(
     "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
 )
 @responses.activate
-def test_fetch_google_credentials_expired():
-    mock_response = {
-        "access_token": "fake_access_token",
-        "exchanged_tokens": {
-            "google": {
-                "access_token": "google_token",
-                "exp": round((datetime.now() - timedelta(hours=1)).timestamp()),
-            }
-        },
-    }
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
-
-    # Add 2 hours to expiry timestamp for refresh response
-    mock_response["exchanged_tokens"]["google"]["exp"] += 7200
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
+def test_fetch_google_credentials_expired(
+    fetch_google_token_from_oidc_exchange_mock: Mock,
+) -> None:
+    fetch_google_token_from_oidc_exchange_mock.return_value = (
+        "google_token",
+        datetime.now() - timedelta(hours=1),
+    )
 
     client = AuthClient()
     response = client.fetch_google_credentials()
 
     assert response.expired
+
+    fetch_google_token_from_oidc_exchange_mock.return_value = (
+        "google_token",
+        datetime.now() + timedelta(hours=1),
+    )
 
     response.refresh(None)
     assert not response.expired

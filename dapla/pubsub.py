@@ -1,22 +1,28 @@
 import json
 import re
+import typing as t
 from concurrent import futures
-from typing import Callable, Iterator
+from typing import Callable
 
-from google.cloud import pubsub_v1, storage
+from google.cloud import storage
+from google.cloud.pubsub_v1 import PublisherClient
+from google.cloud.pubsub_v1.publisher.futures import (  # type: ignore [import-untyped]
+    Future as PubSubFuture,
+)
 
 from dapla import AuthClient
 
 
 class EmptyListError(Exception):
+    """Empty list error."""
+
     pass
 
 
 def _get_list_of_blobs_with_prefix(
     bucket_name: str, folder_prefix: str
-) -> Iterator[storage.Blob]:
-    """
-    Helper function that gets a list of Blob objects in a Google Cloud Storage bucket that has a certain prefix.
+) -> list[storage.Blob]:
+    """Helper function that gets a list of Blob objects in a Google Cloud Storage bucket that has a certain prefix.
 
     Args:
         bucket_name (str): The name of the Google Cloud Storage bucket to get blobs from.
@@ -32,8 +38,7 @@ def _get_list_of_blobs_with_prefix(
 
 
 def _generate_pubsub_data(bucket_id: str, object_id: str) -> bytes:
-    """
-    Helper function that generates the message data to be published to a Google Cloud Pub/Sub topic.
+    """Helper function that generates the message data to be published to a Google Cloud Pub/Sub topic.
 
     Args:
         bucket_id (str): The ID of the Google Cloud Storage bucket that contains the object.
@@ -51,12 +56,11 @@ def _generate_pubsub_data(bucket_id: str, object_id: str) -> bytes:
 
 
 def _get_callback(
-    publish_future: pubsub_v1.publisher.futures.Future,
+    _publish_future: PubSubFuture,
     blob_name: str,
     timeout: int = 60,
-) -> Callable[[pubsub_v1.publisher.futures.Future], None]:
-    """
-    Helper function that creates a callback function for a Google Cloud Pub/Sub publish future.
+) -> Callable[[PubSubFuture], None]:
+    """Helper function that creates a callback function for a Google Cloud Pub/Sub publish future.
 
     Args:
         publish_future (pubsub_v1.publisher.futures.Future): The future object returned by the publish call.
@@ -67,7 +71,7 @@ def _get_callback(
         callable: A callback function that handles success or failure of the publish operation.
     """
 
-    def callback(publish_future: pubsub_v1.publisher.futures.Future) -> None:
+    def callback(publish_future: PubSubFuture) -> None:
         try:
             # Wait 60 seconds for the publish call to succeed.
             publish_future.result(timeout=timeout)
@@ -80,7 +84,7 @@ def _get_callback(
 
 def _publish_gcs_objects_to_pubsub(
     project_id: str, bucket_id: str, folder_prefix: str, topic_id: str
-):
+) -> None:
     """Publishes messages to a Pub/Sub topic for all objects in a Google Cloud Storage bucket with a given prefix.
 
     Args:
@@ -96,9 +100,7 @@ def _publish_gcs_objects_to_pubsub(
             f"There are no files in {bucket_id:} with the given {folder_prefix:}."
         )
 
-    publisher = pubsub_v1.PublisherClient(
-        credentials=AuthClient.fetch_google_credentials()
-    )
+    publisher = PublisherClient(credentials=AuthClient.fetch_google_credentials())
     topic_path = publisher.topic_path(project_id, topic_id)
 
     publish_futures = []
@@ -107,13 +109,16 @@ def _publish_gcs_objects_to_pubsub(
         byte_data = _generate_pubsub_data(bucket_id, blob.name)
 
         # When you publish a message, the client returns a future.
-        publish_future = publisher.publish(
-            topic_path,
-            data=byte_data,
-            payloadFormat="JSON_API_V1",
-            bucketId=f"{bucket_id}",
-            objectId=f"{blob.name}",
-            eventType="DAPLA-REPUBLISH",
+        publish_future = t.cast(
+            PubSubFuture,
+            publisher.publish(
+                topic_path,
+                data=byte_data,
+                payloadFormat="JSON_API_V1",
+                bucketId=f"{bucket_id}",
+                objectId=f"{blob.name}",
+                eventType="DAPLA-REPUBLISH",
+            ),
         )
 
         # Non-blocking. Publish failures are handled in the callback function.
@@ -125,7 +130,7 @@ def _publish_gcs_objects_to_pubsub(
     print(f"Messages published to {topic_path}")
 
 
-def _extract_project_name(project_id):
+def _extract_project_name(project_id: str) -> str:
     """Extracts the project name from a project ID.
 
     The project ID is expected to be in the format "<project-name>-<unique-id>".
@@ -153,7 +158,7 @@ def _extract_project_name(project_id):
 
 def trigger_source_data_processing(
     project_id: str, source_name: str, folder_prefix: str, kuben: bool = False
-):
+) -> None:
     """Triggers a source data processing service with every file that has a given prefix.
 
     Args:
@@ -162,7 +167,6 @@ def trigger_source_data_processing(
         source_name (str): The name of source that should process the files.
         kuben (bool): Whether the team is on kuben or legacy.
     """
-
     project_name = _extract_project_name(project_id)
 
     if kuben:

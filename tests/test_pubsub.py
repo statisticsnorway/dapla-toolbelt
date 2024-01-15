@@ -5,16 +5,16 @@ from unittest.mock import Mock
 
 import google
 import pytest
-from google.cloud import pubsub_v1
+from google.cloud.pubsub_v1.publisher.futures import (  # type: ignore [import-untyped]
+    Future as PubSubFuture,
+)
 
 import dapla.pubsub
-from dapla.pubsub import (
-    _extract_project_name,
-    _generate_pubsub_data,
-    _get_callback,
-    _get_list_of_blobs_with_prefix,
-    _publish_gcs_objects_to_pubsub,
-)
+from dapla.pubsub import _extract_project_name
+from dapla.pubsub import _generate_pubsub_data
+from dapla.pubsub import _get_callback
+from dapla.pubsub import _get_list_of_blobs_with_prefix
+from dapla.pubsub import _publish_gcs_objects_to_pubsub
 
 
 class TestPubSub(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestPubSub(unittest.TestCase):
         ):
             _get_list_of_blobs_with_prefix(self.bucket_id, self.folder_prefix)
 
-    def test_generate_pubsub_data(self):
+    def test_generate_pubsub_data(self) -> None:
         byte_data = _generate_pubsub_data(self.bucket_id, self.object_id)
         # Decodes the object and checks that the key and values are as expected.
         json_object = json.loads(byte_data.decode("utf-8"))
@@ -44,7 +44,7 @@ class TestPubSub(unittest.TestCase):
         assert json_object["bucket"] == self.bucket_id
 
     @unittest.mock.patch("dapla.pubsub._get_list_of_blobs_with_prefix")
-    def test_publish_gcs_objects_to_pubsub(self, mock_list):
+    def test_publish_gcs_objects_to_pubsub(self, mock_list: Mock) -> None:
         # Checks if a EmptyListError is raised when no files are returned by _get_list_of_blobs_with_prefix
         mock_list.return_value = []
         with self.assertRaises(dapla.pubsub.EmptyListError):
@@ -52,8 +52,8 @@ class TestPubSub(unittest.TestCase):
                 self.project_id, self.bucket_id, self.folder_prefix, self.topic_id
             )
 
-    def test_get_callback(self):
-        publish_future = pubsub_v1.publisher.futures.Future()
+    def test_get_callback(self) -> None:
+        publish_future = PubSubFuture()
         # Create a callback function using the _get_callback helper function
         callback = _get_callback(publish_future, "blob_name", timeout=1)
 
@@ -65,7 +65,7 @@ class TestPubSub(unittest.TestCase):
     @unittest.mock.patch("dapla.pubsub._publish_gcs_objects_to_pubsub")
     def test_trigger_source_data_processing(
         self, mock_publish_gcs_objects_to_pubsub: Mock
-    ):
+    ) -> None:
         dapla.trigger_source_data_processing(
             self.project_id, self.source_folder_name, self.folder_prefix
         )
@@ -80,7 +80,7 @@ class TestPubSub(unittest.TestCase):
     @unittest.mock.patch("dapla.pubsub._publish_gcs_objects_to_pubsub")
     def test_trigger_source_data_processing_kuben(
         self, mock_publish_gcs_objects_to_pubsub: Mock
-    ):
+    ) -> None:
         kuben_project_id = "my-team-t-jhdfb"
 
         dapla.trigger_source_data_processing(
@@ -107,7 +107,7 @@ class TestPubSub(unittest.TestCase):
         ("prod-demo-stat-b-b609d", "prod-demo-stat-b"),
     ],
 )
-def test_extract_project_name(project_id, expected_project_name):
+def test_extract_project_name(project_id: str, expected_project_name: str) -> None:
     assert _extract_project_name(project_id) == expected_project_name
 
 
@@ -118,6 +118,6 @@ def test_extract_project_name(project_id, expected_project_name):
         "no_hyphen",
     ],
 )
-def test_invalid_project_id(invalid_project_id):
+def test_invalid_project_id(invalid_project_id: str) -> None:
     with pytest.raises(ValueError):
         _extract_project_name(invalid_project_id)

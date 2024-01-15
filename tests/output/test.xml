@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+<data>
+  <row>
+    <index>June</index>
+    <apples>3</apples>
+    <oranges>0</oranges>
+  </row>
+  <row>
+    <index>Robert</index>
+    <apples>2</apples>
+    <oranges>3</oranges>
+  </row>
+  <row>
+    <index>Lily</index>
+    <apples>0</apples>
+    <oranges>7</oranges>
+  </row>
+  <row>
+    <index>David</index>
+    <apples>1</apples>
+    <oranges>2</oranges>
+  </row>
+</data>
