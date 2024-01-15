@@ -150,8 +150,6 @@ def mypy(session: Session) -> None:
             "mypy",
             f"--python-executable={sys.executable}",
             "noxfile.py",
-            "--config-file",
-            "pyproject.toml",
         )
 
 
