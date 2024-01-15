@@ -20,7 +20,7 @@ def repo_root_dir(directory: Optional[Path | str] = None) -> Path:
     >>> import dapla as dp
     >>> import tomli
     >>>
-    >>> config_file = dp.repo_root_dir() / "config" / "config.toml"
+    >>> config_file = dp.repo_root_dir() / "pyproject.toml"
     >>> with open(config_file, mode="rb") as fp:
     >>>     config = tomli.load(fp)
     """
