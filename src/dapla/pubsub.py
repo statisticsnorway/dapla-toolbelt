@@ -63,9 +63,9 @@ def _get_callback(
     """Helper function that creates a callback function for a Google Cloud Pub/Sub publish future.
 
     Args:
-        publish_future (pubsub_v1.publisher.futures.Future): The future object returned by the publish call.
+        _publish_future (PubSubFuture): The future object returned by the publish call.
         blob_name (str): The name of the Google Cloud Storage object that is being published.
-        timeout (Optional[int], default=60): The number of seconds to wait for the publish call to succeed before timing out.
+        timeout (int): The number of seconds to wait for the publish call to succeed before timing out. Defaults to 60 seconds.
 
     Returns:
         callable: A callback function that handles success or failure of the publish operation.
@@ -77,7 +77,6 @@ def _get_callback(
             publish_future.result(timeout=timeout)
         except futures.TimeoutError:
             print(f"Publishing message for {blob_name} timed out.")
-            raise
 
     return callback
 
@@ -92,6 +91,10 @@ def _publish_gcs_objects_to_pubsub(
         bucket_id (str): The ID of the Google Cloud Storage bucket.
         folder_prefix (str): The prefix of the folder containing the objects to be published.
         topic_id (str): The ID of the Pub/Sub topic to publish to.
+
+    Raises:
+        EmptyListError: If there are no objects in the bucket with the given prefix.
+
     """
     blob_list = _get_list_of_blobs_with_prefix(bucket_id, folder_prefix)
 

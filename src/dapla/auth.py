@@ -24,6 +24,13 @@ class AuthClient:
     ) -> tuple[str, datetime]:
         """Fetches the Google token by exchanging an OIDC token.
 
+        Args:
+            request: The GoogleAuthRequest object.
+            _scopes: The scopes to request.
+
+        Raises:
+            AuthError: If the request to the OIDC token exchange endpoint fails.
+
         Returns:
             A tuple of (google-token, expiry).
         """
@@ -51,6 +58,9 @@ class AuthClient:
     def fetch_google_token_from_jupyter() -> str:
         """Fetches the personal access token for the current user.
 
+        Raises:
+            AuthError: If the token exchange request to JupyterHub fails.
+
         Returns:
             The personal access token.
         """
@@ -65,7 +75,14 @@ class AuthClient:
 
     @staticmethod
     def fetch_local_user_from_jupyter() -> dict[str, Any]:
-        """Retrieves user information, most notably access tokens for use in authentication."""
+        """Retrieves user information, most notably access tokens for use in authentication.
+
+        Raises:
+            AuthError: If the request to the user endpoint fails.
+
+        Returns:
+            The user data from the token .
+        """
         # Helps getting the correct ssl configs
         hub = HubAuth()
         response = requests.get(
@@ -77,7 +94,6 @@ class AuthClient:
         )
         if response.status_code == 200:
             user_data = response.json()
-            print(user_data)
             return t.cast(dict[str, Any], user_data)
         else:
             raise AuthError
@@ -111,11 +127,7 @@ class AuthClient:
 
     @staticmethod
     def fetch_personal_token() -> str:
-        """Fetches the personal access token for the current user.
-
-        Returns:
-            The personal access token.
-        """
+        """Fetches the personal access token for the current user."""
         try:
             personal_token = AuthClient.fetch_local_user_from_jupyter()["access_token"]
             return t.cast(str, personal_token)
@@ -126,6 +138,9 @@ class AuthClient:
     @staticmethod
     def fetch_google_token() -> str:
         """Fetches the Google token for the current user.
+
+        Raises:
+            AuthError: If the token exchange request to JupyterHub fails.
 
         Returns:
             The Google token.

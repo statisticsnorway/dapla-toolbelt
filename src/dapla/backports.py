@@ -29,6 +29,9 @@ def details(gcs_path: str) -> list[dict[str, str]]:
 
     Args:
         gcs_path: the path from which you want to list all folders
+
+    Returns:
+        A list of dicts containing file details
     """
     fs = FileClient.get_gcs_file_system()
     return list(

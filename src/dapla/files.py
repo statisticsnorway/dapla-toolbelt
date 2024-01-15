@@ -154,21 +154,17 @@ class FileClient:
         )
 
     @staticmethod
-    def save_pandas_to_csv(
-        df: pd.DataFrame, gcs_path: str, index: bool = False, **kwargs: Any
-    ) -> None:
+    def save_pandas_to_csv(df: pd.DataFrame, gcs_path: str, **kwargs: Any) -> None:
         """Write the contents of a Pandas DataFrame to a CSV file in a bucket.
 
         Args:
             df: The Pandas DataFrame to save to file.
             gcs_path: The GCS path to the destination .csv file.
-            index: Whether to write the Pandas index to the file. Defaults to False.
             **kwargs: Additional arguments to pass to the underlying Pandas to_csv().
         """
         df.to_csv(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
             storage_options={"token": AuthClient.fetch_google_credentials()},
-            index=index,
             **kwargs,
         )
 
@@ -179,7 +175,6 @@ class FileClient:
         Args:
             df: The Pandas DataFrame to save to file.
             gcs_path: The GCS path to the destination .json file.
-            index: Whether to write the Pandas index to the file. Defaults to False.
             **kwargs: Additional arguments to pass to the underlying Pandas to_json().
         """
         df.to_json(

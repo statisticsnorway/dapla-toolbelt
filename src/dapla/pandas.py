@@ -59,6 +59,9 @@ def read_pandas(
             Defaults to None.
         kwargs: Additional arguments to pass to the underlying Pandas "read_*()" method.
 
+    Raises:
+        ValueError: If multiple paths are provided for non-parquet formats.
+
     Returns:
         A Pandas DataFrame containing the selected dataset.
 
@@ -128,6 +131,10 @@ def write_pandas(
         gcs_path: The GCS path to the destination file. Must have an extension that corresponds to the file_format
         file_format: The expected file format. All file formats other than "parquet" are delegated to Pandas
         **kwargs: Additional arguments to pass to the underlying Pandas "to_*()" method.
+
+    Raises:
+        ValueError: If the file format is invalid.
+        ValueError: If the path does not have an extension that corresponds to the file format.
     """
     import pyarrow.parquet
 

@@ -27,6 +27,9 @@ class GuardianClient:
             guardian_endpoint_url: URL to the Maskinporten Guardian
             keycloak_token: the user's personal Keycloak token. Automatic fetch attempt will be made if left empty.
 
+        Raises:
+            RuntimeError: If the API call fails
+
         Returns:
             The endpoint json response
         """
@@ -61,6 +64,9 @@ class GuardianClient:
             guardian_endpoint: URL to the maskinporten guardian
             keycloak_token: the user's Keycloak token
             body: maskinporten request body
+
+        Raises:
+            RuntimeError: If the Guardian token request fails
 
         Returns:
             The maskinporten access token
