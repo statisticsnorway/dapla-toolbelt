@@ -189,7 +189,6 @@ class FileClient:
         Args:
             df: The Pandas DataFrame to save to file.
             gcs_path: The GCS path to the destination .xml file.
-            index: Whether to write the Pandas index to the file. Defaults to False.
             **kwargs: Additional arguments to pass to the underlying Pandas to_xml().
         """
         df.to_xml(

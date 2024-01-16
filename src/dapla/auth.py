@@ -136,7 +136,7 @@ class AuthClient:
     @staticmethod
     def fetch_google_token(
         request: Optional[GoogleAuthRequest] = None,
-        _scopes: Optional[Sequence[str]] = None,
+        scopes: Optional[Sequence[str]] = None,
     ) -> tuple[str, datetime]:
         """Fetches the Google token for the current user.
 
@@ -145,7 +145,7 @@ class AuthClient:
 
         Args:
             request: The GoogleAuthRequest object.
-            _scopes: The scopes to request.
+            scopes: The scopes to request.
 
         Raises:
             AuthError: If the token exchange request to JupyterHub fails.
@@ -157,11 +157,11 @@ class AuthClient:
             if AuthClient._is_oidc_token():
                 if request is None:
                     request = GoogleAuthRequest()
-                if _scopes is None:
-                    _scopes = []
+                if scopes is None:
+                    scopes = []
 
                 google_token, expiry = AuthClient.fetch_google_token_from_oidc_exchange(
-                    request, []
+                    request, scopes
                 )
             else:
                 user_info = AuthClient.fetch_local_user_from_jupyter()

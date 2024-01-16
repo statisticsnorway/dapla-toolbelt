@@ -32,9 +32,9 @@ def test_fetch_personal_token() -> None:
     responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
 
     client = AuthClient()
-    response = client.fetch_personal_token()
+    token = client.fetch_personal_token()
 
-    assert response == "fake_access_token"
+    assert token == "fake_access_token"
     assert len(responses.calls) == 1
 
 
@@ -95,9 +95,9 @@ def test_fetch_google_token_dapla_jupyter() -> None:
     responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
 
     client = AuthClient()
-    response = client.fetch_google_token()
+    token, _ = client.fetch_google_token()
 
-    assert response == "google_token"
+    assert token == "google_token"
     assert len(responses.calls) == 1
 
 
@@ -132,11 +132,11 @@ def test_fetch_google_token_from_exchange_dapla_lab() -> None:
 @mock.patch("dapla.auth.AuthClient.fetch_google_token_from_oidc_exchange")
 @mock.patch.dict(
     "dapla.auth.os.environ",
-    {"LOCAL_USER_PATH": auth_endpoint_url},
+    {"OIDC_TOKEN": "fake-token"},
     clear=True,
 )
 @responses.activate
-def test_fetch_google_credentials(
+def test_fetch_google_credentials_from_oidc_exchange(
     fetch_google_token_from_oidc_exchange_mock: Mock,
 ) -> None:
     fetch_google_token_from_oidc_exchange_mock.return_value = (
@@ -145,17 +145,15 @@ def test_fetch_google_credentials(
     )
 
     client = AuthClient()
-    response = client.fetch_google_credentials()
-    response.refresh(None)
+    credentials = client.fetch_google_credentials()
+    credentials.refresh(None)
 
-    assert response.token == "google_token"
-    assert not response.expired
+    assert credentials.token == "google_token"
+    assert not credentials.expired
 
 
 @mock.patch("dapla.auth.AuthClient.fetch_google_token_from_oidc_exchange")
-@mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
-)
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "fake-token"}, clear=True)
 @responses.activate
 def test_fetch_google_credentials_expired(
     fetch_google_token_from_oidc_exchange_mock: Mock,
