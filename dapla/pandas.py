@@ -182,7 +182,7 @@ def _get_storage_options() -> Optional[dict[str, Any]]:
         try:
             token = AuthClient.fetch_personal_token()
         except Exception:
-            print("WARNIGN: No authentication token found in environment")
+            print("WARNING: No authentication token found in environment")
             token = None
 
     return {"token": token} if token is not None else None

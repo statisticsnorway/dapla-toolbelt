@@ -45,7 +45,6 @@ class AuthClient:
                 "client_id": "onyxia",
             },
         )
-        print(response.status)
         if response.status == 200:
             expiry = datetime.now(timezone.utc) + timedelta(
                 seconds=response.data["expires_in"]
