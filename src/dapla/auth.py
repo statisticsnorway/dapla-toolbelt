@@ -1,9 +1,9 @@
+import json
 import os
 import typing as t
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from typing import Any
 from typing import Optional
 
@@ -47,10 +47,9 @@ class AuthClient:
             },
         )
         if response.status == 200:
-            expiry = datetime.now(timezone.utc) + timedelta(
-                seconds=response.data["expires_in"]
-            )
-            return response.data["access_token"], expiry
+            auth_data = json.loads(response.data)
+            expiry = datetime.utcnow() + timedelta(seconds=auth_data["expires_in"])
+            return auth_data["access_token"], expiry
         else:
             raise AuthError
 
