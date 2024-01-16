@@ -58,7 +58,7 @@ class FileClient:
         Args:
             gcs_path: The GCS path to a directory.
             detail: Whether to return detailed information about the files.
-            kwargs: Additional arguments to pass to the underlying GCSFileSystem.
+            kwargs: Additional arguments to pass to the underlying 'ls()' method.
 
         Returns:
             List of strings if detail is False, or list of directory information dicts if detail is True.
