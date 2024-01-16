@@ -112,7 +112,7 @@ class AuthClient:
                     token=token,
                     expiry=expiry,
                     token_uri="https://oauth2.googleapis.com/token",
-                    refresh_handler=AuthClient.fetch_google_token(),
+                    refresh_handler=AuthClient.fetch_google_token,
                 )
             except AuthError as err:
                 err._print_warning()
