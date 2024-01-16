@@ -183,9 +183,7 @@ class FileClient:
         )
 
     @staticmethod
-    def save_pandas_to_xml(
-        df: pd.DataFrame, gcs_path: str, index: bool = False, **kwargs: Any
-    ) -> None:
+    def save_pandas_to_xml(df: pd.DataFrame, gcs_path: str, **kwargs: Any) -> None:
         """Write the contents of a Pandas DataFrame to an XML file in a bucket.
 
         Args:
@@ -197,6 +195,5 @@ class FileClient:
         df.to_xml(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
             storage_options={"token": AuthClient.fetch_google_credentials()},
-            index=index,
             **kwargs,
         )
