@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Any
+from typing import Optional
 
 import google.auth
 import requests
@@ -106,14 +107,12 @@ class AuthClient:
         """
         if AuthClient._is_ready():
             try:
-                token, expiry = AuthClient.fetch_google_token_from_oidc_exchange(
-                    GoogleAuthRequest(), []
-                )
+                token, expiry = AuthClient.fetch_google_token()
                 credentials = Credentials(
                     token=token,
                     expiry=expiry,
                     token_uri="https://oauth2.googleapis.com/token",
-                    refresh_handler=AuthClient.fetch_google_token_from_oidc_exchange,
+                    refresh_handler=AuthClient.fetch_google_token(),
                 )
             except AuthError as err:
                 err._print_warning()
@@ -135,8 +134,18 @@ class AuthClient:
             raise err
 
     @staticmethod
-    def fetch_google_token() -> str:
+    def fetch_google_token(
+        request: Optional[GoogleAuthRequest] = None,
+        _scopes: Optional[Sequence[str]] = None,
+    ) -> tuple[str, datetime]:
         """Fetches the Google token for the current user.
+
+        Scopes in the argument is ignored, but are kept for compatibility
+        with the Credentials refresh handler method signature.
+
+        Args:
+            request: The GoogleAuthRequest object.
+            _scopes: The scopes to request.
 
         Raises:
             AuthError: If the token exchange request to JupyterHub fails.
@@ -146,18 +155,26 @@ class AuthClient:
         """
         try:
             if AuthClient._is_oidc_token():
-                google_token = AuthClient.fetch_google_token_from_oidc_exchange(
-                    GoogleAuthRequest(), []
+                if request is None:
+                    request = GoogleAuthRequest()
+                if _scopes is None:
+                    _scopes = []
+
+                google_token, expiry = AuthClient.fetch_google_token_from_oidc_exchange(
+                    request, []
                 )
             else:
-                google_token = AuthClient.fetch_local_user_from_jupyter()[
-                    "exchanged_tokens"
-                ]["google"]["access_token"]
+                user_info = AuthClient.fetch_local_user_from_jupyter()
+                google_token = user_info["exchanged_tokens"]["google"]["access_token"]
+                expiry = datetime.utcfromtimestamp(
+                    user_info["exchanged_tokens"]["google"]["exp"]
+                )
+
         except AuthError as err:
             err._print_warning()
             raise err
 
-        return t.cast(str, google_token)
+        return google_token, expiry
 
     @staticmethod
     def _is_ready() -> bool:
