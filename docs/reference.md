@@ -120,10 +120,6 @@ dapla.pubsub module
    :undoc-members:
    :show-inheritance:
 
-dapla.spark package
-===================
-
-
 dapla.spark.sparkui module
 --------------------------
 
