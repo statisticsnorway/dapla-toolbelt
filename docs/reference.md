@@ -119,12 +119,4 @@ dapla.pubsub module
    :members:
    :undoc-members:
    :show-inheritance:
-
-dapla.spark.sparkui module
---------------------------
-
-.. automodule:: dapla.spark.sparkui
-   :members:
-   :undoc-members:
-   :show-inheritance:
 ```
