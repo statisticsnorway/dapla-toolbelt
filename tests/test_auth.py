@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from datetime import timedelta
 from unittest import mock
@@ -109,10 +110,12 @@ def test_fetch_google_token_dapla_jupyter() -> None:
 @responses.activate
 def test_fetch_google_token_from_exchange_dapla_lab() -> None:
     mock_response = Mock()
-    mock_response.data = {
-        "access_token": "google_token",
-        "expires_in": round((datetime.now() + timedelta(hours=1)).timestamp()),
-    }
+    mock_response.data = json.dumps(
+        {
+            "access_token": "google_token",
+            "expires_in": round((datetime.now() + timedelta(hours=1)).timestamp()),
+        }
+    )
     mock_response.status = 200
     mock_google_request = Mock()
     mock_google_request.return_value = mock_response
