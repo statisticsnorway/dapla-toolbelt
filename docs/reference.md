@@ -13,13 +13,121 @@ delete the .rst file afterwards.
 
 ```{eval-rst}
 dapla package
-=============================================================================
+=============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   dapla.spark
 
 
-dapla.functions module
------------------------------------------------------------------------------
+dapla.auth module
+-----------------
 
-.. automodule:: dapla.functions
+.. automodule:: dapla.auth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.backports module
+----------------------
+
+.. automodule:: dapla.backports
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.collector module
+----------------------
+
+.. automodule:: dapla.collector
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.converter module
+----------------------
+
+.. automodule:: dapla.converter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.doctor module
+-------------------
+
+.. automodule:: dapla.doctor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.files module
+------------------
+
+.. automodule:: dapla.files
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.gcs module
+----------------
+
+.. automodule:: dapla.gcs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.git module
+----------------
+
+.. automodule:: dapla.git
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.guardian module
+---------------------
+
+.. automodule:: dapla.guardian
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.jupyterhub module
+-----------------------
+
+.. automodule:: dapla.jupyterhub
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.pandas module
+-------------------
+
+.. automodule:: dapla.pandas
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.pubsub module
+-------------------
+
+.. automodule:: dapla.pubsub
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+dapla.spark package
+===================
+
+
+dapla.spark.sparkui module
+--------------------------
+
+.. automodule:: dapla.spark.sparkui
    :members:
    :undoc-members:
    :show-inheritance:
