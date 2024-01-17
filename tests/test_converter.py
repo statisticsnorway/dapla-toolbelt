@@ -1,20 +1,21 @@
-import responses
-import mock
 import json
+from unittest import mock
+from unittest.mock import Mock
+
+import responses
 
 from dapla.converter import ConverterClient
 
+converter_test_url = "https://mock-converter.no"
+fake_token = "1234567890"
 
-converter_test_url = 'https://mock-converter.no'
-fake_token = '1234567890'
-
-sample_response_start_job = '''
+sample_response_start_job = """
 {
   "jobId": "01FZWP8R3PHDYD5QQS4CY1RKBW"
 }
-'''
+"""
 
-sample_response_get_job_summary = '''
+sample_response_get_job_summary = """
 {
   "converter.job.info": 1.0,
   "converter.rawdata.messages.total{result=fail}": 0.0,
@@ -32,9 +33,9 @@ sample_response_get_job_summary = '''
   "time.start": "2022-04-05T11:03:01.226536Z",
   "time.stop": "2022-04-05T11:03:02.569081Z"
 }
-'''
+"""
 
-sample_response_pseudo_report = '''
+sample_response_pseudo_report = """
 {
   "matchedPseudoRules": [
     {
@@ -78,9 +79,9 @@ sample_response_pseudo_report = '''
     "matchedPseudoRulesCount": 2
   }
 }
-'''
+"""
 
-sample_response_pseudo_schema = '''
+sample_response_pseudo_schema = """
 root record required
  |-- metadata record
  |    |-- collector record
@@ -105,74 +106,104 @@ root record required
  |    |    |-- baz record
  |    |    |    |-- navn string required pseudo:fpe-anychar(testsecret1)
  |    |-- opprettetDato string
-'''
+"""
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch("dapla.auth.AuthClient")
 @responses.activate
-def test_converter_start_200_response(auth_client_mock):
+def test_converter_start_200_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
-    job_config = {}
-    responses.add(responses.POST, 'https://mock-converter.no/jobs', json=sample_response_start_job, status=200)
+    job_config: dict[str, str] = {}
+    responses.add(
+        responses.POST,
+        "https://mock-converter.no/jobs",
+        json=sample_response_start_job,
+        status=200,
+    )
     client = ConverterClient(converter_test_url)
     response = client.start(job_config)
     json_str = json.loads(response.json())
 
-    assert json_str['jobId'] == json.loads(sample_response_start_job)['jobId']
+    assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch("dapla.auth.AuthClient")
 @responses.activate
-def test_converter_start_simulation_200_response(auth_client_mock):
+def test_converter_start_simulation_200_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
-    job_config = {}
-    responses.add(responses.POST, 'https://mock-converter.no/jobs/simulation', json=sample_response_start_job, status=200)
+    job_config: dict[str, str] = {}
+    responses.add(
+        responses.POST,
+        "https://mock-converter.no/jobs/simulation",
+        json=sample_response_start_job,
+        status=200,
+    )
     client = ConverterClient(converter_test_url)
     response = client.start_simulation(job_config)
     json_str = json.loads(response.json())
 
-    assert json_str['jobId'] == json.loads(sample_response_start_job)['jobId']
+    assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch("dapla.auth.AuthClient")
 @responses.activate
-def test_converter_get_job_summary_200_response(auth_client_mock):
+def test_converter_get_job_summary_200_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
-    responses.add(responses.GET, 'https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/execution-summary', json=sample_response_get_job_summary, status=200)
+    responses.add(
+        responses.GET,
+        "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/execution-summary",
+        json=sample_response_get_job_summary,
+        status=200,
+    )
     client = ConverterClient(converter_test_url)
-    response = client.get_job_summary(json.loads(sample_response_start_job)['jobId'])
+    response = client.get_job_summary(json.loads(sample_response_start_job)["jobId"])
 
     assert json.loads(response.json()) == json.loads(sample_response_get_job_summary)
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch("dapla.auth.AuthClient")
 @responses.activate
-def test_converter_stop_job_200_response(auth_client_mock):
+def test_converter_stop_job_200_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
-    responses.add(responses.POST, 'https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/stop', json=sample_response_get_job_summary, status=200)
+    responses.add(
+        responses.POST,
+        "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/stop",
+        json=sample_response_get_job_summary,
+        status=200,
+    )
     client = ConverterClient(converter_test_url)
-    response = client.stop_job(json.loads(sample_response_start_job)['jobId'])
+    response = client.stop_job(json.loads(sample_response_start_job)["jobId"])
 
     assert response.status_code == 200
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch("dapla.auth.AuthClient")
 @responses.activate
-def test_converter_get_pseudo_report_200_response(auth_client_mock):
+def test_converter_get_pseudo_report_200_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
-    responses.add(responses.GET, 'https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/reports/pseudo', json=sample_response_pseudo_report, status=200)
+    responses.add(
+        responses.GET,
+        "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/reports/pseudo",
+        json=sample_response_pseudo_report,
+        status=200,
+    )
     client = ConverterClient(converter_test_url)
-    response = client.get_pseudo_report(json.loads(sample_response_start_job)['jobId'])
+    response = client.get_pseudo_report(json.loads(sample_response_start_job)["jobId"])
 
     assert json.loads(response.json()) == json.loads(sample_response_pseudo_report)
 
 
-@mock.patch('dapla.auth.AuthClient')
+@mock.patch("dapla.auth.AuthClient")
 @responses.activate
-def test_converter_get_pseudo_schema_200_response(auth_client_mock):
+def test_converter_get_pseudo_schema_200_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
-    responses.add(responses.GET, 'https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/reports/pseudo-schema-hierarchy', json=sample_response_pseudo_schema, status=200)
+    responses.add(
+        responses.GET,
+        "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/reports/pseudo-schema-hierarchy",
+        json=sample_response_pseudo_schema,
+        status=200,
+    )
     client = ConverterClient(converter_test_url)
-    response = client.get_pseudo_schema(json.loads(sample_response_start_job)['jobId'])
+    response = client.get_pseudo_schema(json.loads(sample_response_start_job)["jobId"])
 
     assert len(response.text) > 0
