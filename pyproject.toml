@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dapla-toolbelt"
-version = "2.0.0"
+version = "2.0.1"
 description = "Dapla Toolbelt"
 authors = ["Dapla Developers <dapla-platform-developers@ssb.no>"]
 license = "MIT"
@@ -31,7 +31,7 @@ pyjwt = ">=2.6.0"
 google-cloud-pubsub = ">=2.14.1"
 pyarrow-stubs = ">=10.0.1.7"
 google-auth-stubs = ">=0.2.0" # Not maintained by Google, should change if Google releases their own stubs
-pandas-stubs = ">=2.1.4"
+pandas-stubs = ">=2.0.0"
 types-google-cloud-ndb = ">=2.2.0"
 
 [tool.poetry.group.dev.dependencies]
