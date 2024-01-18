@@ -18,11 +18,6 @@ dapla package
 Subpackages
 -----------
 
-.. toctree::
-   :maxdepth: 4
-
-   dapla.spark
-
 
 dapla.auth module
 -----------------
