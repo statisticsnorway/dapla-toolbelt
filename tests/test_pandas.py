@@ -5,6 +5,8 @@ import pandas as pd
 import pyarrow.compute as pc
 from fsspec.implementations.local import LocalFileSystem
 from google.oauth2.credentials import Credentials
+from pandas import read_csv
+from pandas import read_xml
 
 # These import enables mock patching
 from dapla.pandas import _get_storage_options
@@ -44,41 +46,61 @@ def test_read_parquet_format_with_filterings(file_client_mock: Mock) -> None:
     assert result[0][col_filter] == 7
 
 
+@mock.patch("dapla.pandas.read_csv")
 @mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
-def test_read_csv_format(auth_client_mock: Mock, file_client_mock: Mock) -> None:
-    mock_google_creds = Mock()
+def test_read_csv_format(
+    auth_client_mock: Mock, file_client_mock: Mock, read_csv_mock: Mock
+) -> None:
+    mock_google_creds = Mock(spec=Credentials)
     mock_google_creds.token = None
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
-    result = read_pandas("tests/data/fruits.csv", file_format="csv")
+    read_csv_mock.return_value = read_csv("tests/data/fruits.csv")
+    result = read_pandas("gs://tests/data/fruits.csv", file_format="csv")
     print(result.head(5))
     assert result["oranges"][2] == 7
+    read_csv_mock.assert_called_once_with(
+        "gs://tests/data/fruits.csv", storage_options={"token": mock_google_creds}
+    )
 
 
+@mock.patch("dapla.pandas.DataFrame.to_csv")
 @mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
-def test_write_csv_format(auth_client_mock: Mock, file_client_mock: Mock) -> None:
-    mock_google_creds = Mock()
+def test_write_csv_format(
+    auth_client_mock: Mock, file_client_mock: Mock, to_csv_mock: Mock
+) -> None:
+    mock_google_creds = Mock(spec=Credentials)
     mock_google_creds.token = None
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
     # Create pandas dataframe
     data = {"apples": [3, 2, 0, 1], "oranges": [0, 3, 7, 2]}
     df = pd.DataFrame(data, index=["June", "Robert", "Lily", "David"])
+    to_csv_mock.return_value = df.to_csv("tests/output/test.csv")
+    write_pandas(df, "gs://tests/output/test.csv", file_format="csv")
+    to_csv_mock.assert_called_with(
+        "gs://tests/output/test.csv", storage_options={"token": mock_google_creds}
+    )
 
-    write_pandas(df, "tests/output/test.csv", file_format="csv")
 
-
+@mock.patch("dapla.pandas.read_xml")
 @mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
-def test_read_xml_format(auth_client_mock: Mock, file_client_mock: Mock) -> None:
-    mock_google_creds = Mock()
+def test_read_xml_format(
+    auth_client_mock: Mock, file_client_mock: Mock, read_xml_mock: Mock
+) -> None:
+    mock_google_creds = Mock(spec=Credentials)
     mock_google_creds.token = None
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
-    result = read_pandas("tests/data/students.xml", file_format="xml")
+    read_xml_mock.return_value = read_xml("tests/data/students.xml")
+    result = read_pandas("gs://tests/data/students.xml", file_format="xml")
     assert result["email"][3] == "skrue@mail.com"
+    read_xml_mock.assert_called_once_with(
+        "gs://tests/data/students.xml", storage_options={"token": mock_google_creds}
+    )
 
 
 @mock.patch("dapla.pandas.FileClient")
@@ -90,28 +112,37 @@ def test_read_partitioned_parquet(file_client_mock: Mock) -> None:
     assert result["innskudd"][1] == 2000
 
 
+@mock.patch("dapla.pandas.DataFrame.to_xml")
 @mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
-def test_write_xml_format(auth_client_mock: Mock, file_client_mock: Mock) -> None:
-    mock_google_creds = Mock()
+def test_write_xml_format(
+    auth_client_mock: Mock, file_client_mock: Mock, to_xml_mock: Mock
+) -> None:
+    mock_google_creds = Mock(spec=Credentials)
     mock_google_creds.token = None
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
     # Create pandas dataframe
     data = {"apples": [3, 2, 0, 1], "oranges": [0, 3, 7, 2]}
     df = pd.DataFrame(data, index=["June", "Robert", "Lily", "David"])
+    to_xml_mock.return_value = df.to_xml("tests/output/test.xml")
 
-    write_pandas(df, "tests/output/test.xml", file_format="xml")
+    write_pandas(df, "gs://tests/output/test.xml", file_format="xml")
+
+    to_xml_mock.assert_called_with(
+        "gs://tests/output/test.xml", storage_options={"token": mock_google_creds}
+    )
 
 
 @mock.patch("dapla.pandas.AuthClient")
 def test_get_storage_options(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_google_credentials.return_value = Credentials(
-        token="dummy_tokan",
+        token="dummy_token",
         token_uri="https://oauth2.googleapis.com/token",
     )
     auth_client_mock._is_oidc_token.return_value = True
 
     result = _get_storage_options()
     assert result is not None
-    assert result["token"] == "dummy_tokan"
+    assert result["token"] is not None
+    assert result["token"].token == "dummy_token"

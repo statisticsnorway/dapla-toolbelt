@@ -8,6 +8,7 @@ from typing import Optional
 # import this module to trigger import side-effect and register the pyarrow extension types
 import pandas.core.arrays.arrow.extension_types  # type: ignore [import-untyped] # noqa: F401
 import pyarrow.compute
+from google.oauth2.credentials import Credentials
 from pandas import DataFrame
 from pandas import Series
 from pandas import read_csv
@@ -169,20 +170,12 @@ def write_pandas(
             raise ValueError(f"Invalid file format {file_format}")
 
 
-def _get_storage_options() -> Optional[dict[str, Any]]:
+def _get_storage_options() -> Optional[dict[str, Optional[Credentials]]]:
     """Returns the ``storage_options`` that are used in Pandas for specifying extra options for a particular storage connection that will be parsed by ``fsspec``.
 
     In this case when the URL starts with "gcs://".
     An error will be raised by Pandas if providing this argument with a local path or a file-like buffer.
     See the fsspec and backend storage implementation docs for the set of allowed keys and values
     """
-    if AuthClient._is_oidc_token():
-        token = AuthClient.fetch_google_credentials().token
-    else:
-        try:
-            token = AuthClient.fetch_personal_token()
-        except Exception:
-            print("WARNING: No authentication token found in environment")
-            token = None
-
-    return {"token": token} if token is not None else None
+    credentials = AuthClient.fetch_google_credentials()
+    return {"token": credentials} if credentials is not None else None
