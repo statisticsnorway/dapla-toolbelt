@@ -4,6 +4,7 @@ import typing as t
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
+from functools import partial
 from typing import Any
 from typing import Optional
 
@@ -113,12 +114,17 @@ class AuthClient:
                     token_uri="https://oauth2.googleapis.com/token",
                 )
 
+                def _refresh(self: Credentials, request: Any) -> None:
+                    token, expiry = AuthClient.fetch_google_token(request)
+                    self.token = token
+                    self.expiry = expiry
+
                 # We need to manually override the refresh method.
                 # This is because the "Credentials" class' built-in refresh method
-                # checks for
-                credentials.refresh = (
-                    AuthClient.fetch_google_token  # type: ignore [assignment]
-                )
+                # requires that the token be *at least valid for 3 minutes and 45 seconds*.
+                # We cannot make this guarantee in JupyterHub due to the implementation
+                # of our TokenExchange endpoint.
+                credentials.refresh = partial(_refresh, credentials)  # type: ignore[method-assign]
             except AuthError as err:
                 err._print_warning()
 

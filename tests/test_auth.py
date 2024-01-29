@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 import responses
+from google.oauth2.credentials import Credentials
 
 import dapla
 from dapla.auth import AuthClient
@@ -167,14 +168,20 @@ def test_fetch_google_credentials_expired(
     )
 
     client = AuthClient()
-    response = client.fetch_google_credentials()
+    credentials = client.fetch_google_credentials()
 
-    assert response.expired
+    assert credentials.expired
 
     fetch_google_token_from_oidc_exchange_mock.return_value = (
         "google_token",
         datetime.now() + timedelta(hours=1),
     )
+    credentials.refresh(None)
+    assert not credentials.expired
 
-    response.refresh(None)
-    assert not response.expired
+
+def test_credentials_object_refresh_exists() -> None:
+    # We test whether the "refresh" method exists,
+    # since it might be removed in a future release and we are overriding the method.
+    credentials = Credentials("fake-token")
+    assert hasattr(credentials, "refresh")
