@@ -144,4 +144,5 @@ def test_get_storage_options(auth_client_mock: Mock) -> None:
 
     result = _get_storage_options()
     assert result is not None
+    assert result["token"] is not None
     assert result["token"].token == "dummy_token"
