@@ -176,13 +176,5 @@ def _get_storage_options() -> Optional[dict[str, Any]]:
     An error will be raised by Pandas if providing this argument with a local path or a file-like buffer.
     See the fsspec and backend storage implementation docs for the set of allowed keys and values
     """
-    if AuthClient._is_oidc_token():
-        token = AuthClient.fetch_google_credentials().token
-    else:
-        try:
-            token = AuthClient.fetch_personal_token()
-        except Exception:
-            print("WARNING: No authentication token found in environment")
-            token = None
-
-    return {"token": token} if token is not None else None
+    credentials = AuthClient.fetch_google_credentials()
+    return {"token": credentials} if credentials is not None else None
