@@ -111,7 +111,13 @@ class AuthClient:
                     token=token,
                     expiry=expiry,
                     token_uri="https://oauth2.googleapis.com/token",
-                    refresh_handler=AuthClient.fetch_google_token,
+                )
+
+                # We need to manually override the refresh method.
+                # This is because the "Credentials" class' built-in refresh method
+                # checks for
+                credentials.refresh = (
+                    AuthClient.fetch_google_token  # type: ignore [assignment]
                 )
             except AuthError as err:
                 err._print_warning()
