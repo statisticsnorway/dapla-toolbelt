@@ -105,7 +105,7 @@ class AuthClient:
         Returns:
             The Google "Credentials" object.
         """
-        if AuthClient._is_ready():
+        if AuthClient.is_ready():
             try:
                 token, expiry = AuthClient.fetch_google_token()
                 credentials = Credentials(
@@ -188,7 +188,8 @@ class AuthClient:
         return google_token, expiry
 
     @staticmethod
-    def _is_ready() -> bool:
+    def is_ready() -> bool:
+        """Checks whether the authentication handler can be used."""
         return "LOCAL_USER_PATH" in os.environ or "OIDC_TOKEN" in os.environ
 
     @staticmethod

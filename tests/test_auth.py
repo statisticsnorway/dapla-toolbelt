@@ -20,7 +20,7 @@ auth_endpoint_url = "https://mock-auth.no/user"
 )
 def test_is_ready() -> None:
     client = AuthClient()
-    assert client._is_ready()
+    assert client.is_ready()
 
 
 @mock.patch.dict(
