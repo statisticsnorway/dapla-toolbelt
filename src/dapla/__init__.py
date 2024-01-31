@@ -3,7 +3,7 @@
 import importlib.metadata
 import warnings
 
-import tomli.load
+import tomli
 
 from .auth import AuthClient
 from .backports import details
