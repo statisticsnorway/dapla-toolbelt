@@ -28,6 +28,7 @@ ipython = ">=8.10.0"
 jupyterhub = ">=3.0.0"
 google-cloud-storage = ">=2.7.0"
 pyjwt = ">=2.6.0"
+tomli = ">=1.1.0"
 google-cloud-pubsub = ">=2.14.1"
 pyarrow-stubs = ">=10.0.1.7"
 google-auth-stubs = ">=0.2.0" # Not maintained by Google, should change if Google releases their own stubs
@@ -85,6 +86,7 @@ module = [
     "jupyterhub.*",
     "fsspec.*",
     "responses.*",
+    "tomli.*",
 ]
 ignore_missing_imports = true
 
