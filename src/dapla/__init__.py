@@ -1,8 +1,9 @@
 """Dapla Toolbelt collection."""
 
-import importlib.metadata.version
-import tomli.load
+import importlib.metadata
 import warnings
+
+import tomli.load
 
 from .auth import AuthClient
 from .backports import details
@@ -35,14 +36,7 @@ __all__ = [
 ]
 
 
-
-# Setting __version__ attribute programatically from either installed package...
-try:
-    __version__ = importlib.metadata.version("dapla-toolbelt")
-except importlib.metadata.PackageNotFoundError as e:
-    __version__ = _try_getting_pyproject_toml(e)
-
-# ... or from pyproject directly (when running under pytest for example)
+# Register function for second try: getting from pyproject directly (when running under pytest for example)
 def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
     """Look for version in pyproject.toml, if not found, set to 0.0.0 ."""
     if e is None:
@@ -59,5 +53,12 @@ def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
         warn_msg = f"Error from dapla-toolbelt __init__, not able to get version-number, setting it to {version_missing}: {e}, passed in from importlib: {passed_excep}"
         warnings.warn(warn_msg, category=Warning)
         return version_missing
+
+
+# First try is setting __version__ attribute programatically from installed package
+try:
+    __version__ = importlib.metadata.version("dapla-toolbelt")
+except importlib.metadata.PackageNotFoundError as e:
+    __version__ = _try_getting_pyproject_toml(e)
 
 
