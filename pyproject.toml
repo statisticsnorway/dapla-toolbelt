@@ -85,6 +85,7 @@ module = [
     "jupyterhub.*",
     "fsspec.*",
     "responses.*",
+    "tomli.*",
 ]
 ignore_missing_imports = true
 

@@ -51,7 +51,7 @@ def _try_getting_pyproject_toml(e: Exception | None = None) -> str:
     except Exception as e:
         version_missing: str = "0.0.0"
         warn_msg = f"Error from dapla-toolbelt __init__, not able to get version-number, setting it to {version_missing}: {e}, passed in from importlib: {passed_excep}"
-        warnings.warn(warn_msg, category=Warning)
+        warnings.warn(warn_msg, category=Warning, stacklevel=2)
         return version_missing
 
 
@@ -60,5 +60,3 @@ try:
     __version__ = importlib.metadata.version("dapla-toolbelt")
 except importlib.metadata.PackageNotFoundError as e:
     __version__ = _try_getting_pyproject_toml(e)
-
-
