@@ -16,6 +16,8 @@ from IPython.display import HTML
 from IPython.display import display
 from jupyterhub.services.auth import HubAuth
 
+google.auth._helpers.REFRESH_THRESHOLD = timedelta(hours=10)
+
 
 class AuthClient:
     """Client for retrieving authentication information."""
