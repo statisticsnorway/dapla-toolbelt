@@ -86,7 +86,6 @@ def read_pandas(
             parquet_ds = pq.ParquetDataset(
                 gcs_path,
                 filesystem=fs,
-                use_legacy_dataset=False,
                 filters=filters,  # type: ignore [arg-type]
             )  # Stubs show the incorrect type -
             # see https://arrow.apache.org/docs/python/generated/pyarrow.parquet.ParquetDataset.html
