@@ -14,6 +14,7 @@ from pandas import Series
 from pandas import read_csv
 from pandas import read_fwf
 from pandas import read_json
+from pandas import read_sas
 from pandas import read_xml
 
 from .auth import AuthClient
@@ -28,6 +29,7 @@ class SupportedFileFormat(Enum):
     CSV = "csv"
     FWF = "fwf"
     XML = "xml"
+    SAS7BDAT = "sas7bdat"
 
     @classmethod
     def _missing_(cls, value: object) -> None:
@@ -117,6 +119,15 @@ def read_pandas(
                 "DataFrame | Series[Any]",
                 read_xml(gcs_path, storage_options=_get_storage_options(), **kwargs),
             )
+        case SupportedFileFormat.SAS7BDAT:
+            assert isinstance(gcs_path, str)
+
+            fs = FileClient.get_gcs_file_system()
+
+            with fs.open(gcs_path) as sas:
+                df = read_sas(sas, format="sas7bdat", encoding="infer", **kwargs)
+
+            return t.cast("DataFrame | Series[Any]", df)
         case _:
             raise ValueError(f"Invalid file format {file_format}")
 
@@ -178,3 +189,6 @@ def _get_storage_options() -> Optional[dict[str, Optional[Credentials]]]:
     """
     credentials = AuthClient.fetch_google_credentials()
     return {"token": credentials} if credentials is not None else None
+
+
+# gs://sas-tester/dates.sas7bdat

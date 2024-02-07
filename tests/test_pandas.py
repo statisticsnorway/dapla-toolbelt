@@ -65,6 +65,14 @@ def test_read_csv_format(
     )
 
 
+@mock.patch("dapla.pandas.FileClient")
+def test_read_sas7bdat_format(file_client_mock: Mock) -> None:
+    file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/sasdata.sas7bdat"
+    result = read_pandas("tests/data/sasdata.sas7bdat", file_format="sas7bdat")
+    assert result["tekst"][0] == "Dette er en tekst"
+
+
 @mock.patch("dapla.pandas.DataFrame.to_csv")
 @mock.patch("dapla.pandas.FileClient")
 @mock.patch("dapla.pandas.AuthClient")
