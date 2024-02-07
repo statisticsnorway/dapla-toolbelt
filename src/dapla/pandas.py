@@ -189,6 +189,3 @@ def _get_storage_options() -> Optional[dict[str, Optional[Credentials]]]:
     """
     credentials = AuthClient.fetch_google_credentials()
     return {"token": credentials} if credentials is not None else None
-
-
-# gs://sas-tester/dates.sas7bdat
