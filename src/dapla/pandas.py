@@ -125,7 +125,7 @@ def read_pandas(
             fs = FileClient.get_gcs_file_system()
 
             with fs.open(gcs_path) as sas:
-                df = read_sas(sas, format="sas7bdat", encoding="infer", **kwargs)
+                df = read_sas(sas, format="sas7bdat", **kwargs)
 
             return t.cast("DataFrame | Series[Any]", df)
         case _:
