@@ -6,6 +6,7 @@ import pyarrow.compute as pc
 from fsspec.implementations.local import LocalFileSystem
 from google.oauth2.credentials import Credentials
 from pandas import read_csv
+from pandas import read_excel
 from pandas import read_xml
 
 # These import enables mock patching
@@ -73,6 +74,47 @@ def test_read_sas7bdat_format(file_client_mock: Mock) -> None:
         "tests/data/sasdata.sas7bdat", file_format="sas7bdat", encoding="latin1"
     )
     assert result["tekst"][0] == "Dette er en tekst"
+
+
+@mock.patch("dapla.pandas.read_excel")
+@mock.patch("dapla.pandas.FileClient")
+@mock.patch("dapla.pandas.AuthClient")
+def test_read_excel_format(
+    auth_client_mock: Mock, file_client_mock: Mock, read_excel_mock: Mock
+) -> None:
+    mock_google_creds = Mock(spec=Credentials)
+    mock_google_creds.token = None
+    auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
+    file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    read_excel_mock.return_value = read_excel("tests/data/people.xlsx")
+    file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/people.xlsx"
+    result = read_pandas("gs://tests/data/people.xlsx", file_format="excel")
+    print(result)
+    assert sum(result["Alder"].to_list()) == 81
+    read_excel_mock.assert_called_once_with(
+        "gs://tests/data/people.xlsx", storage_options={"token": mock_google_creds}
+    )
+
+
+@mock.patch("dapla.pandas.DataFrame.to_excel")
+@mock.patch("dapla.pandas.FileClient")
+@mock.patch("dapla.pandas.AuthClient")
+def test_write_excel_format(
+    auth_client_mock: Mock, file_client_mock: Mock, to_excel_mock: Mock
+) -> None:
+    mock_google_creds = Mock(spec=Credentials)
+    mock_google_creds.token = None
+    auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
+    file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+
+    data = {"age": [23, 30, 77, 32]}
+    df = pd.DataFrame(data, index=["June", "Robert", "Lily", "David"])
+    to_excel_mock.return_value = None
+    write_pandas(df, "gs://tests/output/test.xlsx", file_format="excel")
+    to_excel_mock.assert_called_with(
+        "gs://tests/output/test.xlsx", storage_options={"token": mock_google_creds}
+    )
 
 
 @mock.patch("dapla.pandas.DataFrame.to_csv")
