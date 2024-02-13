@@ -188,6 +188,10 @@ def write_pandas(
             df.to_excel(gcs_path, storage_options=_get_storage_options(), **kwargs)  # type: ignore [call-arg]
         case SupportedFileFormat.FWF:
             raise ValueError("Writing with fixed width format is not supported")
+        case SupportedFileFormat.SAS7BDAT:
+            raise ValueError(
+                "Writing to SAS7BDAT is not supported since it's a proprietary format"
+            )
         case _:
             raise ValueError(f"Invalid file format {file_format}")
 

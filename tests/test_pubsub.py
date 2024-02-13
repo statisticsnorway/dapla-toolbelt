@@ -53,7 +53,7 @@ class TestPubSub(unittest.TestCase):
 
     def test_get_callback(self) -> None:
         publish_future = MagicMock(
-            side_effect=pubsub_v1.publisher.futures.Future.result  # type: ignore [attr-defined]
+            side_effect=pubsub_v1.publisher.futures.Future.result
         )
         # Create a callback function using the _get_callback helper function
         callback = _get_callback(publish_future, "blob_name", timeout=1)
