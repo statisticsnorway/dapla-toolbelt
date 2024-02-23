@@ -85,8 +85,7 @@ module = [
     "fsspec.*",
     "responses.*",
     "tomli.*",
-    "google.cloud.pubsub_v1.*",
-    "google.cloud.storage.*",
+    "google.cloud.*",
 ]
 ignore_missing_imports = true
 
