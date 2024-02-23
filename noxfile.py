@@ -1,4 +1,5 @@
 """Nox sessions."""
+
 import os
 import shlex
 import shutil
@@ -143,7 +144,14 @@ def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["src", "tests"]
     session.install(".")
-    session.install("mypy", "pytest")
+    session.install(
+        "mypy",
+        "pytest",
+        "types-requests",
+        "pyarrow-stubs",
+        "google-auth-stubs",
+        "pandas-stubs",
+    )
     session.run("mypy", *args)
     if not session.posargs:
         session.run(
