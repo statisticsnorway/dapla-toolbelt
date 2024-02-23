@@ -36,9 +36,9 @@ def details(gcs_path: str) -> list[dict[str, str]]:
     fs = FileClient.get_gcs_file_system()
     return list(
         map(
-            lambda o: _folder_item(o)
-            if o["storageClass"] == "DIRECTORY"
-            else _file_item(o),
+            lambda o: (
+                _folder_item(o) if o["storageClass"] == "DIRECTORY" else _file_item(o)
+            ),
             fs.ls(gcs_path, detail=True),
         )
     )
