@@ -20,20 +20,21 @@ class EmptyListError(Exception):
 
 
 def _get_list_of_blobs_with_prefix(
-    bucket_name: str, folder_prefix: str
+    bucket_name: str, folder_prefix: str, project_id: str
 ) -> list[storage.Blob]:
     """Helper function that gets a list of Blob objects in a Google Cloud Storage bucket that has a certain prefix.
 
     Args:
         bucket_name (str): The name of the Google Cloud Storage bucket to get blobs from.
         folder_prefix (str): The prefix to filter blobs by.
+        project_id (str): The ID of the Google Cloud project that the Pub/Sub topic belongs to.
 
     Returns:
         An list over the `storage.Blob` objects representing the blobs in the specified bucket and with names starting
         with the given prefix.
     """
     google_credentials = AuthClient.fetch_google_credentials()
-    storage_client = storage.Client(credentials=google_credentials)
+    storage_client = storage.Client(project=project_id, credentials=google_credentials)
     return list(storage_client.list_blobs(bucket_name, prefix=folder_prefix))
 
 
@@ -96,7 +97,7 @@ def _publish_gcs_objects_to_pubsub(
         EmptyListError: If there are no objects in the bucket with the given prefix.
 
     """
-    blob_list = _get_list_of_blobs_with_prefix(bucket_id, folder_prefix)
+    blob_list = _get_list_of_blobs_with_prefix(bucket_id, folder_prefix, project_id)
 
     if len(blob_list) == 0:
         raise EmptyListError(
@@ -165,7 +166,7 @@ def trigger_source_data_processing(
     """Triggers a source data processing service with every file that has a given prefix.
 
     Args:
-        project_id (str): The ID of Google Cloud project containing the source.
+        project_id (str): The ID of Google Cloud project containing the pubsub topic, this is normally the standard project.
         folder_prefix (str): The folder prefix of the files to be processed.
         source_name (str): The name of source that should process the files.
         kuben (bool): Whether the team is on kuben or legacy.

@@ -31,7 +31,9 @@ class TestPubSub(unittest.TestCase):
                 NotFound,
             )
         ):
-            _get_list_of_blobs_with_prefix(self.bucket_id, self.folder_prefix)
+            _get_list_of_blobs_with_prefix(
+                self.bucket_id, self.folder_prefix, self.project_id
+            )
 
     def test_generate_pubsub_data(self) -> None:
         byte_data = _generate_pubsub_data(self.bucket_id, self.object_id)
