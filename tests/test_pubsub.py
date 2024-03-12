@@ -84,7 +84,7 @@ class TestPubSub(unittest.TestCase):
     def test_trigger_source_data_processing_kuben(
         self, mock_publish_gcs_objects_to_pubsub: Mock
     ) -> None:
-        kuben_project_id = "my-team-t-jhdfb"
+        kuben_project_id = "dapla-kildomaten-p-zz"
 
         dapla.trigger_source_data_processing(
             kuben_project_id, self.source_folder_name, self.folder_prefix, True
@@ -95,7 +95,7 @@ class TestPubSub(unittest.TestCase):
         # Check that _publish_gcs_objects_to_pubsub has been called with expected parameters
         mock_publish_gcs_objects_to_pubsub.assert_called_with(
             kuben_project_id,
-            "ssb-my-team-data-kilde-test",
+            "ssb-dapla-kildomaten-data-kilde-prod",
             self.folder_prefix,
             topic_id=self.topic_id,
         )

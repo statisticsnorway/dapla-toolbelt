@@ -173,7 +173,7 @@ def _extract_env(project_id: str) -> t.Literal["test", "prod"]:
     Raises:
         ValueError: If the project ID does not follow the `Kuben` format
     """
-    char_to_env_map = {"t": "test", "p": "prod"}
+    char_to_env_map: dict[str, t.Literal["test", "prod"]] = {"t": "test", "p": "prod"}
     env_char = project_id.split("-")[-2]
     if env_char not in char_to_env_map.keys():
         raise ValueError("Invalid project id")
@@ -195,7 +195,7 @@ def trigger_source_data_processing(
 
     if kuben:
         env = _extract_env(project_id)
-        bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-{env}]"
+        bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-{env}"
     else:
         bucket_id = f"ssb-{project_name}-data-kilde"
 
