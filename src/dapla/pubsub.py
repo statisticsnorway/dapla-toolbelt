@@ -158,6 +158,28 @@ def _extract_project_name(project_id: str) -> str:
         )
 
 
+def _extract_env(project_id: str) -> t.Literal["test", "prod"]:
+    """Extracts the environment name from a GCP `Kuben` project ID.
+
+    This function assumes the project ID follows the `Kuben` project naming convention,
+    if it does the character before the last hyphen will represent the environment.
+
+    Args:
+        project_id (str): The project ID of a GCP `Kuben` project.
+
+    Returns:
+        t.Literal['test', 'prod']: the environment name.
+
+    Raises:
+        ValueError: If the project ID does not follow the `Kuben` format
+    """
+    char_to_env_map: dict[str, t.Literal["test", "prod"]] = {"t": "test", "p": "prod"}
+    env_char = project_id.split("-")[-2]
+    if env_char not in char_to_env_map.keys():
+        raise ValueError("Invalid project id")
+    return char_to_env_map[env_char]
+
+
 def trigger_source_data_processing(
     project_id: str, source_name: str, folder_prefix: str, kuben: bool = False
 ) -> None:
@@ -172,9 +194,13 @@ def trigger_source_data_processing(
     project_name = _extract_project_name(project_id)
 
     if kuben:
-        bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-test"
+        env = _extract_env(project_id)
+        bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-{env}"
     else:
         bucket_id = f"ssb-{project_name}-data-kilde"
+
+    # GCP resources for `Kildomaten` are created with dash as seperator instead of underscore
+    source_name = source_name.replace("_", "-")
 
     _publish_gcs_objects_to_pubsub(
         project_id, bucket_id, folder_prefix, topic_id=f"update-{source_name}"

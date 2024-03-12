@@ -9,6 +9,7 @@ from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import pubsub_v1
 
 import dapla.pubsub
+from dapla.pubsub import _extract_env
 from dapla.pubsub import _extract_project_name
 from dapla.pubsub import _generate_pubsub_data
 from dapla.pubsub import _get_callback
@@ -83,7 +84,7 @@ class TestPubSub(unittest.TestCase):
     def test_trigger_source_data_processing_kuben(
         self, mock_publish_gcs_objects_to_pubsub: Mock
     ) -> None:
-        kuben_project_id = "my-team-t-jhdfb"
+        kuben_project_id = "dapla-kildomaten-p-zz"
 
         dapla.trigger_source_data_processing(
             kuben_project_id, self.source_folder_name, self.folder_prefix, True
@@ -94,7 +95,7 @@ class TestPubSub(unittest.TestCase):
         # Check that _publish_gcs_objects_to_pubsub has been called with expected parameters
         mock_publish_gcs_objects_to_pubsub.assert_called_with(
             kuben_project_id,
-            "ssb-my-team-data-kilde-test",
+            "ssb-dapla-kildomaten-data-kilde-prod",
             self.folder_prefix,
             topic_id=self.topic_id,
         )
@@ -123,3 +124,17 @@ def test_extract_project_name(project_id: str, expected_project_name: str) -> No
 def test_invalid_project_id(invalid_project_id: str) -> None:
     with pytest.raises(ValueError):
         _extract_project_name(invalid_project_id)
+
+
+@pytest.mark.parametrize(
+    "project_id, expected_project_id",
+    [("dapla-kildomaten-p-zz", "prod"), ("dapla-t-zz", "test")],
+)
+def test_extract_env(project_id: str, expected_project_id: str) -> None:
+    assert _extract_env(project_id) == expected_project_id
+
+
+def test_extract_env_invalid_project() -> None:
+    project_id = "dapla-kildomaten-p"
+    with pytest.raises(ValueError):
+        _extract_env(project_id)
