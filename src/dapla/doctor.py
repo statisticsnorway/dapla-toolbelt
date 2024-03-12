@@ -2,10 +2,10 @@ import datetime
 import logging
 import os
 
+import google.cloud.storage as storage
 import jwt
 import requests
 from gcsfs.retry import HttpError
-from google.cloud import storage
 
 from dapla.auth import AuthClient
 

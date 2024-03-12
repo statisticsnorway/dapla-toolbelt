@@ -12,6 +12,7 @@ from google.oauth2.credentials import Credentials
 from pandas import DataFrame
 from pandas import Series
 from pandas import read_csv
+from pandas import read_excel
 from pandas import read_fwf
 from pandas import read_json
 from pandas import read_sas
@@ -30,6 +31,7 @@ class SupportedFileFormat(Enum):
     FWF = "fwf"
     XML = "xml"
     SAS7BDAT = "sas7bdat"
+    EXCEL = "excel"
 
     @classmethod
     def _missing_(cls, value: object) -> None:
@@ -119,6 +121,13 @@ def read_pandas(
                 "DataFrame | Series[Any]",
                 read_xml(gcs_path, storage_options=_get_storage_options(), **kwargs),
             )
+        case SupportedFileFormat.EXCEL:
+            assert isinstance(gcs_path, str)
+
+            return t.cast(
+                "DataFrame | Series[Any]",
+                read_excel(gcs_path, storage_options=_get_storage_options(), **kwargs),
+            )
         case SupportedFileFormat.SAS7BDAT:
             assert isinstance(gcs_path, str)
 
@@ -174,8 +183,15 @@ def write_pandas(
             df.to_csv(gcs_path, storage_options=_get_storage_options(), **kwargs)
         case SupportedFileFormat.XML:
             df.to_xml(gcs_path, storage_options=_get_storage_options(), **kwargs)
+        case SupportedFileFormat.EXCEL:
+            # FIXME: mypy complains about `storage_options` being an unknown argument
+            df.to_excel(gcs_path, storage_options=_get_storage_options(), **kwargs)  # type: ignore [call-arg]
         case SupportedFileFormat.FWF:
             raise ValueError("Writing with fixed width format is not supported")
+        case SupportedFileFormat.SAS7BDAT:
+            raise ValueError(
+                "Writing to SAS7BDAT is not supported since it's a proprietary format"
+            )
         case _:
             raise ValueError(f"Invalid file format {file_format}")
 
