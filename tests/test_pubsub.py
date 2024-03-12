@@ -9,6 +9,7 @@ from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import pubsub_v1
 
 import dapla.pubsub
+from dapla.pubsub import _extract_env
 from dapla.pubsub import _extract_project_name
 from dapla.pubsub import _generate_pubsub_data
 from dapla.pubsub import _get_callback
@@ -123,3 +124,17 @@ def test_extract_project_name(project_id: str, expected_project_name: str) -> No
 def test_invalid_project_id(invalid_project_id: str) -> None:
     with pytest.raises(ValueError):
         _extract_project_name(invalid_project_id)
+
+
+@pytest.mark.parametrize(
+    "project_id, expected_project_id",
+    [("dapla-kildomaten-p-zz", "prod"), ("dapla-t-zz", "test")],
+)
+def test_extract_env(project_id: str, expected_project_id: str) -> None:
+    assert _extract_env(project_id) == expected_project_id
+
+
+def test_extract_env_invalid_project() -> None:
+    project_id = "dapla-kildomaten-p"
+    with pytest.raises(ValueError):
+        _extract_env(project_id)
