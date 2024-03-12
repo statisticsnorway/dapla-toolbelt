@@ -4,9 +4,11 @@ import typing as t
 from concurrent import futures
 from typing import Callable
 
-import google.cloud.storage as storage
+from google.cloud import storage
 from google.cloud.pubsub_v1 import PublisherClient
-from google.cloud.pubsub_v1.publisher.futures import Future as PubSubFuture
+from google.cloud.pubsub_v1.publisher.futures import (  # type: ignore [import-untyped]
+    Future as PubSubFuture,
+)
 
 from dapla import AuthClient
 
@@ -175,6 +177,9 @@ def trigger_source_data_processing(
         bucket_id = f"ssb-{project_name.rsplit('-', 1)[0]}-data-kilde-test"
     else:
         bucket_id = f"ssb-{project_name}-data-kilde"
+
+    # GCP resources for `Kildomaten` are created with dash as seperator instead of underscore
+    source_name = source_name.replace("_", "-")
 
     _publish_gcs_objects_to_pubsub(
         project_id, bucket_id, folder_prefix, topic_id=f"update-{source_name}"
