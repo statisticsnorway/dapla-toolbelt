@@ -4,11 +4,9 @@ import typing as t
 from concurrent import futures
 from typing import Callable
 
-from google.cloud import storage
+import google.cloud.storage as storage
 from google.cloud.pubsub_v1 import PublisherClient
-from google.cloud.pubsub_v1.publisher.futures import (  # type: ignore [import-untyped]
-    Future as PubSubFuture,
-)
+from google.cloud.pubsub_v1.publisher.futures import Future as PubSubFuture
 
 from dapla import AuthClient
 
