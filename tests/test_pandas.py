@@ -57,6 +57,7 @@ def test_read_csv_format(
     mock_google_creds.token = None
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "gs://tests/data/fruits.csv"
     read_csv_mock.return_value = read_csv("tests/data/fruits.csv")
     result = read_pandas("gs://tests/data/fruits.csv", file_format="csv")
     print(result.head(5))
@@ -70,6 +71,7 @@ def test_read_csv_format(
 def test_read_sas7bdat_format(file_client_mock: Mock) -> None:
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/sasdata.sas7bdat"
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "tests/data/sasdata.sas7bdat"
     result = read_pandas(
         "tests/data/sasdata.sas7bdat", file_format="sas7bdat", encoding="latin1"
     )
@@ -89,6 +91,7 @@ def test_read_excel_format(
     read_excel_mock.return_value = read_excel("tests/data/people.xlsx")
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/people.xlsx"
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "gs://tests/data/people.xlsx"
     result = read_pandas("gs://tests/data/people.xlsx", file_format="excel")
     print(result)
     assert sum(result["Alder"].to_list()) == 81
@@ -107,7 +110,7 @@ def test_write_excel_format(
     mock_google_creds.token = None
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
-
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "gs://tests/output/test.xlsx"
     data = {"age": [23, 30, 77, 32]}
     df = pd.DataFrame(data, index=["June", "Robert", "Lily", "David"])
     to_excel_mock.return_value = None
@@ -127,6 +130,7 @@ def test_write_csv_format(
     mock_google_creds.token = None
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "gs://tests/output/test.csv"
     # Create pandas dataframe
     data = {"apples": [3, 2, 0, 1], "oranges": [0, 3, 7, 2]}
     df = pd.DataFrame(data, index=["June", "Robert", "Lily", "David"])
@@ -147,6 +151,9 @@ def test_read_xml_format(
     mock_google_creds.token = None
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
+    file_client_mock._ensure_gcs_uri_prefix.return_value = (
+        "gs://tests/data/students.xml"
+    )
     read_xml_mock.return_value = read_xml("tests/data/students.xml")
     result = read_pandas("gs://tests/data/students.xml", file_format="xml")
     assert result["email"][3] == "skrue@mail.com"
@@ -159,6 +166,7 @@ def test_read_xml_format(
 def test_read_partitioned_parquet(file_client_mock: Mock) -> None:
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     file_client_mock._remove_gcs_uri_prefix.return_value = "tests/data/partition"
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "gs://tests/data/partition"
     result = read_pandas("tests/data/partition")
     print(result.head(5))
     assert result["innskudd"][1] == 2000
@@ -174,6 +182,7 @@ def test_write_xml_format(
     mock_google_creds.token = None
     file_client_mock.get_gcs_file_system.return_value = LocalFileSystem()
     auth_client_mock.fetch_google_credentials.return_value = mock_google_creds
+    file_client_mock._ensure_gcs_uri_prefix.return_value = "gs://tests/output/test.xml"
     # Create pandas dataframe
     data = {"apples": [3, 2, 0, 1], "oranges": [0, 3, 7, 2]}
     df = pd.DataFrame(data, index=["June", "Robert", "Lily", "David"])
