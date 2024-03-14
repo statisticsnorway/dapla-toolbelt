@@ -71,6 +71,9 @@ def read_pandas(
         A Pandas DataFrame containing the selected dataset.
 
     """
+    if isinstance(gcs_path, str):
+        gcs_path = FileClient._ensure_gcs_uri_prefix(gcs_path)
+
     if isinstance(gcs_path, list) and file_format != "parquet":
         raise ValueError("Multiple paths are only supported for parquet format")
     match SupportedFileFormat(file_format):
@@ -158,6 +161,9 @@ def write_pandas(
     """
     import pyarrow.parquet
 
+    if isinstance(gcs_path, str):
+        gcs_path = FileClient._ensure_gcs_uri_prefix(gcs_path)
+
     match SupportedFileFormat(file_format):
         case SupportedFileFormat.PARQUET:
             # Transfom and write pandas dataframe
@@ -178,7 +184,7 @@ def write_pandas(
                     **kwargs,
                 )
         case SupportedFileFormat.JSON:
-            df.to_json(gcs_path, **kwargs)
+            df.to_json(gcs_path, **kwargs, storage_options=_get_storage_options())  # type: ignore [call-overload]
         case SupportedFileFormat.CSV:
             df.to_csv(gcs_path, storage_options=_get_storage_options(), **kwargs)
         case SupportedFileFormat.XML:
