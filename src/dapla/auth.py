@@ -16,6 +16,13 @@ from IPython.display import HTML
 from IPython.display import display
 from jupyterhub.services.auth import HubAuth
 
+# Refresh window was modified in: https://github.com/googleapis/google-auth-library-python/commit/c6af1d692b43833baca978948376739547cf685a
+# The change was directed towards high latency environments, and should not apply to us.
+# Since we can't force a refresh, the threshold is lowered to keep us from waiting ~4 minutes for a new token.
+# A permanent fix would be to supply credentials with a refresh endpoint
+# that allways returns a token that is valid for more than 3m 45s.
+google.auth._helpers.REFRESH_THRESHOLD = timedelta(seconds=5)
+
 
 class AuthClient:
     """Client for retrieving authentication information."""
@@ -114,17 +121,16 @@ class AuthClient:
                     token_uri="https://oauth2.googleapis.com/token",
                 )
 
-                def _refresh(self: Credentials, request: Any) -> None:
-                    token, expiry = AuthClient.fetch_google_token(request)
-                    self.token = token
-                    self.expiry = expiry
+                def _refresh_handler(
+                    self, request: google.auth.transport.Request, scopes: Sequence[str]
+                ) -> tuple[str, datetime]:
+                    return AuthClient.fetch_google_token(request, scopes)
 
-                # We need to manually override the refresh method.
-                # This is because the "Credentials" class' built-in refresh method
-                # requires that the token be *at least valid for 3 minutes and 45 seconds*.
-                # We cannot make this guarantee in JupyterHub due to the implementation
-                # of our TokenExchange endpoint.
-                credentials.refresh = partial(_refresh, credentials)  # type: ignore[method-assign]
+                # We manually override the refresh_handler method with our custom logic for fetching tokens.
+                # Previously, we directly overrode the `refresh` method. However, this
+                # approach led to deadlock issues in gcsfs/credentials.py's maybe_refresh method.
+                credentials.refresh_handler = partial(_refresh_handler, credentials)  # type: ignore[method-assign]
+
             except AuthError as err:
                 err._print_warning()
 
