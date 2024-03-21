@@ -4,7 +4,6 @@ import typing as t
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
-from functools import partial
 from typing import Any
 from typing import Optional
 
@@ -114,23 +113,23 @@ class AuthClient:
         """
         if AuthClient.is_ready():
             try:
+
+                def _refresh_handler(
+                    request: google.auth.transport.Request, scopes: Sequence[str]
+                ) -> tuple[str, datetime]:
+                    # We manually override the refresh_handler method with our custom logic for fetching tokens.
+                    # Previously, we directly overrode the `refresh` method. However, this
+                    # approach led to deadlock issues in gcsfs/credentials.py's maybe_refresh method.
+                    # credentials.refresh_handler = partial(_refresh_handler, credentials)  # type: ignore[method-assign]
+                    return AuthClient.fetch_google_token()
+
                 token, expiry = AuthClient.fetch_google_token()
                 credentials = Credentials(
                     token=token,
                     expiry=expiry,
                     token_uri="https://oauth2.googleapis.com/token",
+                    refresh_handler=_refresh_handler,
                 )
-
-                def _refresh_handler(
-                    self, request: google.auth.transport.Request, scopes: Sequence[str]
-                ) -> tuple[str, datetime]:
-                    return AuthClient.fetch_google_token(request, scopes)
-
-                # We manually override the refresh_handler method with our custom logic for fetching tokens.
-                # Previously, we directly overrode the `refresh` method. However, this
-                # approach led to deadlock issues in gcsfs/credentials.py's maybe_refresh method.
-                credentials.refresh_handler = partial(_refresh_handler, credentials)  # type: ignore[method-assign]
-
             except AuthError as err:
                 err._print_warning()
 
