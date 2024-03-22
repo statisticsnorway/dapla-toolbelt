@@ -23,7 +23,8 @@ def test_instance() -> None:
 @patch("dapla.auth.AuthClient.fetch_google_token")
 def test_gcs_deadlock(mock_fetch_google_token: Mock, mock_is_ready: Mock) -> None:
     # When overriding the refresh method we experienced a deadlock, resulting in the credentials never being refreshed
-    # This test checks confirms that the credentials object is updated on refresh.
+    # This test checks that the credentials object is updated on refresh
+    # and that it proceeds to the next step when a valid token is provided.
 
     mock_is_ready.return_value = True  # Mock client ready to not use ADC
     mock_fetch_google_token.side_effect = [
