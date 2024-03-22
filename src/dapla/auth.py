@@ -120,7 +120,6 @@ class AuthClient:
                     # We manually override the refresh_handler method with our custom logic for fetching tokens.
                     # Previously, we directly overrode the `refresh` method. However, this
                     # approach led to deadlock issues in gcsfs/credentials.py's maybe_refresh method.
-                    # credentials.refresh_handler = partial(_refresh_handler, credentials)  # type: ignore[method-assign]
                     return AuthClient.fetch_google_token()
 
                 token, expiry = AuthClient.fetch_google_token()
