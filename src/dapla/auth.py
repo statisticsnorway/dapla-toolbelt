@@ -20,7 +20,7 @@ from jupyterhub.services.auth import HubAuth
 # Since we can't force a refresh, the threshold is lowered to keep us from waiting ~4 minutes for a new token.
 # A permanent fix would be to supply credentials with a refresh endpoint
 # that allways returns a token that is valid for more than 3m 45s.
-google.auth._helpers.REFRESH_THRESHOLD = timedelta(seconds=5)  # type: ignore[attr-defined]
+google.auth._helpers.REFRESH_THRESHOLD = timedelta(seconds=20)  # type: ignore[attr-defined]
 
 
 class AuthClient:
