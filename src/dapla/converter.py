@@ -10,7 +10,7 @@ from .auth import AuthClient
 class ConverterClient:
     """Client for working with DataConverter."""
 
-    def __init__(self, converter_url: str):
+    def __init__(self, converter_url: str) -> None:
         """Initialize ConverterClient."""
         self.converter_url = converter_url
 
