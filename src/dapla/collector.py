@@ -10,7 +10,7 @@ from .auth import AuthClient
 class CollectorClient:
     """Client for working with DataCollector."""
 
-    def __init__(self, collector_url: str):
+    def __init__(self, collector_url: str) -> None:
         """Initialize CollectorClient."""
         self.collector_url = collector_url
 

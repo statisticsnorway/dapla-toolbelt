@@ -1,8 +1,8 @@
 import json
 import re
 import typing as t
+from collections.abc import Callable
 from concurrent import futures
-from typing import Callable
 
 import google.cloud.storage as storage
 from google.cloud.pubsub_v1 import PublisherClient
