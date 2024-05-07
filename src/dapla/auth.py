@@ -151,12 +151,12 @@ class AuthClient:
 
     @staticmethod
     @lru_cache(maxsize=1)
-    def get_email_from_credentials() -> Optional[str]:
+    def fetch_email_from_credentials() -> Optional[str]:
         """Retrieves an e-mail based on current Google Credentials. Potentially makes a Google API call."""
         if AuthClient.is_ready():
             credentials = AuthClient.fetch_google_credentials()
             response = requests.get(
-                url=f"{credentials.token_uri}/tokeninfo?access_token={credentials.token}"
+                url=f"https://oauth2.googleapis.com/tokeninfo?access_token={credentials.token}"
             )
 
             return response.json().get("email") if response.status_code == 200 else None
