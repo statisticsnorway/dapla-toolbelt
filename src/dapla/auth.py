@@ -4,6 +4,7 @@ import typing as t
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
+from functools import lru_cache
 from typing import Any
 from typing import Optional
 
@@ -147,6 +148,22 @@ class AuthClient:
         except AuthError as err:
             err._print_warning()
             raise err
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def fetch_email_from_credentials() -> Optional[str]:
+        """Retrieves an e-mail based on current Google Credentials. Potentially makes a Google API call."""
+        if AuthClient.is_ready():
+            credentials = AuthClient.fetch_google_credentials()
+            response = requests.get(
+                url=f"https://oauth2.googleapis.com/tokeninfo?access_token={credentials.token}"
+            )
+
+            return response.json().get("email") if response.status_code == 200 else None
+
+        else:
+            user_info = AuthClient.fetch_local_user_from_jupyter()
+            return user_info.get("username")
 
     @staticmethod
     def fetch_google_token(
