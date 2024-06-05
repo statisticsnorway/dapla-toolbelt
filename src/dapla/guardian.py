@@ -77,7 +77,7 @@ class GuardianClient:
                 "Authorization": "Bearer %s" % keycloak_token,
                 "Content-type": "application/json",
             },
-            data=body,
+            json=body,
         )
         if guardian_response.status_code == 200:
             return t.cast(str, guardian_response.json()["accessToken"])
