@@ -27,7 +27,7 @@ class TestFiles(unittest.TestCase):
         )
 
     @patch("google.cloud.storage.Client")
-    def _test_list_versions_valid(self, mock_client):
+    def test_list_versions_valid(self, mock_client: Mock) -> None:
         # Arrange
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
@@ -53,7 +53,7 @@ class TestFiles(unittest.TestCase):
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
 
     @patch("google.cloud.storage.Client")
-    def _test_list_versions_nonexistent_file(self, mock_client):
+    def test_list_versions_nonexistent_file(self, mock_client: Mock) -> None:
         bucket_name = "test-bucket"
         file_name = "nonexistent-file.txt"
         mock_bucket = Mock()
@@ -66,7 +66,7 @@ class TestFiles(unittest.TestCase):
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
 
     @patch("google.cloud.storage.Client")
-    def _test_list_versions_empty_bucket(self, mock_client):
+    def test_list_versions_empty_bucket(self, mock_client: Mock) -> None:
 
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
@@ -80,7 +80,7 @@ class TestFiles(unittest.TestCase):
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
 
     @patch("google.cloud.storage.Client")
-    def _test_restore_version_success(self, mock_client):
+    def test_restore_version_success(self, mock_client: Mock) -> None:
         mock_bucket = Mock()
         mock_source_blob = Mock()
         mock_client.return_value.bucket.return_value = mock_bucket
@@ -91,7 +91,7 @@ class TestFiles(unittest.TestCase):
             file_name="test-file.txt",
             destination_file="restored-file.txt",
             generation_id="1234567890",
-            destination_generation_id=None,
+            destination_generation_id="0",
         )
 
         mock_client.return_value.bucket.assert_called_with("test-bucket")
@@ -101,11 +101,11 @@ class TestFiles(unittest.TestCase):
             mock_bucket,
             "restored-file.txt",
             source_generation="1234567890",
-            if_generation_match=None,
+            if_generation_match="0",
         )
 
     @patch("google.cloud.storage.Client")
-    def _test_restore_version_existing_live_version(self, mock_client):
+    def test_restore_version_existing_live_version(self, mock_client: Mock) -> None:
         mock_bucket = Mock()
         mock_source_blob = Mock()
         mock_client.return_value.bucket.return_value = mock_bucket
