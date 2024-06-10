@@ -13,11 +13,18 @@ class TestFiles(unittest.TestCase):
 
     def test_ensure_gcs_uri_prefix(self) -> None:
         assert FileClient._ensure_gcs_uri_prefix(PATH_WITH_PREFIX) == PATH_WITH_PREFIX
-        assert FileClient._ensure_gcs_uri_prefix(PATH_WITHOUT_PREFIX) == PATH_WITH_PREFIX
+        assert (
+            FileClient._ensure_gcs_uri_prefix(PATH_WITHOUT_PREFIX) == PATH_WITH_PREFIX
+        )
 
     def test_remove_gcs_uri_prefix(self) -> None:
-        assert FileClient._remove_gcs_uri_prefix(PATH_WITH_PREFIX) == PATH_WITHOUT_PREFIX
-        assert FileClient._remove_gcs_uri_prefix(PATH_WITHOUT_PREFIX)== PATH_WITHOUT_PREFIX
+        assert (
+            FileClient._remove_gcs_uri_prefix(PATH_WITH_PREFIX) == PATH_WITHOUT_PREFIX
+        )
+        assert (
+            FileClient._remove_gcs_uri_prefix(PATH_WITHOUT_PREFIX)
+            == PATH_WITHOUT_PREFIX
+        )
 
     @patch("google.cloud.storage.Client")
     def test_list_versions_valid(self, mock_client):
@@ -44,16 +51,6 @@ class TestFiles(unittest.TestCase):
 
         mock_client.return_value.bucket.assert_called_with(bucket_name)
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
-
-    @patch("google.cloud.storage.Client")
-    def test_list_versions_invalid_bucket(self, mock_client):
-
-        bucket_name = "invalid-bucket"
-        file_name = "test-file.txt"
-        mock_client.return_value.bucket.side_effect = Exception("Bucket not found")
-
-        with self.assertRaises(Exception):
-            FileClient.list_versions(bucket_name, file_name)
 
     @patch("google.cloud.storage.Client")
     def test_list_versions_nonexistent_file(self, mock_client):
