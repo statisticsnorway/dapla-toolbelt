@@ -4,10 +4,10 @@ from typing import Any
 
 import pandas as pd
 from fsspec.spec import AbstractBufferedFile
+from google.cloud import storage
 
 from .auth import AuthClient
 from .gcs import GCSFileSystem
-from google.cloud import storage
 
 GS_URI_PREFIX = "gs://"
 
@@ -33,7 +33,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX):]
+            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
         return gcs_path
 
     @staticmethod
@@ -66,8 +66,7 @@ class FileClient:
 
     @staticmethod
     def list_versions(bucket_name: str, file_name: str) -> Any:
-        """
-        Lists all versions of a file in a bucket.
+        """Lists all versions of a file in a bucket.
 
         Args:
             bucket_name: Bucket name where the file is located.
@@ -84,10 +83,14 @@ class FileClient:
             print("Time Deleted: ", blob.time_deleted)
 
     @staticmethod
-    def restore_version(bucket_name: str, file_name: str, destination_file: str, generation_id: str,
-                        destination_generation_id: str) -> None:
-        """
-        Restores deleted/non-current version of file to the live version.
+    def restore_version(
+        bucket_name: str,
+        file_name: str,
+        destination_file: str,
+        generation_id: str,
+        destination_generation_id: str,
+    ) -> None:
+        """Restores deleted/non-current version of file to the live version.
         If there's already a live version of this object, then this action will make the pre-existing live version non-current.
 
         Args:
@@ -98,7 +101,6 @@ class FileClient:
             destination_generation_id: Incase live version already exists, generation_id of the live version
 
         """
-
         storage_client = storage.Client()
         source_bucket = storage_client.bucket(bucket_name)
         source_file = source_bucket.blob(file_name)
@@ -107,16 +109,15 @@ class FileClient:
         destination_bucket = storage_client.bucket(bucket_name)
 
         source_bucket.copy_blob(
-            source_file, destination_bucket, destination_file, source_generation=generation_id,
-            if_generation_match=destination_generation_id
+            source_file,
+            destination_bucket,
+            destination_file,
+            source_generation=generation_id,
+            if_generation_match=destination_generation_id,
         )
 
         print(
-            "Restored file {} with generation id {} from bucket {}.".format(
-                source_file,
-                generation_id,
-                source_bucket.name
-            )
+            f"Restored file {source_file} with generation id {generation_id} from bucket {source_bucket.name}."
         )
 
     @staticmethod
