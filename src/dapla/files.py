@@ -33,7 +33,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
+            gcs_path = gcs_path[len(GS_URI_PREFIX):]
         return gcs_path
 
     @staticmethod
@@ -91,7 +91,6 @@ class FileClient:
         destination_generation_id: str,
     ) -> None:
         """Restores deleted/non-current version of file to the live version.
-        If there's already a live version of this object, then this action will make the pre-existing live version non-current.
 
         Args:
             bucket_name: source bucket name where the file is located.
