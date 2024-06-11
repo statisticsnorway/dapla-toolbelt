@@ -66,7 +66,7 @@ class FileClient:
 
     @staticmethod
     def get_versions(bucket_name: str, file_name: str) -> Any:
-        """Lists all versions of a file in a bucket.
+        """Get all versions of a file in a bucket.
 
         Args:
             bucket_name: Bucket name where the file is located.
