@@ -33,7 +33,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
+            gcs_path = gcs_path[len(GS_URI_PREFIX):]
         return gcs_path
 
     @staticmethod
@@ -65,12 +65,15 @@ class FileClient:
         return FileClient.get_gcs_file_system().ls(gcs_path, detail=detail, **kwargs)
 
     @staticmethod
-    def list_versions(bucket_name: str, file_name: str) -> Any:
+    def get_versions(bucket_name: str, file_name: str) -> Any:
         """Lists all versions of a file in a bucket.
 
         Args:
             bucket_name: Bucket name where the file is located.
             file_name: Name of the file.
+
+        Returns:
+            A new blob with new generation id.
         """
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
@@ -89,7 +92,7 @@ class FileClient:
         destination_file: str,
         generation_id: str,
         destination_generation_id: str,
-    ) -> None:
+    ) -> Any:
         """Restores deleted/non-current version of file to the live version.
 
         Args:
@@ -99,6 +102,8 @@ class FileClient:
             generation_id: generation_id of the non-current.
             destination_generation_id: Incase live version already exists, generation_id of the live version
 
+        Returns:
+            A new blob with new generation id.
         """
         storage_client = storage.Client()
         source_bucket = storage_client.bucket(bucket_name)
@@ -107,17 +112,8 @@ class FileClient:
         # Restoring file means the destination bucket will be same as source
         destination_bucket = storage_client.bucket(bucket_name)
 
-        source_bucket.copy_blob(
-            source_file,
-            destination_bucket,
-            destination_file,
-            source_generation=generation_id,
-            if_generation_match=destination_generation_id,
-        )
-
-        print(
-            f"Restored file {source_file} with generation id {generation_id} from bucket {source_bucket.name}."
-        )
+        return source_bucket.copy_blob(source_file, destination_bucket, destination_file,
+                                       source_generation=generation_id, if_generation_match=destination_generation_id, )
 
     @staticmethod
     def cat(gcs_path: str) -> str:
