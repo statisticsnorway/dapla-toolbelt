@@ -33,7 +33,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX):]
+            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
         return gcs_path
 
     @staticmethod
@@ -71,9 +71,6 @@ class FileClient:
         Args:
             bucket_name: Bucket name where the file is located.
             file_name: Name of the file.
-
-        Returns:
-            A new blob with new generation id.
         """
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
@@ -112,8 +109,13 @@ class FileClient:
         # Restoring file means the destination bucket will be same as source
         destination_bucket = storage_client.bucket(bucket_name)
 
-        return source_bucket.copy_blob(source_file, destination_bucket, destination_file,
-                                       source_generation=generation_id, if_generation_match=destination_generation_id, )
+        return source_bucket.copy_blob(
+            source_file,
+            destination_bucket,
+            destination_file,
+            source_generation=generation_id,
+            if_generation_match=destination_generation_id,
+        )
 
     @staticmethod
     def cat(gcs_path: str) -> str:

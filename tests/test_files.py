@@ -111,9 +111,13 @@ class TestFiles(unittest.TestCase):
         mock_client.return_value.bucket.return_value = mock_bucket
         mock_bucket.blob.return_value = mock_source_blob
 
-        blob = FileClient.restore_version(bucket_name="test-bucket", file_name="test-file.txt",
-                                          destination_file="restored-file.txt", generation_id="1234567890",
-                                          destination_generation_id="0987654321", )
+        blob = FileClient.restore_version(
+            bucket_name="test-bucket",
+            file_name="test-file.txt",
+            destination_file="restored-file.txt",
+            generation_id="1234567890",
+            destination_generation_id="0987654321",
+        )
 
         mock_client.return_value.bucket.assert_called_with("test-bucket")
         mock_bucket.blob.assert_called_with("test-file.txt")
