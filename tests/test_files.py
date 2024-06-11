@@ -47,10 +47,17 @@ class TestFiles(unittest.TestCase):
         )
         mock_bucket.list_blobs.return_value = [mock_blob1, mock_blob2]
 
-        FileClient.get_versions(bucket_name, file_name)
+        files = FileClient.get_versions(bucket_name, file_name)
 
         mock_client.return_value.bucket.assert_called_with(bucket_name)
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
+
+        assert len(files) == 2
+
+        assert files[0].name == mock_blob1.name
+        assert files[0].generation == mock_blob1.generation
+        assert files[0].updated == mock_blob1.updated
+        assert files[0].time_deleted is None
 
     @patch("google.cloud.storage.Client")
     def test_get_versions_nonexistent_file(self, mock_client: Mock) -> None:
@@ -60,10 +67,13 @@ class TestFiles(unittest.TestCase):
         mock_client.return_value.bucket.return_value = mock_bucket
         mock_bucket.list_blobs.return_value = []
 
-        FileClient.get_versions(bucket_name, file_name)
+        files = FileClient.get_versions(bucket_name, file_name)
 
         mock_client.return_value.bucket.assert_called_with(bucket_name)
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
+
+        assert len(files) == 0
+        assert files == []
 
     @patch("google.cloud.storage.Client")
     def test_get_versions_empty_bucket(self, mock_client: Mock) -> None:
@@ -73,10 +83,13 @@ class TestFiles(unittest.TestCase):
         mock_client.return_value.bucket.return_value = mock_bucket
         mock_bucket.list_blobs.return_value = []
 
-        FileClient.get_versions(bucket_name, file_name)
+        files = FileClient.get_versions(bucket_name, file_name)
 
         mock_client.return_value.bucket.assert_called_with(bucket_name)
         mock_bucket.list_blobs.assert_called_with(prefix=file_name, versions=True)
+
+        assert len(files) == 0
+        assert files == []
 
     @patch("google.cloud.storage.Client")
     def test_restore_version_success(self, mock_client: Mock) -> None:

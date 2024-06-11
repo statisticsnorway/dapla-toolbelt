@@ -72,17 +72,14 @@ class FileClient:
             bucket_name: Bucket name where the file is located.
             file_name: Name of the file.
 
-
+        Returns:
+            List of versions of the file.
         """
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
-        blobs = bucket.list_blobs(prefix=file_name, versions=True)
+        files = bucket.list_blobs(prefix=file_name, versions=True)
 
-        for blob in blobs:
-            print("Name: ", blob.name)
-            print("Generation id: ", blob.generation)
-            print("Updated on: ", blob.updated)
-            print("Time Deleted: ", blob.time_deleted)
+        return files
 
     @staticmethod
     def restore_version(
