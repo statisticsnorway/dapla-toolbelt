@@ -77,9 +77,8 @@ class FileClient:
         """
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
-        files = bucket.list_blobs(prefix=file_name, versions=True)
 
-        return files
+        return bucket.list_blobs(prefix=file_name, versions=True)
 
     @staticmethod
     def restore_version(
