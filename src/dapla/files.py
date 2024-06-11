@@ -71,6 +71,8 @@ class FileClient:
         Args:
             bucket_name: Bucket name where the file is located.
             file_name: Name of the file.
+
+
         """
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
