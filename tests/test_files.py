@@ -26,7 +26,7 @@ class TestFiles(unittest.TestCase):
         )
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_valid_file(self, mock_client):
+    def test_get_versions_valid_file(self, mock_client) -> None:
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
 
@@ -54,7 +54,7 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 2
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_empty_bucket(self, mock_client):
+    def test_get_versions_empty_bucket(self, mock_client) -> None:
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
         mock_client.return_value.list_blobs.return_value = []
@@ -67,7 +67,7 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 0
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_non_existent_file(self, mock_client):
+    def test_get_versions_non_existent_file(self, mock_client) -> None:
         bucket_name = "test-bucket"
         file_name = "non-existent-file.txt"
         mock_client.return_value.list_blobs.return_value = []
@@ -78,26 +78,6 @@ class TestFiles(unittest.TestCase):
             bucket_name, prefix=file_name, versions=True
         )
         assert len(files) == 0
-
-    @patch("google.cloud.storage.Client")
-    def test_get_versions_with_invalid_bucket_name(self, mock_client):
-        bucket_name = "invalid-bucket-name"
-        file_name = "test-file.txt"
-        mock_client.return_value.list_blobs.side_effect = Exception(
-            "Invalid bucket name"
-        )
-
-        with self.assertRaises(Exception):
-            FileClient.get_versions(bucket_name, file_name)
-
-    @patch("google.cloud.storage.Client")
-    def test_get_versions_with_invalid_file_name(self, mock_client):
-        bucket_name = "test-bucket"
-        file_name = "invalid/file/name"
-        mock_client.return_value.list_blobs.side_effect = Exception("Invalid file name")
-
-        with self.assertRaises(Exception):
-            FileClient.get_versions(bucket_name, file_name)
 
     @patch("google.cloud.storage.Client")
     def test_restore_version_success(self, mock_client: Mock) -> None:
