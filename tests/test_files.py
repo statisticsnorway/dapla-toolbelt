@@ -26,7 +26,7 @@ class TestFiles(unittest.TestCase):
         )
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_valid_file(self, mock_client) -> None:
+    def test_get_versions_valid_file(self, mock_client: Mock) -> None:
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
 
@@ -54,7 +54,7 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 2
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_empty_bucket(self, mock_client) -> None:
+    def test_get_versions_empty_bucket(self, mock_client: Mock) -> None:
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
         mock_client.return_value.list_blobs.return_value = []
@@ -67,7 +67,7 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 0
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_non_existent_file(self, mock_client) -> None:
+    def test_get_versions_non_existent_file(self, mock_client: Mock) -> None:
         bucket_name = "test-bucket"
         file_name = "non-existent-file.txt"
         mock_client.return_value.list_blobs.return_value = []
