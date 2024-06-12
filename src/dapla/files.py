@@ -75,10 +75,9 @@ class FileClient:
         Returns:
             List of versions of the file.
         """
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-
-        return list(bucket.list_blobs(prefix=file_name, versions=True))
+        return list(
+            storage.Client().list_blobs(bucket_name, prefix=file_name, versions=True)
+        )
 
     @staticmethod
     def restore_version(
