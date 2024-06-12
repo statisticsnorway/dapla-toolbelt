@@ -8,7 +8,7 @@ PATH_WITH_PREFIX = "gs://bucket/path"
 PATH_WITHOUT_PREFIX = "bucket/path"
 
 
-class TestGetVersionsEdgeCases(unittest.TestCase):
+class TestFiles(unittest.TestCase):
 
     def test_ensure_gcs_uri_prefix(self) -> None:
         assert FileClient._ensure_gcs_uri_prefix(PATH_WITH_PREFIX) == PATH_WITH_PREFIX
