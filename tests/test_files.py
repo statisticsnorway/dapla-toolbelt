@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -28,7 +27,10 @@ class TestFiles(unittest.TestCase):
         )
 
     @patch("google.cloud.storage.Client")
-    def test_get_versions_valid_file(self, mock_client: Mock) -> None:
+    @patch("dapla.auth.AuthClient")
+    def test_get_versions_valid_file(
+        self, mock_client: Mock, mock_auth_client: Mock
+    ) -> None:
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
 
@@ -45,8 +47,7 @@ class TestFiles(unittest.TestCase):
             time_deleted=None,
         )
 
-        auth_client = Mock(AuthClient())
-        auth_client.return_value.fetch_google_credentials = Mock(
+        mock_auth_client.return_value.fetch_google_credentials = Mock(
             return_value="test_credentials"
         )
 
