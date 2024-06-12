@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -44,7 +45,10 @@ class TestFiles(unittest.TestCase):
             time_deleted=None,
         )
 
-        AuthClient.fetch_google_credentials = Mock(return_value="test_credentials")
+        auth_client = Mock(AuthClient())
+        auth_client.return_value.fetch_google_credentials = Mock(
+            return_value="test_credentials"
+        )
 
         mock_client.return_value.list_blobs.return_value = [mock_blob1, mock_blob2]
 
@@ -61,7 +65,11 @@ class TestFiles(unittest.TestCase):
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
         mock_client.return_value.list_blobs.return_value = []
-        AuthClient.fetch_google_credentials = Mock(return_value="test_credentials")
+
+        auth_client = Mock(AuthClient())
+        auth_client.return_value.fetch_google_credentials = Mock(
+            return_value="test_credentials"
+        )
 
         files = FileClient.get_versions(bucket_name, file_name)
 
@@ -75,7 +83,11 @@ class TestFiles(unittest.TestCase):
         bucket_name = "test-bucket"
         file_name = "non-existent-file.txt"
         mock_client.return_value.list_blobs.return_value = []
-        AuthClient.fetch_google_credentials = Mock(return_value="test_credentials")
+
+        auth_client = Mock(AuthClient())
+        auth_client.return_value.fetch_google_credentials = Mock(
+            return_value="test_credentials"
+        )
 
         files = FileClient.get_versions(bucket_name, file_name)
 
@@ -90,7 +102,11 @@ class TestFiles(unittest.TestCase):
         mock_source_blob = Mock()
         mock_client.return_value.bucket.return_value = mock_bucket
         mock_bucket.blob.return_value = mock_source_blob
-        AuthClient.fetch_google_credentials = Mock(return_value="test_credentials")
+
+        auth_client = Mock(AuthClient())
+        auth_client.return_value.fetch_google_credentials = Mock(
+            return_value="test_credentials"
+        )
 
         blob = FileClient.restore_version(
             bucket_name="test-bucket",
@@ -117,7 +133,11 @@ class TestFiles(unittest.TestCase):
         mock_source_blob = Mock()
         mock_client.return_value.bucket.return_value = mock_bucket
         mock_bucket.blob.return_value = mock_source_blob
-        AuthClient.fetch_google_credentials = Mock(return_value="test_credentials")
+
+        auth_client = Mock(AuthClient())
+        auth_client.return_value.fetch_google_credentials = Mock(
+            return_value="test_credentials"
+        )
 
         blob = FileClient.restore_version(
             bucket_name="test-bucket",
