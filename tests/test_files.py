@@ -130,3 +130,7 @@ class TestFiles(unittest.TestCase):
             if_generation_match="0987654321",
         )
         assert blob == mock_bucket.copy_blob.return_value
+
+
+if __name__ == "__main__":
+    unittest.main()
