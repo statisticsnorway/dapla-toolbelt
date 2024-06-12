@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from dapla import FileClient, AuthClient
+from dapla import AuthClient
+from dapla import FileClient
 
 PATH_WITH_PREFIX = "gs://bucket/path"
 PATH_WITHOUT_PREFIX = "bucket/path"
