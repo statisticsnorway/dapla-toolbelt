@@ -98,3 +98,55 @@ class TestGetVersionsEdgeCases(unittest.TestCase):
 
         with self.assertRaises(Exception):
             FileClient.get_versions(bucket_name, file_name)
+
+    @patch("google.cloud.storage.Client")
+    def test_restore_version_success(self, mock_client: Mock) -> None:
+        mock_bucket = Mock()
+        mock_source_blob = Mock()
+        mock_client.return_value.bucket.return_value = mock_bucket
+        mock_bucket.blob.return_value = mock_source_blob
+
+        blob = FileClient.restore_version(
+            bucket_name="test-bucket",
+            file_name="test-file.txt",
+            destination_file="restored-file.txt",
+            generation_id="1234567890",
+            destination_generation_id="0",
+        )
+
+        mock_client.return_value.bucket.assert_called_with("test-bucket")
+        mock_bucket.blob.assert_called_with("test-file.txt")
+        mock_bucket.copy_blob.assert_called_with(
+            mock_source_blob,
+            mock_bucket,
+            "restored-file.txt",
+            source_generation="1234567890",
+            if_generation_match="0",
+        )
+        assert blob == mock_bucket.copy_blob.return_value
+
+    @patch("google.cloud.storage.Client")
+    def test_restore_version_existing_live_version(self, mock_client: Mock) -> None:
+        mock_bucket = Mock()
+        mock_source_blob = Mock()
+        mock_client.return_value.bucket.return_value = mock_bucket
+        mock_bucket.blob.return_value = mock_source_blob
+
+        blob = FileClient.restore_version(
+            bucket_name="test-bucket",
+            file_name="test-file.txt",
+            destination_file="restored-file.txt",
+            generation_id="1234567890",
+            destination_generation_id="0987654321",
+        )
+
+        mock_client.return_value.bucket.assert_called_with("test-bucket")
+        mock_bucket.blob.assert_called_with("test-file.txt")
+        mock_bucket.copy_blob.assert_called_with(
+            mock_source_blob,
+            mock_bucket,
+            "restored-file.txt",
+            source_generation="1234567890",
+            if_generation_match="0987654321",
+        )
+        assert blob == mock_bucket.copy_blob.return_value
