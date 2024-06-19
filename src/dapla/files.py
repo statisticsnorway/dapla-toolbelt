@@ -33,7 +33,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
+            gcs_path = gcs_path[len(GS_URI_PREFIX):]
         return gcs_path
 
     @staticmethod
@@ -65,12 +65,12 @@ class FileClient:
         return FileClient.get_gcs_file_system().ls(gcs_path, detail=detail, **kwargs)
 
     @staticmethod
-    def get_versions(bucket_name: str, file_name: str) -> Any:
+    def get_versions(bucket_name: str, file_path: str) -> Any:
         """Get all versions of a file in a bucket.
 
         Args:
             bucket_name: Bucket name where the file is located.
-            file_name: Name of the file.
+            file_path: Path to the file.
 
         Returns:
             List of versions of the file.
@@ -78,46 +78,50 @@ class FileClient:
         storage_client = storage.Client(
             credentials=AuthClient.fetch_google_credentials()
         )
-        bucket = storage_client.bucket(bucket_name)
 
-        return list(bucket.list_blobs(prefix=file_name, versions=True))
+        bucket = storage_client.get_bucket(bucket_name)
+
+        if bucket.versioning_enabled is True:
+            return list(bucket.list_blobs(prefix=file_path, versions=True))
+        else:
+            return list(bucket.list_blobs(prefix=file_path, soft_deleted=True))
 
     @staticmethod
     def restore_version(
-        bucket_name: str,
-        file_name: str,
-        destination_file: str,
-        generation_id: str,
-        destination_generation_id: str,
+        source_bucket_name: str,
+        source_file_name: str,
+        source_generation_id: str,
+        **kwargs: Any
     ) -> Any:
         """Restores deleted/non-current version of file to the live version.
 
         Args:
-            bucket_name: source bucket name where the file is located.
-            file_name: non-current file name.
-            destination_file: name of the file to be restored .
-            generation_id: generation_id of the non-current.
-            destination_generation_id: Incase live version already exists, generation_id of the live version
-
+            source_bucket_name: source bucket name where the file is located.
+            source_file_name: non-current file name.
+            source_generation_id: generation_id of the non-current.
+            kwargs: Additional arguments to pass to the underlying 'copy_blob()' method.
         Returns:
             A new blob with new generation id.
         """
         storage_client = storage.Client(
             credentials=AuthClient.fetch_google_credentials()
         )
-        source_bucket = storage_client.bucket(bucket_name)
-        source_file = source_bucket.blob(file_name)
+        source_bucket = storage_client.get_bucket(source_bucket_name)
+        source_file = source_bucket.blob(source_file_name)
 
-        # Restoring file means the destination bucket will be same as source
-        destination_bucket = storage_client.bucket(bucket_name)
+        if source_bucket.versioning_enabled is True:
+            return source_bucket.copy_blob(
+                blob=source_file,
+                destination_bucket=source_bucket,
+                source_generation=source_generation_id,
+                **kwargs)
 
-        return source_bucket.copy_blob(
-            source_file,
-            destination_bucket,
-            destination_file,
-            source_generation=generation_id,
-            if_generation_match=destination_generation_id,
-        )
+        else:
+            return source_bucket.restore_blob(
+                blob_name=source_file_name,
+                generation=source_generation_id,
+                **kwargs
+            )
 
     @staticmethod
     def cat(gcs_path: str) -> str:
