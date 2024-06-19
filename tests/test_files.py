@@ -128,6 +128,109 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 0
         assert files == []
 
+    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("google.cloud.storage.Client")
+    def test_restore_version_versioning_enabled(
+        self, mock_client: Mock, mock_auth_client: Mock
+    ) -> None:
+        source_bucket_name = "test-bucket"
+        source_file_name = "test-file.txt"
+        source_generation_id = "1234567890"
+        mock_bucket = Mock()
+        mock_bucket.versioning_enabled = True
+        mock_client.return_value.get_bucket.return_value = mock_bucket
+        mock_blob = Mock()
+        mock_bucket.copy_blob.return_value = mock_blob
+
+        result = FileClient.restore_version(
+            source_bucket_name, source_file_name, source_generation_id
+        )
+
+        mock_client.return_value.get_bucket.assert_called_with(source_bucket_name)
+        mock_bucket.copy_blob.assert_called_with(
+            blob=mock_bucket.blob(source_file_name),
+            destination_bucket=mock_bucket,
+            source_generation=source_generation_id,
+        )
+        assert result == mock_blob
+
+    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("google.cloud.storage.Client")
+    def test_restore_version_versioning_disabled(
+        self, mock_client: Mock, mock_auth_client: Mock
+    ) -> None:
+        source_bucket_name = "test-bucket"
+        source_file_name = "test-file.txt"
+        source_generation_id = "1234567890"
+        mock_bucket = Mock()
+        mock_bucket.versioning_enabled = False
+        mock_client.return_value.get_bucket.return_value = mock_bucket
+        mock_blob = Mock()
+        mock_bucket.restore_blob.return_value = mock_blob
+
+        result = FileClient.restore_version(
+            source_bucket_name, source_file_name, source_generation_id
+        )
+
+        mock_client.return_value.get_bucket.assert_called_with(source_bucket_name)
+        mock_bucket.restore_blob.assert_called_with(
+            blob_name=source_file_name, generation=source_generation_id
+        )
+        assert result == mock_blob
+
+    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("google.cloud.storage.Client")
+    def test_restore_version_with_kwargs(
+        self, mock_client: Mock, mock_auth_client: Mock
+    ) -> None:
+        source_bucket_name = "test-bucket"
+        source_file_name = "test-file.txt"
+        source_generation_id = "1234567890"
+        mock_bucket = Mock()
+        mock_bucket.versioning_enabled = True
+        mock_client.return_value.get_bucket.return_value = mock_bucket
+        mock_blob = Mock()
+        mock_bucket.copy_blob.return_value = mock_blob
+        kwargs = {"metadata": {"key": "value"}}
+
+        result = FileClient.restore_version(
+            source_bucket_name, source_file_name, source_generation_id, **kwargs
+        )
+
+        mock_client.return_value.get_bucket.assert_called_with(source_bucket_name)
+        mock_bucket.copy_blob.assert_called_with(
+            blob=mock_bucket.blob(source_file_name),
+            destination_bucket=mock_bucket,
+            source_generation=source_generation_id,
+            **kwargs,
+        )
+        assert result == mock_blob
+
+    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("google.cloud.storage.Client")
+    def test_restore_version_invalid_generation_id(
+        self, mock_client: Mock, mock_auth_client: Mock
+    ) -> None:
+        source_bucket_name = "test-bucket"
+        source_file_name = "test-file.txt"
+        source_generation_id = "invalid"
+        mock_bucket = Mock()
+        mock_bucket.versioning_enabled = True
+        mock_client.return_value.get_bucket.return_value = mock_bucket
+        mock_bucket.copy_blob.side_effect = ValueError("Invalid generation ID")
+
+        with self.assertRaises(ValueError):
+            FileClient.restore_version(
+                source_bucket_name, source_file_name, source_generation_id
+            )
+
+        mock_client.return_value.get_bucket.assert_called_with(source_bucket_name)
+        mock_bucket.copy_blob.assert_called_with(
+            blob=mock_bucket.blob(source_file_name),
+            destination_bucket=mock_bucket,
+            source_generation=source_generation_id,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
