@@ -34,7 +34,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
+            gcs_path = gcs_path[len(GS_URI_PREFIX):]
         return gcs_path
 
     @staticmethod
@@ -140,7 +140,6 @@ class FileClient:
 
         except google.cloud.exceptions.NotFound:
             print("Sorry, mentioned bucket doesn't exist.")
-
 
     @staticmethod
     def cat(gcs_path: str) -> str:
