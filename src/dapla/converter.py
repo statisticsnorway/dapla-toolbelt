@@ -27,7 +27,7 @@ class ConverterClient:
         converter_response = requests.post(
             f"{self.converter_url}/jobs",
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
             data=json.dumps(job_config),
@@ -50,7 +50,7 @@ class ConverterClient:
         converter_response = requests.post(
             f"{self.converter_url}/jobs/simulation",
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
             data=json.dumps(job_config),
@@ -72,7 +72,7 @@ class ConverterClient:
         job_summary = requests.get(
             f"{self.converter_url}/jobs/{job_id}/execution-summary",
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
         )
@@ -93,7 +93,7 @@ class ConverterClient:
         job_status = requests.post(
             f"{self.converter_url}/jobs/{job_id}/stop",
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
         )
@@ -122,7 +122,7 @@ class ConverterClient:
         pseudo_report = requests.get(
             f"{self.converter_url}/jobs/{job_id}/reports/pseudo",
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
         )
@@ -145,7 +145,7 @@ class ConverterClient:
         pseudo_report = requests.get(
             f"{self.converter_url}/jobs/{job_id}/reports/pseudo-schema-hierarchy",
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
         )

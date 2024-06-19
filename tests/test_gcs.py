@@ -28,11 +28,11 @@ def test_gcs_deadlock(mock_fetch_google_token: Mock, mock_is_ready: Mock) -> Non
 
     mock_is_ready.return_value = True  # Mock client ready to not use ADC
     mock_fetch_google_token.side_effect = [
-        ("FakeToken1", utcnow()),  # type: ignore[no-untyped-call]
-        ("FakeToken2", utcnow()),  # type: ignore[no-untyped-call]
-        ("FakeToken3", utcnow()),  # type: ignore[no-untyped-call]
-        ("FakeToken4", utcnow()),  # type: ignore[no-untyped-call]
-        ("FakeToken5Valid", utcnow() + timedelta(seconds=30)),  # type: ignore[no-untyped-call]
+        ("FakeToken1", utcnow()),
+        ("FakeToken2", utcnow()),
+        ("FakeToken3", utcnow()),
+        ("FakeToken4", utcnow()),
+        ("FakeToken5Valid", utcnow() + timedelta(seconds=30)),
     ]
 
     gcs_path = "gs://ssb-dapla-pseudo-data-produkt-test/integration_tests_data/personer.parquet"

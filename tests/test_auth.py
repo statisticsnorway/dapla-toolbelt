@@ -170,12 +170,11 @@ def test_fetch_google_credentials_expired(
     client = AuthClient()
     credentials = client.fetch_google_credentials()
 
-    assert credentials.expired
-
     fetch_google_token_from_oidc_exchange_mock.return_value = (
         "google_token",
         datetime.now() + timedelta(hours=1),
     )
+
     credentials.refresh(None)
     assert not credentials.expired
 

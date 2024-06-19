@@ -17,12 +17,9 @@ def test_initiate_201_response(auth_client_mock: Mock) -> None:
     auth_client_mock.fetch_personal_token.return_value = fake_token
     specification: dict[str, str] = {}
     worker_id = "abcd"
-    collector_response = (
-        """{
-        "workerId": "%s"
-    }"""
-        % worker_id
-    )
+    collector_response = f"""{{
+        "workerId": "{worker_id}"
+    }}"""
     responses.add(
         responses.PUT, collector_test_url, json=collector_response, status=201
     )

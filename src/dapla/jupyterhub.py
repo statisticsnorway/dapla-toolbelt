@@ -23,7 +23,7 @@ def generate_api_token(
         + os.environ["JUPYTERHUB_USER"]
         + "/tokens",
         json=body,
-        headers={"Authorization": "token %s" % hub.api_token},
+        headers={"Authorization": f"token {hub.api_token}"},
         allow_redirects=False,
     )
     hub_response.raise_for_status()

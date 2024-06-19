@@ -42,7 +42,7 @@ class GuardianClient:
         api_response = requests.get(
             api_endpoint_url,
             headers={
-                "Authorization": "Bearer %s" % maskinporten_token,
+                "Authorization": f"Bearer {maskinporten_token}",
                 "Accept": "application/json",
             },
         )
@@ -74,7 +74,7 @@ class GuardianClient:
         guardian_response = requests.post(
             guardian_endpoint,
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
             json=body,
