@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dapla-toolbelt"
-version = "2.0.17"
+version = "2.0.18"
 description = "Dapla Toolbelt"
 authors = ["Dapla Developers <dapla-platform-developers@ssb.no>"]
 license = "MIT"
@@ -16,6 +16,7 @@ Changelog = "https://github.com/statisticsnorway/dapla-toolbelt/releases"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
+numpy = "<2"
 requests = ">=2.27.1"
 pyarrow = ">=14.0.2, <15"                                   # This tight constraint is dependent on fixing https://issues.apache.org/jira/browse/ARROW-7867
 pandas = { version = ">=1.4.2", extras = ["excel", "xml"] }
