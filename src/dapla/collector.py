@@ -27,7 +27,7 @@ class CollectorClient:
         collector_response = requests.put(
             self.collector_url,
             headers={
-                "Authorization": "Bearer %s" % keycloak_token,
+                "Authorization": f"Bearer {keycloak_token}",
                 "Content-type": "application/json",
             },
             data=json.dumps(specification),
@@ -42,7 +42,7 @@ class CollectorClient:
         """Get all running collector tasks."""
         keycloak_token = AuthClient.fetch_personal_token()
         collector_response = requests.get(
-            self.collector_url, headers={"Authorization": "Bearer %s" % keycloak_token}
+            self.collector_url, headers={"Authorization": f"Bearer {keycloak_token}"}
         )
         collector_response.raise_for_status()
         return collector_response
@@ -59,7 +59,7 @@ class CollectorClient:
         keycloak_token = AuthClient.fetch_personal_token()
         collector_response = requests.delete(
             f"{self.collector_url}/{task_id}",
-            headers={"Authorization": "Bearer %s" % keycloak_token},
+            headers={"Authorization": f"Bearer {keycloak_token}"},
         )
         if collector_response.status_code == 400:
             print(
