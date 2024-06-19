@@ -36,8 +36,18 @@ class TestFiles(unittest.TestCase):
         mock_bucket = Mock()
         mock_bucket.versioning_enabled = True
         mock_client.return_value.get_bucket.return_value = mock_bucket
-        mock_blob1 = Mock(name="test-file.txt", generation=1, updated="2023-04-01T00:00:00Z", time_deleted=None)
-        mock_blob2 = Mock(name="test-file.txt", generation=2, updated="2023-04-02T00:00:00Z", time_deleted="2023-04-03T00:00:00Z")
+        mock_blob1 = Mock(
+            name="test-file.txt",
+            generation=1,
+            updated="2023-04-01T00:00:00Z",
+            time_deleted=None,
+        )
+        mock_blob2 = Mock(
+            name="test-file.txt",
+            generation=2,
+            updated="2023-04-02T00:00:00Z",
+            time_deleted="2023-04-03T00:00:00Z",
+        )
         mock_bucket.list_blobs.return_value = [mock_blob1, mock_blob2]
 
         files = FileClient.get_versions(bucket_name, file_name)
@@ -59,14 +69,26 @@ class TestFiles(unittest.TestCase):
 
     @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
-    def test_get_valid_versions_versioning_disabled(self, mock_client: Mock, mock_auth_client: Mock) -> None:
+    def test_get_valid_versions_versioning_disabled(
+        self, mock_client: Mock, mock_auth_client: Mock
+    ) -> None:
         bucket_name = "test-bucket"
         file_name = "test-file.txt"
         mock_bucket = Mock()
         mock_bucket.versioning_enabled = False
         mock_client.return_value.get_bucket.return_value = mock_bucket
-        mock_blob1 = Mock(name="test-file.txt", generation=1, updated="2023-04-01T00:00:00Z", time_deleted=None)
-        mock_blob2 = Mock(name="test-file.txt", generation=2, updated="2023-04-02T00:00:00Z", time_deleted="2023-04-03T00:00:00Z")
+        mock_blob1 = Mock(
+            name="test-file.txt",
+            generation=1,
+            updated="2023-04-01T00:00:00Z",
+            time_deleted=None,
+        )
+        mock_blob2 = Mock(
+            name="test-file.txt",
+            generation=2,
+            updated="2023-04-02T00:00:00Z",
+            time_deleted="2023-04-03T00:00:00Z",
+        )
         mock_bucket.list_blobs.return_value = [mock_blob1, mock_blob2]
 
         files = FileClient.get_versions(bucket_name, file_name)

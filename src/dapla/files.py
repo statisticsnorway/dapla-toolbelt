@@ -33,7 +33,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX):]
+            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
         return gcs_path
 
     @staticmethod
@@ -91,7 +91,7 @@ class FileClient:
         source_bucket_name: str,
         source_file_name: str,
         source_generation_id: str,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Any:
         """Restores deleted/non-current version of file to the live version.
 
@@ -100,6 +100,7 @@ class FileClient:
             source_file_name: non-current file name.
             source_generation_id: generation_id of the non-current.
             kwargs: Additional arguments to pass to the underlying 'copy_blob()' method.
+
         Returns:
             A new blob with new generation id.
         """
@@ -114,13 +115,12 @@ class FileClient:
                 blob=source_file,
                 destination_bucket=source_bucket,
                 source_generation=source_generation_id,
-                **kwargs)
+                **kwargs,
+            )
 
         else:
             return source_bucket.restore_blob(
-                blob_name=source_file_name,
-                generation=source_generation_id,
-                **kwargs
+                blob_name=source_file_name, generation=source_generation_id, **kwargs
             )
 
     @staticmethod
