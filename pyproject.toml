@@ -16,9 +16,8 @@ Changelog = "https://github.com/statisticsnorway/dapla-toolbelt/releases"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-numpy = "<2"
 requests = ">=2.27.1"
-pyarrow = ">=14.0.2, <15"                                   # This tight constraint is dependent on fixing https://issues.apache.org/jira/browse/ARROW-7867
+pyarrow = ">=14.0.2"
 pandas = { version = ">=1.4.2", extras = ["excel", "xml"] }
 gcsfs = ">=2022.7.1"
 ipython = ">=8.10.0"
@@ -79,6 +78,10 @@ warn_unreachable = true
 pretty = true
 show_column_numbers = true
 show_error_context = true
+disallow_untyped_calls = false
+# the above is added due to Google libs being untyped
+# note that this *does* enforce typing functions defined in dapla-toolbelt,
+# but it allows calling untyped functions in a typed context.
 
 [[tool.mypy.overrides]]
 # Allow missing type hints in third-party libraries without type information.
@@ -88,6 +91,7 @@ module = [
     "fsspec.*",
     "responses.*",
     "tomli.*",
+    "google.*",
     "google.cloud.*",
 ]
 ignore_missing_imports = true

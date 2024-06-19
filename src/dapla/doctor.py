@@ -68,11 +68,11 @@ class Doctor:
         print("Checking your Google Cloud Storage credentials...")
 
         # Fetch the google token
-        google_token, _ = AuthClient.fetch_google_credentials().token
+        google_token = AuthClient.fetch_google_credentials().token
 
         try:
             requests.get(
-                "https://oauth2.googleapis.com/tokeninfo?access_token=%s" % google_token
+                f"https://oauth2.googleapis.com/tokeninfo?access_token={google_token}"
             )
         except HttpError as ex:
             if str(ex) == "Invalid Credentials, 401":

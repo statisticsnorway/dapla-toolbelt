@@ -94,7 +94,7 @@ class AuthClient:
         hub = HubAuth()
         response = requests.get(
             os.environ["LOCAL_USER_PATH"],
-            headers={"Authorization": "token %s" % hub.api_token},
+            headers={"Authorization": f"token {hub.api_token}"},
             cert=(hub.certfile, hub.keyfile),
             verify=hub.client_ca,
             allow_redirects=False,
@@ -229,6 +229,6 @@ class AuthError(Exception):
             display(
                 HTML(
                     'Your session has timed out. Please <a href="/hub/login">log in</a> to continue.'
-                )  # type: ignore [no-untyped-call]
+                )
             )
         )
