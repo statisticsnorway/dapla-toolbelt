@@ -167,7 +167,7 @@ class TestFiles(unittest.TestCase):
         bucket_name = "invalid-bucket"
         file_name = "test-file.txt"
         mock_client.return_value.get_bucket.side_effect = (
-            google.cloud.exceptions.NotFound(f'Sorry, mentioned bucket does´t exist. ')
+            google.cloud.exceptions.NotFound("Sorry, mentioned bucket does´t exist. ")
         )
 
         files = FileClient.get_versions(bucket_name, file_name)
@@ -184,7 +184,7 @@ class TestFiles(unittest.TestCase):
         source_file_name = "test-file.txt"
         source_generation_id = "1234567890"
         mock_client.return_value.get_bucket.side_effect = (
-            google.cloud.exceptions.NotFound(f'Sorry, mentioned bucket does´t exist. ')
+            google.cloud.exceptions.NotFound("Sorry, mentioned bucket does´t exist. ")
         )
 
         result = FileClient.restore_version(
@@ -206,7 +206,7 @@ class TestFiles(unittest.TestCase):
         mock_bucket.versioning_enabled = True
         mock_client.return_value.get_bucket.return_value = mock_bucket
         mock_bucket.copy_blob.side_effect = google.cloud.exceptions.NotFound(
-            f'No such object. Check file name or the generation number'
+            "No such object. Check file name or the generation number"
         )
 
         result = FileClient.restore_version(
