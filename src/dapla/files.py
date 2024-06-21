@@ -34,7 +34,7 @@ class FileClient:
     def _remove_gcs_uri_prefix(gcs_path: str) -> str:
         """Remove the 'gs://' prefix from a GCS URI."""
         if gcs_path.startswith(GS_URI_PREFIX):
-            gcs_path = gcs_path[len(GS_URI_PREFIX):]
+            gcs_path = gcs_path[len(GS_URI_PREFIX) :]
         return gcs_path
 
     @staticmethod
@@ -87,7 +87,7 @@ class FileClient:
             else:
                 return list(bucket.list_blobs(prefix=file_path, soft_deleted=True))
         except google.cloud.exceptions.NotFound:
-            print("Sorry, mentioned bucket doesn't exist.")
+            print(f'Bucket "{bucket_name}" does not exist')
             return []
 
     @staticmethod
@@ -97,7 +97,7 @@ class FileClient:
         source_generation_id: str,
         **kwargs: Any,
     ) -> Any:
-        """Restores soft deleted version of file to the live version.
+        """Restores soft deleted/object versionated version of file to the live version.
 
         Args:
             source_bucket_name: source bucket name where the file is located.
@@ -125,7 +125,7 @@ class FileClient:
                         **kwargs,
                     )
                 except google.cloud.exceptions.NotFound as e:
-                    print("No such object. Check file name or the generation number", e)
+                    print(f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}".')
                     return []
             else:
                 try:
@@ -135,11 +135,11 @@ class FileClient:
                         **kwargs,
                     )
                 except google.cloud.exceptions.NotFound as e:
-                    print("No such object. Check file name or the generation number", e)
+                    print(f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}"')
                     return []
 
         except google.cloud.exceptions.NotFound:
-            print("Sorry, mentioned bucket doesn't exist.")
+            print(f'Bucket "{source_bucket_name}" does not exist')
 
     @staticmethod
     def cat(gcs_path: str) -> str:
