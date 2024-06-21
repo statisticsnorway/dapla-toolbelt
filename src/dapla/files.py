@@ -124,8 +124,10 @@ class FileClient:
                         source_generation=source_generation_id,
                         **kwargs,
                     )
-                except google.cloud.exceptions.NotFound as e:
-                    print(f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}".')
+                except google.cloud.exceptions.NotFound:
+                    print(
+                        f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}".'
+                    )
                     return []
             else:
                 try:
@@ -134,8 +136,10 @@ class FileClient:
                         generation=source_generation_id,
                         **kwargs,
                     )
-                except google.cloud.exceptions.NotFound as e:
-                    print(f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}"')
+                except google.cloud.exceptions.NotFound:
+                    print(
+                        f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}"'
+                    )
                     return []
 
         except google.cloud.exceptions.NotFound:
