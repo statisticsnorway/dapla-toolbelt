@@ -192,10 +192,10 @@ class TestFiles(unittest.TestCase):
         mock_client.return_value.get_bucket.assert_called_with("test-bucket")
         mock_bucket.blob.assert_called_with("test-file.txt")
         mock_bucket.restore_blob.assert_called_with(
-            blob_name='test-file.txt',
+            blob_name="test-file.txt",
             generation="1234567890",
-            new_name='restored-file.txt',
-            if_generation_match='0'
+            new_name="restored-file.txt",
+            if_generation_match="0",
         )
         assert blob == mock_bucket.restore_blob.return_value
 
