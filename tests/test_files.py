@@ -167,7 +167,7 @@ class TestFiles(unittest.TestCase):
         bucket_name = "invalid-bucket"
         file_name = "test-file.txt"
         mock_client.return_value.get_bucket.side_effect = (
-            google.cloud.exceptions.NotFound("Sorry, mentioned bucket does´t exist. ")
+            google.cloud.exceptions.NotFound("Sorry, mentioned bucket not found.")
         )
 
         files = FileClient.get_versions(bucket_name, file_name)
@@ -184,7 +184,7 @@ class TestFiles(unittest.TestCase):
         source_file_name = "test-file.txt"
         source_generation_id = "1234567890"
         mock_client.return_value.get_bucket.side_effect = (
-            google.cloud.exceptions.NotFound("Sorry, mentioned bucket does´t exist. ")
+            google.cloud.exceptions.NotFound("Sorry, mentioned bucket not found.")
         )
 
         result = FileClient.restore_version(
