@@ -130,10 +130,11 @@ class AuthClient:
                     token_uri="https://oauth2.googleapis.com/token",
                     refresh_handler=_refresh_handler,
                 )
+                return credentials
             except AuthError as err:
                 err._print_warning()
+                return None
 
-            return credentials
         else:
             # Fetch credentials from Google Cloud SDK
             credentials, _ = google.auth.default()
