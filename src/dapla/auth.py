@@ -51,7 +51,7 @@ class AuthClient:
                 "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
                 "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",
                 "requested_issuer": "google",
-                "client_id": "onyxia",
+                "client_id": "onyxia-api",
             },
         )
         if response.status == 200:
@@ -59,6 +59,8 @@ class AuthClient:
             expiry = datetime.utcnow() + timedelta(seconds=auth_data["expires_in"])
             return auth_data["access_token"], expiry
         else:
+            error = json.loads(response.data)
+            print("Error: ", error["error_description"])
             raise AuthError
 
     @staticmethod
@@ -133,7 +135,7 @@ class AuthClient:
                 return credentials
             except AuthError as err:
                 err._print_warning()
-                return None
+                raise err
 
         else:
             # Fetch credentials from Google Cloud SDK
