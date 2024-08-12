@@ -135,6 +135,7 @@ class AuthClient:
                 return credentials
             except AuthError as err:
                 err._print_warning()
+                return None
 
         else:
             # Fetch credentials from Google Cloud SDK
