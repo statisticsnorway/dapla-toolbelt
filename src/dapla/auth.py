@@ -111,6 +111,9 @@ class AuthClient:
     def fetch_google_credentials() -> Credentials:
         """Fetches the Google credentials for the current user.
 
+        Raises:
+            AuthError: If fails to fetch credentials.
+
         Returns:
             The Google "Credentials" object.
         """
