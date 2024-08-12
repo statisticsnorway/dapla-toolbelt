@@ -66,10 +66,15 @@ def test_fetch_personal_token_error(mock_display: Mock) -> None:
 @responses.activate
 def test_fetch_google_token_exchange_error(mock_display: Mock) -> None:
     mock_response = Mock()
+
+    mock_data = {"error_description": "Invalid token"}
+    mock_json = json.dumps(mock_data)
+    mock_response.data = mock_json
     mock_response.status = 404
 
     mock_google_request = Mock()
     mock_google_request.return_value = mock_response
+
     with mock.patch.object(
         dapla.auth.GoogleAuthRequest,  # type: ignore [attr-defined]
         "__call__",
