@@ -108,7 +108,7 @@ class AuthClient:
             raise AuthError
 
     @staticmethod
-    def fetch_google_credentials() -> Credentials:
+    def fetch_google_credentials() -> Optional[Credentials]:
         """Fetches the Google credentials for the current user.
 
         Returns:
