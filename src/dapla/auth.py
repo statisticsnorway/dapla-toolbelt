@@ -230,6 +230,9 @@ class AuthClient:
     def fetch_google_credentials(force_token_exchange: bool = False) -> Credentials:
         """Fetches the Google credentials for the current user.
 
+        Args:
+            force_token_exchange: Forces authentication by token exchange.
+
         Raises:
             AuthError: If fails to fetch credentials.
 
