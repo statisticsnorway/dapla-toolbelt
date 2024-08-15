@@ -86,7 +86,7 @@ class FileClient:
                 return list(bucket.list_blobs(prefix=file_path, versions=True))
             else:
                 return list(bucket.list_blobs(prefix=file_path, soft_deleted=True))
-        except google.cloud.exceptions.NotFound:
+        except google.api_core.exceptions.NotFound:
             print(f'Bucket "{bucket_name}" does not exist')
             return []
 
@@ -124,7 +124,7 @@ class FileClient:
                         source_generation=source_generation_id,
                         **kwargs,
                     )
-                except google.cloud.exceptions.NotFound:
+                except google.api_core.exceptions.NotFound:
                     print(
                         f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}".'
                     )
@@ -136,13 +136,13 @@ class FileClient:
                         generation=source_generation_id,
                         **kwargs,
                     )
-                except google.cloud.exceptions.NotFound:
+                except google.api_core.exceptions.NotFound:
                     print(
                         f'No such object "{source_file_name}" exist with generationnumber "{source_generation_id}"'
                     )
                     return []
 
-        except google.cloud.exceptions.NotFound:
+        except google.api_core.exceptions.NotFound:
             print(f'Bucket "{source_bucket_name}" does not exist')
 
     @staticmethod
