@@ -193,3 +193,57 @@ def test_credentials_object_refresh_exists() -> None:
     # since it might be removed in a future release and we are overriding the method.
     credentials = Credentials("fake-token")
     assert hasattr(credentials, "refresh")
+
+
+@mock.patch("dapla.auth.AuthClient.fetch_google_token")
+def test_fetch_credentials_force_token_exchange(mock_fetch_google_token: Mock) -> None:
+    mock_fetch_google_token.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials(force_token_exchange=True)
+    mock_fetch_google_token.assert_called_once()
+
+
+@mock.patch.dict("dapla.auth.os.environ", {"DAPLA_SERVICE": "CLOUD_RUN"}, clear=True)
+@mock.patch("dapla.auth.google.auth.default")
+def test_fetch_credentials_cloud_run(mock_google_auth_default: Mock) -> None:
+    mock_google_auth_default.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_google_auth_default.assert_called_once()
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_SERVICE": "JUPYTERLAB", "DAPLA_REGION": "BIP"},
+    clear=True,
+)
+@mock.patch("dapla.auth.AuthClient.fetch_google_token")
+def test_fetch_credentials_jupyterhub_bip(mock_fetch_google_token: Mock) -> None:
+    mock_fetch_google_token.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_fetch_google_token.assert_called_once_with(from_jupyterhub=True)
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_SERVICE": "JUPYTERLAB", "DAPLA_REGION": "ON_PREM"},
+    clear=True,
+)
+@mock.patch("dapla.auth.AuthClient.fetch_google_token")
+def test_fetch_credentials_jupyterhub_on_prem(mock_fetch_google_token: Mock) -> None:
+    mock_fetch_google_token.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_fetch_google_token.assert_called_once_with(from_jupyterhub=True)
+
+
+@mock.patch.dict("dapla.auth.os.environ", {"DAPLA_REGION": "DAPLA_LAB"}, clear=True)
+@mock.patch("dapla.auth.google.auth.default")
+def test_fetch_credentials_dapla_lab(mock_google_auth_default: Mock) -> None:
+    mock_google_auth_default.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_google_auth_default.assert_called_once()
+
+
+@mock.patch("dapla.auth.google.auth.default")
+def test_fetch_credentials_default(mock_google_auth_default: Mock) -> None:
+    mock_google_auth_default.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_google_auth_default.assert_called_once()
