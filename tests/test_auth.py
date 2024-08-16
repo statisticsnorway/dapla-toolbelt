@@ -234,12 +234,26 @@ def test_fetch_credentials_jupyterhub_on_prem(mock_fetch_google_token: Mock) -> 
     mock_fetch_google_token.assert_called_once_with(from_jupyterhub=True)
 
 
-@mock.patch.dict("dapla.auth.os.environ", {"DAPLA_REGION": "DAPLA_LAB"}, clear=True)
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_REGION": "DAPLA_LAB", "ADC_GROUP_PLACEHOLDER": "dummy-group-developers"},
+    clear=True,
+)
 @mock.patch("dapla.auth.google.auth.default")
 def test_fetch_credentials_dapla_lab(mock_google_auth_default: Mock) -> None:
     mock_google_auth_default.return_value = (Mock(), Mock())
     AuthClient.fetch_google_credentials()
     mock_google_auth_default.assert_called_once()
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_REGION": "DAPLA_LAB"},
+    clear=True,
+)
+def test_fetch_credentials_dapla_lab_no_group() -> None:
+    with pytest.raises(AuthError):
+        AuthClient.fetch_google_credentials()
 
 
 @mock.patch("dapla.auth.google.auth.default")
