@@ -272,7 +272,24 @@ class AuthClient:
                         refresh_handler=AuthClient._refresh_handler,
                     )
                 case (_, _, DaplaRegion.DAPLA_LAB):
-                    logger.debug("Auth - Dapla Lab detected, using ADC")
+                    logger.debug("Auth - Dapla Lab detected, attempting to use ADC")
+                    if os.getenv("DAPLA_BUCKETS_PLACEHOLDER_ENV") is None:
+                        raise AuthError(
+                            "Dapla Buckets feature is not enabled. "
+                            "This is necessary in order to access buckets in Dapla Lab. "
+                            "The feature needs to be enabled *before* starting the service. "
+                            """
+                                        In order to enable this feature, do as follows:
+                                            1. Click the "Launch" button on a given service
+                                            2. Click the "<service_name> configurations" drop-down menu
+                                            3. Navigate to the "Buckets" tab
+                                            4. Click 'Enable'
+                                            5. Choose the team whose data you wish to access
+                                        """
+                        )
+                    logger.debug(
+                        "Auth - 'DAPLA_BUCKETS_PLACEHOLDER_ENV' env variable is set, using ADC"
+                    )
                     credentials, _ = google.auth.default()
                 case (_, _, _):
                     logger.debug("Auth - Default authentication used (ADC)")
