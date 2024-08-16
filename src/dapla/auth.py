@@ -273,7 +273,8 @@ class AuthClient:
                     )
                 case (_, _, DaplaRegion.DAPLA_LAB):
                     logger.debug("Auth - Dapla Lab detected, attempting to use ADC")
-                    if os.getenv("DAPLA_BUCKETS_PLACEHOLDER_ENV") is None:
+                    adc_env = os.getenv("ADC_GROUP_PLACEHOLDER")
+                    if adc_env is None:
                         raise AuthError(
                             "Dapla Buckets feature is not enabled. "
                             "This is necessary in order to access buckets in Dapla Lab. "
@@ -288,7 +289,8 @@ class AuthClient:
                             """
                         )
                     logger.debug(
-                        "Auth - 'DAPLA_BUCKETS_PLACEHOLDER_ENV' env variable is set, using ADC"
+                        "Auth - 'ADC_GROUP_PLACEHOLDER' env variable is set, "
+                        f"using ADC as group {adc_env}"
                     )
                     credentials, _ = google.auth.default()
                 case (_, _, _):
