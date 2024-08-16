@@ -276,17 +276,10 @@ class AuthClient:
                     adc_env = os.getenv("ADC_GROUP_PLACEHOLDER")
                     if adc_env is None:
                         raise AuthError(
-                            "Dapla Buckets feature is not enabled. "
+                            "Dapla Group selection feature is not enabled. "
                             "This is necessary in order to access buckets in Dapla Lab. "
-                            "The feature needs to be enabled *before* starting the service. "
-                            """
-                            In order to enable this feature, do as follows:
-                                1. Click the "Launch" button on a given service
-                                2. Click the "<service_name> configurations" drop-down menu
-                                3. Navigate to the "Buckets" tab
-                                4. Click 'Enable'
-                                5. Choose the team whose data you wish to access
-                            """
+                            "The feature needs to be enabled *before* starting the service, "
+                            "and can be done in the 'Buckets' configuration tab"
                         )
                     logger.debug(
                         "Auth - 'ADC_GROUP_PLACEHOLDER' env variable is set, "
