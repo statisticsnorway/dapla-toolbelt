@@ -279,13 +279,13 @@ class AuthClient:
                             "This is necessary in order to access buckets in Dapla Lab. "
                             "The feature needs to be enabled *before* starting the service. "
                             """
-                                        In order to enable this feature, do as follows:
-                                            1. Click the "Launch" button on a given service
-                                            2. Click the "<service_name> configurations" drop-down menu
-                                            3. Navigate to the "Buckets" tab
-                                            4. Click 'Enable'
-                                            5. Choose the team whose data you wish to access
-                                        """
+                            In order to enable this feature, do as follows:
+                                1. Click the "Launch" button on a given service
+                                2. Click the "<service_name> configurations" drop-down menu
+                                3. Navigate to the "Buckets" tab
+                                4. Click 'Enable'
+                                5. Choose the team whose data you wish to access
+                            """
                         )
                     logger.debug(
                         "Auth - 'DAPLA_BUCKETS_PLACEHOLDER_ENV' env variable is set, using ADC"
