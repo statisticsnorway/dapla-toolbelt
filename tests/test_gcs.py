@@ -19,14 +19,16 @@ def test_instance() -> None:
 @pytest.mark.timeout(
     30
 )  # Times the test out after 30 sec, this is will happen if a deadlock happens
-@patch("dapla.auth.AuthClient.is_ready")
+@patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "fake-token"}, clear=True)
+@patch.dict(
+    "dapla.auth.os.environ", {"DAPLA_TOOLBELT_FORCE_TOKEN_EXCHANGE": "1"}, clear=True
+)
 @patch("dapla.auth.AuthClient.fetch_google_token")
-def test_gcs_deadlock(mock_fetch_google_token: Mock, mock_is_ready: Mock) -> None:
+def test_gcs_deadlock(mock_fetch_google_token: Mock) -> None:
     # When overriding the refresh method we experienced a deadlock, resulting in the credentials never being refreshed
     # This test checks that the credentials object is updated on refresh
     # and that it proceeds to the next step when a valid token is provided.
 
-    mock_is_ready.return_value = True  # Mock client ready to not use ADC
     mock_fetch_google_token.side_effect = [
         ("FakeToken1", utcnow()),
         ("FakeToken2", utcnow()),

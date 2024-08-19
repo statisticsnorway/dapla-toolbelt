@@ -18,14 +18,6 @@ auth_endpoint_url = "https://mock-auth.no/user"
 @mock.patch.dict(
     "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
 )
-def test_is_ready() -> None:
-    client = AuthClient()
-    assert client.is_ready()
-
-
-@mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
-)
 @responses.activate
 def test_fetch_personal_token() -> None:
     mock_response = {
@@ -86,10 +78,12 @@ def test_fetch_google_token_exchange_error(mock_display: Mock) -> None:
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
+    "dapla.auth.os.environ",
+    {"LOCAL_USER_PATH": auth_endpoint_url},
+    clear=True,
 )
 @responses.activate
-def test_fetch_google_token_dapla_jupyter() -> None:
+def test_fetch_google_token_bip_jupyter() -> None:
     mock_response = {
         "access_token": "fake_access_token",
         "exchanged_tokens": {
@@ -102,7 +96,7 @@ def test_fetch_google_token_dapla_jupyter() -> None:
     responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
 
     client = AuthClient()
-    token, _ = client.fetch_google_token()
+    token, _ = client.fetch_google_token(from_jupyterhub=True)
 
     assert token == "google_token"
     assert len(responses.calls) == 1
@@ -144,6 +138,11 @@ def test_fetch_google_token_from_exchange_dapla_lab() -> None:
     {"OIDC_TOKEN": "fake-token"},
     clear=True,
 )
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"OIDC_TOKEN_EXCHANGE_URL": "fake-endpoint"},
+    clear=True,
+)
 @responses.activate
 def test_fetch_google_credentials_from_oidc_exchange(
     fetch_google_token_from_oidc_exchange_mock: Mock,
@@ -154,7 +153,7 @@ def test_fetch_google_credentials_from_oidc_exchange(
     )
 
     client = AuthClient()
-    credentials = client.fetch_google_credentials()
+    credentials = client.fetch_google_credentials(force_token_exchange=True)
     credentials.refresh(None)
 
     assert credentials.token == "google_token"
@@ -163,6 +162,11 @@ def test_fetch_google_credentials_from_oidc_exchange(
 
 @mock.patch("dapla.auth.AuthClient.fetch_google_token_from_oidc_exchange")
 @mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "fake-token"}, clear=True)
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"OIDC_TOKEN_EXCHANGE_URL": "fake-endpoint"},
+    clear=True,
+)
 @responses.activate
 def test_fetch_google_credentials_expired(
     fetch_google_token_from_oidc_exchange_mock: Mock,
@@ -173,7 +177,7 @@ def test_fetch_google_credentials_expired(
     )
 
     client = AuthClient()
-    credentials = client.fetch_google_credentials()
+    credentials = client.fetch_google_credentials(force_token_exchange=True)
 
     fetch_google_token_from_oidc_exchange_mock.return_value = (
         "google_token",
@@ -189,3 +193,71 @@ def test_credentials_object_refresh_exists() -> None:
     # since it might be removed in a future release and we are overriding the method.
     credentials = Credentials("fake-token")
     assert hasattr(credentials, "refresh")
+
+
+@mock.patch("dapla.auth.AuthClient.fetch_google_token")
+def test_fetch_credentials_force_token_exchange(mock_fetch_google_token: Mock) -> None:
+    mock_fetch_google_token.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials(force_token_exchange=True)
+    mock_fetch_google_token.assert_called_once()
+
+
+@mock.patch.dict("dapla.auth.os.environ", {"DAPLA_SERVICE": "CLOUD_RUN"}, clear=True)
+@mock.patch("dapla.auth.google.auth.default")
+def test_fetch_credentials_cloud_run(mock_google_auth_default: Mock) -> None:
+    mock_google_auth_default.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_google_auth_default.assert_called_once()
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_SERVICE": "JUPYTERLAB", "DAPLA_REGION": "BIP"},
+    clear=True,
+)
+@mock.patch("dapla.auth.AuthClient.fetch_google_token")
+def test_fetch_credentials_jupyterhub_bip(mock_fetch_google_token: Mock) -> None:
+    mock_fetch_google_token.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_fetch_google_token.assert_called_once_with(from_jupyterhub=True)
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_SERVICE": "JUPYTERLAB", "DAPLA_REGION": "ON_PREM"},
+    clear=True,
+)
+@mock.patch("dapla.auth.AuthClient.fetch_google_token")
+def test_fetch_credentials_jupyterhub_on_prem(mock_fetch_google_token: Mock) -> None:
+    mock_fetch_google_token.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_fetch_google_token.assert_called_once_with(from_jupyterhub=True)
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_REGION": "DAPLA_LAB", "DAPLA_GROUP_CONTEXT": "dummy-group-developers"},
+    clear=True,
+)
+@mock.patch("dapla.auth.google.auth.default")
+def test_fetch_credentials_dapla_lab(mock_google_auth_default: Mock) -> None:
+    mock_google_auth_default.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_google_auth_default.assert_called_once()
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_REGION": "DAPLA_LAB"},
+    clear=True,
+)
+def test_fetch_credentials_dapla_lab_no_group() -> None:
+    with pytest.raises(AuthError):
+        AuthClient.fetch_google_credentials()
+
+
+@mock.patch("dapla.auth.google.auth.default")
+def test_fetch_credentials_default(mock_google_auth_default: Mock) -> None:
+    mock_google_auth_default.return_value = (Mock(), Mock())
+    AuthClient.fetch_google_credentials()
+    mock_google_auth_default.assert_called_once()
