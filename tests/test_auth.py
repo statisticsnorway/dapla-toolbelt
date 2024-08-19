@@ -236,7 +236,7 @@ def test_fetch_credentials_jupyterhub_on_prem(mock_fetch_google_token: Mock) -> 
 
 @mock.patch.dict(
     "dapla.auth.os.environ",
-    {"DAPLA_REGION": "DAPLA_LAB", "ADC_GROUP_PLACEHOLDER": "dummy-group-developers"},
+    {"DAPLA_REGION": "DAPLA_LAB", "DAPLA_GROUP_CONTEXT": "dummy-group-developers"},
     clear=True,
 )
 @mock.patch("dapla.auth.google.auth.default")
