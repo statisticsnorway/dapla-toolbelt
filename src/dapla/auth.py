@@ -273,7 +273,7 @@ class AuthClient:
                     )
                 case (_, _, DaplaRegion.DAPLA_LAB):
                     logger.debug("Auth - Dapla Lab detected, attempting to use ADC")
-                    adc_env = os.getenv("ADC_GROUP_PLACEHOLDER")
+                    adc_env = os.getenv("DAPLA_GROUP_CONTEXT")
                     if adc_env is None:
                         raise AuthError(
                             "Dapla Group selection feature is not enabled. "
@@ -282,7 +282,7 @@ class AuthClient:
                             "and can be done in the 'Buckets' configuration tab"
                         )
                     logger.debug(
-                        "Auth - 'ADC_GROUP_PLACEHOLDER' env variable is set, "
+                        "Auth - 'DAPLA_GROUP_CONTEXT' env variable is set, "
                         f"using ADC as group {adc_env}"
                     )
                     credentials, _ = google.auth.default()
