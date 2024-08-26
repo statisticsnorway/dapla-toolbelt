@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 from enum import Enum
 from functools import lru_cache
+from functools import partial
 from typing import Any
 from typing import Optional
 
@@ -81,12 +82,14 @@ class AuthClient:
 
     @staticmethod
     def _refresh_handler(
-        request: google.auth.transport.Request, scopes: Sequence[str]
+        request: google.auth.transport.Request,
+        scopes: Sequence[str],
+        from_jupyterhub: bool = False,
     ) -> tuple[str, datetime]:
         # We manually override the refresh_handler method with our custom logic for fetching tokens.
         # Previously, we directly overrode the `refresh` method. However, this
         # approach led to deadlock issues in gcsfs/credentials.py's maybe_refresh method.
-        return AuthClient.fetch_google_token()
+        return AuthClient.fetch_google_token(from_jupyterhub=from_jupyterhub)
 
     @staticmethod
     def fetch_google_token_from_oidc_exchange(
@@ -269,7 +272,9 @@ class AuthClient:
                         token=token,
                         expiry=expiry,
                         token_uri="https://oauth2.googleapis.com/token",
-                        refresh_handler=AuthClient._refresh_handler,
+                        refresh_handler=partial(
+                            AuthClient._refresh_handler, from_jupyterhub=True
+                        ),
                     )
                 case (_, _, DaplaRegion.DAPLA_LAB):
                     logger.debug("Auth - Dapla Lab detected, attempting to use ADC")
