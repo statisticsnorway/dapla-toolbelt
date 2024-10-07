@@ -301,14 +301,21 @@ class AuthClient:
         return credentials
 
     @staticmethod
-    def fetch_personal_token() -> str:
-        """Fetches the personal access token for the current user."""
-        try:
-            personal_token = os.environ["OIDC_TOKEN"]
-            return t.cast(str, personal_token)
-        except AuthError as err:
-            err._print_warning()
-            raise err
+    def fetch_personal_token() -> Optional[str]:
+        """
+        Retrieve the OIDC token/Keycloak token from the environment.
+
+        Returns:
+            str: The OIDC token.
+
+        Raises:
+            MissingConfigurationException: If the OIDC_TOKEN environment variable is not set.
+        """
+        keycloak_token = os.getenv("OIDC_TOKEN")
+        if not keycloak_token:
+            raise MissingConfigurationException("OIDC_TOKEN")
+        else:
+            return keycloak_token
 
     @staticmethod
     @lru_cache(maxsize=1)
@@ -336,3 +343,15 @@ class AuthError(Exception):
                 )
             )
         )
+
+
+class MissingConfigurationException(Exception):
+    """Exception raised when a required environment variable or configuration is missing."""
+
+    def __init__(self, variable_name: str):
+        self.variable_name = variable_name
+        self.message = f"Missing required environment variable: {variable_name}"
+        super().__init__(self.message)
+
+    def __str__(self):
+        return f"Configuration error: {self.message}"

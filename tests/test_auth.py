@@ -11,42 +11,32 @@ from google.oauth2.credentials import Credentials
 import dapla
 from dapla.auth import AuthClient
 from dapla.auth import AuthError
+from dapla.auth import MissingConfigurationException
 
 auth_endpoint_url = "https://mock-auth.no/user"
 
 
-@mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
-)
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True)
 @responses.activate
 def test_fetch_personal_token() -> None:
-    mock_response = {
-        "access_token": "fake_access_token",
-    }
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
-
     client = AuthClient()
     token = client.fetch_personal_token()
-
-    assert token == "fake_access_token"
-    assert len(responses.calls) == 1
+    assert token == "dummy_token"
 
 
-@mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
-)
-@mock.patch("dapla.auth.display")
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": ""}, clear=True)
 @responses.activate
-def test_fetch_personal_token_error(mock_display: Mock) -> None:
-    mock_response = {
-        "message": "There was an error",
-    }
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=404)
-    with pytest.raises(AuthError):
-        client = AuthClient()
-        client.fetch_personal_token()
-    # Assert that an error was displayed
-    mock_display.assert_called_once()
+def test_fetch_personal_token_with_invalid_oidc_token() -> None:
+    with pytest.raises(MissingConfigurationException) as exception:
+        AuthClient().fetch_personal_token()
+    assert str(exception.value) == "Configuration error: Missing required environment variable: OIDC_TOKEN"
+
+
+@responses.activate
+def test_fetch_personal_token_when_oidc_token_doesn() -> None:
+    with pytest.raises(MissingConfigurationException) as exception:
+        AuthClient().fetch_personal_token()
+    assert str(exception.value) == "Configuration error: Missing required environment variable: OIDC_TOKEN"
 
 
 @mock.patch.dict(
