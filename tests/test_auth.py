@@ -29,14 +29,20 @@ def test_fetch_personal_token() -> None:
 def test_fetch_personal_token_with_invalid_oidc_token() -> None:
     with pytest.raises(MissingConfigurationException) as exception:
         AuthClient().fetch_personal_token()
-    assert str(exception.value) == "Configuration error: Missing required environment variable: OIDC_TOKEN"
+    assert (
+        str(exception.value)
+        == "Configuration error: Missing required environment variable: OIDC_TOKEN"
+    )
 
 
 @responses.activate
 def test_fetch_personal_token_when_oidc_token_doesn() -> None:
     with pytest.raises(MissingConfigurationException) as exception:
         AuthClient().fetch_personal_token()
-    assert str(exception.value) == "Configuration error: Missing required environment variable: OIDC_TOKEN"
+    assert (
+        str(exception.value)
+        == "Configuration error: Missing required environment variable: OIDC_TOKEN"
+    )
 
 
 @mock.patch.dict(

@@ -302,8 +302,7 @@ class AuthClient:
 
     @staticmethod
     def fetch_personal_token() -> Optional[str]:
-        """
-        Retrieve the OIDC token/Keycloak token from the environment.
+        """Retrieve the OIDC token/Keycloak token from the environment.
 
         Returns:
             str: The OIDC token.
