@@ -347,10 +347,18 @@ class AuthError(Exception):
 class MissingConfigurationException(Exception):
     """Exception raised when a required environment variable or configuration is missing."""
 
-    def __init__(self, variable_name: str):
+    def __init__(self, variable_name: str) -> None:
+        """Initializes a new instance of the MissingConfigurationException class.
+
+        Args:
+            variable_name (str): The name of the missing environment variable or configuration.
+        message (str): The error message to be displayed. Defaults to an empty string.
+
+        """
         self.variable_name = variable_name
         self.message = f"Missing required environment variable: {variable_name}"
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Returns a string representation of the exception."""
         return f"Configuration error: {self.message}"
