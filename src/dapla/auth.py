@@ -301,7 +301,7 @@ class AuthClient:
         return credentials
 
     @staticmethod
-    def fetch_personal_token() -> Optional[str]:
+    def fetch_personal_token() -> str:
         """Retrieve the OIDC token/Keycloak token from the environment.
 
         Returns:
@@ -351,7 +351,7 @@ class MissingConfigurationException(Exception):
         """Initializes a new instance of the MissingConfigurationException class.
 
         Args:
-            variable_name (str): The name of the missing environment variable or configuration.
+        variable_name (str): The name of the missing environment variable or configuration.
         message (str): The error message to be displayed. Defaults to an empty string.
 
         """

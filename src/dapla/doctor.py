@@ -36,15 +36,16 @@ class Doctor:
         print("Checking that your keycloak token is valid...")
         algorithms = ["RS256"]
 
-        keycloak_token = AuthClient.fetch_personal_token()
-
-        claims = jwt.decode(
-            keycloak_token, algorithms=algorithms, options={"verify_signature": False}
-        )
-
-        if not Doctor._is_token_expired(claims):
-            return True
-        else:
+        try:
+            keycloak_token = AuthClient.fetch_personal_token()
+            claims = jwt.decode(
+                keycloak_token,
+                algorithms=algorithms,
+                options={"verify_signature": False},
+            )
+            return not Doctor._is_token_expired(claims)
+        except Exception as e:
+            logger.error(f"Error validating keycloak token: {e!s}")
             return False
 
     @staticmethod
