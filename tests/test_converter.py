@@ -109,6 +109,7 @@ root record required
 """
 
 
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True)
 @mock.patch("dapla.auth.AuthClient")
 @responses.activate
 def test_converter_start_200_response(auth_client_mock: Mock) -> None:
@@ -127,6 +128,7 @@ def test_converter_start_200_response(auth_client_mock: Mock) -> None:
     assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
 
 
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True, )
 @mock.patch("dapla.auth.AuthClient")
 @responses.activate
 def test_converter_start_simulation_200_response(auth_client_mock: Mock) -> None:
@@ -145,6 +147,7 @@ def test_converter_start_simulation_200_response(auth_client_mock: Mock) -> None
     assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
 
 
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True, )
 @mock.patch("dapla.auth.AuthClient")
 @responses.activate
 def test_converter_get_job_summary_200_response(auth_client_mock: Mock) -> None:
@@ -161,6 +164,7 @@ def test_converter_get_job_summary_200_response(auth_client_mock: Mock) -> None:
     assert json.loads(response.json()) == json.loads(sample_response_get_job_summary)
 
 
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True, )
 @mock.patch("dapla.auth.AuthClient")
 @responses.activate
 def test_converter_stop_job_200_response(auth_client_mock: Mock) -> None:
@@ -177,6 +181,7 @@ def test_converter_stop_job_200_response(auth_client_mock: Mock) -> None:
     assert response.status_code == 200
 
 
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True, )
 @mock.patch("dapla.auth.AuthClient")
 @responses.activate
 def test_converter_get_pseudo_report_200_response(auth_client_mock: Mock) -> None:
@@ -193,6 +198,7 @@ def test_converter_get_pseudo_report_200_response(auth_client_mock: Mock) -> Non
     assert json.loads(response.json()) == json.loads(sample_response_pseudo_report)
 
 
+@mock.patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "dummy_token"}, clear=True, )
 @mock.patch("dapla.auth.AuthClient")
 @responses.activate
 def test_converter_get_pseudo_schema_200_response(auth_client_mock: Mock) -> None:
