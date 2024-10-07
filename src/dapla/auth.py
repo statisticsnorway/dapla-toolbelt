@@ -304,7 +304,7 @@ class AuthClient:
     def fetch_personal_token() -> str:
         """Fetches the personal access token for the current user."""
         try:
-            personal_token = AuthClient.fetch_local_user_from_jupyter()["access_token"]
+            personal_token = os.environ["OIDC_TOKEN"]
             return t.cast(str, personal_token)
         except AuthError as err:
             err._print_warning()
