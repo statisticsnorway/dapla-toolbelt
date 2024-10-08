@@ -308,7 +308,7 @@ class AuthClient:
             str: The OIDC token.
 
         Raises:
-            MissingConfigurationException: If the OIDC_TOKEN environment variable is not set.
+            MissingConfigurationException: If the OIDC_TOKEN environment variable is missing or is not set.
         """
         keycloak_token = os.getenv("OIDC_TOKEN")
         if not keycloak_token:
