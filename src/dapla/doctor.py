@@ -8,6 +8,7 @@ import requests
 from gcsfs.retry import HttpError
 
 from dapla.auth import AuthClient
+from dapla.auth import DaplaRegion
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +22,23 @@ class Doctor:
 
     @staticmethod
     def jupyterhub_auth_valid() -> bool:
-        """Checks wheter user is logged in and authenticated to Jupyterhub."""
-        print("Checking authentication to JupyterHub...")
-        try:
-            # Attempt fetching the Jupyterhub user
-            AuthClient.fetch_local_user_from_jupyter()
-        except Exception:
-            return False
-        return True
+        """Checks whether user is logged in and authenticated to Jupyterhub or Dapla Lab."""
+        print("Checking dapla region")
+        if AuthClient.get_dapla_region() == DaplaRegion.DAPLA_LAB:
+            print("Checking authentication to Dapla Lab...")
+            try:
+                AuthClient.fetch_personal_token()
+            except Exception:
+                return False
+            return True
+        else:
+            print("Checking authentication to JupyterHub...")
+            try:
+                # Attempt fetching the Jupyterhub user
+                AuthClient.fetch_local_user_from_jupyter()
+            except Exception:
+                return False
+            return True
 
     @staticmethod
     def keycloak_token_valid() -> bool:

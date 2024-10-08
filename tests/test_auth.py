@@ -11,15 +11,39 @@ from google.oauth2.credentials import Credentials
 import dapla
 from dapla.auth import AuthClient
 from dapla.auth import AuthError
+from dapla.auth import MissingConfigurationException
 
 auth_endpoint_url = "https://mock-auth.no/user"
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ", {"LOCAL_USER_PATH": auth_endpoint_url}, clear=True
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "DAPLA_LAB",
+        "OIDC_TOKEN": "dummy_token",
+    },
+    clear=True,
 )
 @responses.activate
-def test_fetch_personal_token() -> None:
+def test_fetch_personal_token_for_dapla_lab() -> None:
+    client = AuthClient()
+    token = client.fetch_personal_token()
+
+    assert token == "dummy_token"
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
+@responses.activate
+def test_fetch_personal_token_for_jupyterhub() -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
@@ -37,7 +61,7 @@ def test_fetch_personal_token() -> None:
 )
 @mock.patch("dapla.auth.display")
 @responses.activate
-def test_fetch_personal_token_error(mock_display: Mock) -> None:
+def test_fetch_personal_token_error_on_jupyterhub(mock_display: Mock) -> None:
     mock_response = {
         "message": "There was an error",
     }
@@ -47,6 +71,21 @@ def test_fetch_personal_token_error(mock_display: Mock) -> None:
         client.fetch_personal_token()
     # Assert that an error was displayed
     mock_display.assert_called_once()
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {"DAPLA_SERVICE": "JUPYTERLAB", "DAPLA_REGION": "DAPLA_LAB", "OIDC_TOKEN": ""},
+    clear=True,
+)
+@responses.activate
+def test_fetch_personal_token_error_on_dapla_lab() -> None:
+    with pytest.raises(MissingConfigurationException) as exception:
+        AuthClient().fetch_personal_token()
+    assert (
+        str(exception.value)
+        == "Configuration error: Missing required environment variable: OIDC_TOKEN"
+    )
 
 
 @mock.patch.dict(
