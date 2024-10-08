@@ -1,10 +1,11 @@
 import json
 from unittest import mock
-from unittest.mock import Mock
 
 import responses
 
 from dapla.converter import ConverterClient
+
+auth_endpoint_url = "https://mock-auth.no/user"
 
 converter_test_url = "https://mock-converter.no"
 fake_token = "1234567890"
@@ -109,10 +110,17 @@ root record required
 """
 
 
-@mock.patch("dapla.auth.AuthClient")
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "DAPLA_LAB",
+        "OIDC_TOKEN": "dummy_token",
+    },
+    clear=True,
+)
 @responses.activate
-def test_converter_start_200_response(auth_client_mock: Mock) -> None:
-    auth_client_mock.fetch_personal_token.return_value = fake_token
+def test_converter_start_200_response_on_dapla_lab() -> None:
     job_config: dict[str, str] = {}
     responses.add(
         responses.POST,
@@ -127,10 +135,53 @@ def test_converter_start_200_response(auth_client_mock: Mock) -> None:
     assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
 
 
-@mock.patch("dapla.auth.AuthClient")
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
 @responses.activate
-def test_converter_start_simulation_200_response(auth_client_mock: Mock) -> None:
-    auth_client_mock.fetch_personal_token.return_value = fake_token
+def test_converter_start_200_response_on_jupyterhub() -> None:
+    mock_response = {
+        "access_token": "fake_access_token",
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
+
+    job_config: dict[str, str] = {}
+
+    responses.add(
+        responses.POST,
+        "https://mock-converter.no/jobs",
+        json=sample_response_start_job,
+        status=200,
+    )
+    client = ConverterClient(converter_test_url)
+    response = client.start(job_config)
+    json_str = json.loads(response.json())
+
+    assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
+
+
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
+@responses.activate
+def test_converter_start_simulation_200_response() -> None:
+    mock_response = {
+        "access_token": "fake_access_token",
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
+
     job_config: dict[str, str] = {}
     responses.add(
         responses.POST,
@@ -145,10 +196,21 @@ def test_converter_start_simulation_200_response(auth_client_mock: Mock) -> None
     assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
 
 
-@mock.patch("dapla.auth.AuthClient")
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
 @responses.activate
-def test_converter_get_job_summary_200_response(auth_client_mock: Mock) -> None:
-    auth_client_mock.fetch_personal_token.return_value = fake_token
+def test_converter_get_job_summary_200_response() -> None:
+    mock_response = {
+        "access_token": "fake_access_token",
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
     responses.add(
         responses.GET,
         "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/execution-summary",
@@ -161,10 +223,21 @@ def test_converter_get_job_summary_200_response(auth_client_mock: Mock) -> None:
     assert json.loads(response.json()) == json.loads(sample_response_get_job_summary)
 
 
-@mock.patch("dapla.auth.AuthClient")
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
 @responses.activate
-def test_converter_stop_job_200_response(auth_client_mock: Mock) -> None:
-    auth_client_mock.fetch_personal_token.return_value = fake_token
+def test_converter_stop_job_200_response() -> None:
+    mock_response = {
+        "access_token": "fake_access_token",
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
     responses.add(
         responses.POST,
         "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/stop",
@@ -177,10 +250,21 @@ def test_converter_stop_job_200_response(auth_client_mock: Mock) -> None:
     assert response.status_code == 200
 
 
-@mock.patch("dapla.auth.AuthClient")
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
 @responses.activate
-def test_converter_get_pseudo_report_200_response(auth_client_mock: Mock) -> None:
-    auth_client_mock.fetch_personal_token.return_value = fake_token
+def test_converter_get_pseudo_report_200_response() -> None:
+    mock_response = {
+        "access_token": "fake_access_token",
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
     responses.add(
         responses.GET,
         "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/reports/pseudo",
@@ -193,10 +277,21 @@ def test_converter_get_pseudo_report_200_response(auth_client_mock: Mock) -> Non
     assert json.loads(response.json()) == json.loads(sample_response_pseudo_report)
 
 
-@mock.patch("dapla.auth.AuthClient")
+@mock.patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+        "LOCAL_USER_PATH": auth_endpoint_url,
+    },
+    clear=True,
+)
 @responses.activate
-def test_converter_get_pseudo_schema_200_response(auth_client_mock: Mock) -> None:
-    auth_client_mock.fetch_personal_token.return_value = fake_token
+def test_converter_get_pseudo_schema_200_response() -> None:
+    mock_response = {
+        "access_token": "fake_access_token",
+    }
+    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
     responses.add(
         responses.GET,
         "https://mock-converter.no/jobs/01FZWP8R3PHDYD5QQS4CY1RKBW/reports/pseudo-schema-hierarchy",
