@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 from enum import Enum
 from functools import lru_cache
+from functools import partial
 from typing import Any
 from typing import Optional
 
@@ -80,13 +81,21 @@ class AuthClient:
         return env, service, region
 
     @staticmethod
+    def get_dapla_region() -> Optional[DaplaRegion]:
+        """Checks if the current Dapla Region is Dapla Lab."""
+        env, service, region = AuthClient._get_current_dapla_metadata()
+        return region
+
+    @staticmethod
     def _refresh_handler(
-        request: google.auth.transport.Request, scopes: Sequence[str]
+        request: google.auth.transport.Request,
+        scopes: Sequence[str],
+        from_jupyterhub: bool = False,
     ) -> tuple[str, datetime]:
         # We manually override the refresh_handler method with our custom logic for fetching tokens.
         # Previously, we directly overrode the `refresh` method. However, this
         # approach led to deadlock issues in gcsfs/credentials.py's maybe_refresh method.
-        return AuthClient.fetch_google_token()
+        return AuthClient.fetch_google_token(from_jupyterhub=from_jupyterhub)
 
     @staticmethod
     def fetch_google_token_from_oidc_exchange(
@@ -269,7 +278,9 @@ class AuthClient:
                         token=token,
                         expiry=expiry,
                         token_uri="https://oauth2.googleapis.com/token",
-                        refresh_handler=AuthClient._refresh_handler,
+                        refresh_handler=partial(
+                            AuthClient._refresh_handler, from_jupyterhub=True
+                        ),
                     )
                 case (_, _, DaplaRegion.DAPLA_LAB):
                     logger.debug("Auth - Dapla Lab detected, attempting to use ADC")
@@ -297,13 +308,40 @@ class AuthClient:
 
     @staticmethod
     def fetch_personal_token() -> str:
-        """Fetches the personal access token for the current user."""
-        try:
-            personal_token = AuthClient.fetch_local_user_from_jupyter()["access_token"]
-            return t.cast(str, personal_token)
-        except AuthError as err:
-            err._print_warning()
-            raise err
+        """If Dapla Region is Dapla Lab, retrieve the OIDC token/Keycloak token from the environment.
+
+        Returns:
+            str: The OIDC token.
+
+        Raises:
+            MissingConfigurationException: If the OIDC_TOKEN environment variable is missing or is not set.
+
+        If Dapla Region is BIP, retrieve the Keycloak token jupyterhub.
+
+        Returns:
+            str: personal/keycloak token.
+
+        Raises:
+            AuthError: Handles AuthError.
+        """
+        env, service, region = AuthClient._get_current_dapla_metadata()
+        if region == DaplaRegion.DAPLA_LAB:
+            logger.debug("Auth - Dapla Lab detected, using OIDC_TOKEN")
+            keycloak_token = os.getenv("OIDC_TOKEN")
+            if not keycloak_token:
+                raise MissingConfigurationException("OIDC_TOKEN")
+            else:
+                return keycloak_token
+        else:
+            logger.debug("Auth - BIP detected, using jupyterhub personal token")
+            try:
+                personal_token = AuthClient.fetch_local_user_from_jupyter()[
+                    "access_token"
+                ]
+                return t.cast(str, personal_token)
+            except AuthError as err:
+                err._print_warning()
+                raise err
 
     @staticmethod
     @lru_cache(maxsize=1)
@@ -331,3 +369,22 @@ class AuthError(Exception):
                 )
             )
         )
+
+
+class MissingConfigurationException(Exception):
+    """Exception raised when a required environment variable or configuration is missing."""
+
+    def __init__(self, variable_name: str) -> None:
+        """Initializes a new instance of the MissingConfigurationException class.
+
+        Args:
+        variable_name (str): The name of the missing environment variable or configuration.
+        message (str): The error message to be displayed. Defaults to an empty string.
+        """
+        self.variable_name = variable_name
+        self.message = f"Missing required environment variable: {variable_name}"
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        """Returns a string representation of the exception."""
+        return f"Configuration error: {self.message}"
