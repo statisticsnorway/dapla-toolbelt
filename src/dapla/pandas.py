@@ -91,7 +91,7 @@ def read_pandas(
                 gcs_path = FileClient._remove_gcs_uri_prefix(gcs_path)
 
             parquet_ds = pq.ParquetDataset(
-                gcs_path,
+                gcs_path,  # type: ignore [arg-type]
                 filesystem=fs,
                 filters=filters,  # type: ignore [arg-type]
             )  # Stubs show the incorrect type -
