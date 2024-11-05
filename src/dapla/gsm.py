@@ -1,6 +1,6 @@
 from typing import Optional
 
-from google.cloud import secretmanager
+from google.cloud.secretmanager import SecretManagerServiceClient
 
 from .auth import AuthClient
 
@@ -21,7 +21,7 @@ def get_secret_version(
     Returns:
         str: The payload of the secret version as a UTF-8 decoded string.
     """
-    client = secretmanager.SecretManagerServiceClient(
+    client = SecretManagerServiceClient(
         credentials=AuthClient.fetch_google_credentials()
     )
     secret_name = f"projects/{project_id}/secrets/{shortname}/versions/{version_id}"
