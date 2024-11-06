@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dapla-toolbelt"
-version = "3.0.2"
+version = "3.1.2"
 description = "Dapla Toolbelt"
 authors = ["Dapla Developers <dapla-platform-developers@ssb.no>"]
 license = "MIT"
@@ -27,6 +27,8 @@ pyjwt = ">=2.6.0"
 tomli = ">=1.1.0"
 google-cloud-pubsub = ">=2.14.1"
 fsspec = ">=2023.12.2"
+google-cloud-secret-manager = "^2.21.0"
+pytest-mock = "^3.14.0"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"

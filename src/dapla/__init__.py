@@ -13,6 +13,7 @@ from .converter import ConverterClient
 from .doctor import Doctor
 from .files import FileClient
 from .git import repo_root_dir
+from .gsm import get_secret_version
 from .guardian import GuardianClient
 from .jupyterhub import generate_api_token
 from .pandas import read_pandas
@@ -33,6 +34,7 @@ __all__ = [
     "read_pandas",
     "write_pandas",
     "trigger_source_data_processing",
+    "get_secret_version",
 ]
 
 
