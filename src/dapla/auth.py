@@ -5,7 +5,6 @@ import typing as t
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
-from enum import Enum
 from functools import lru_cache
 from functools import partial
 from typing import Any
@@ -19,6 +18,10 @@ from IPython.display import HTML
 from IPython.display import display
 from jupyterhub.services.auth import HubAuth
 
+from dapla.const import DaplaEnvironment
+from dapla.const import DaplaRegion
+from dapla.const import DaplaService
+
 logger = logging.getLogger(__name__)
 
 # Refresh window was modified in: https://github.com/googleapis/google-auth-library-python/commit/c6af1d692b43833baca978948376739547cf685a
@@ -27,33 +30,6 @@ logger = logging.getLogger(__name__)
 # A permanent fix would be to supply credentials with a refresh endpoint
 # that allways returns a token that is valid for more than 3m 45s.
 google.auth._helpers.REFRESH_THRESHOLD = timedelta(seconds=20)
-
-
-class DaplaEnvironment(Enum):
-    """Represents the 'DAPLA_ENVIRONMENT' environment variable."""
-
-    DEV = "DEV"
-    STAGING = "STAGING"
-    TEST = "TEST"
-    PROD = "PROD"
-
-
-class DaplaService(Enum):
-    """Represents the 'DAPLA_SERVICE' environment variable."""
-
-    JUPYTERLAB = "JUPYTERLAB"
-    VS_CODE = "VS_CODE"
-    R_STUDIO = "R_STUDIO"
-    CLOUD_RUN = "CLOUD_RUN"
-
-
-class DaplaRegion(Enum):
-    """Represents the 'DAPLA_REGION' environment variable."""
-
-    ON_PREM = "ON_PREM"
-    DAPLA_LAB = "DAPLA_LAB"
-    BIP = "BIP"
-    CLOUD_RUN = "CLOUD_RUN"
 
 
 class AuthClient:
@@ -347,6 +323,9 @@ class AuthClient:
     @lru_cache(maxsize=1)
     def fetch_email_from_credentials() -> Optional[str]:
         """Retrieves an e-mail based on current Google Credentials. Potentially makes a Google API call."""
+        if os.getenv("DAPLA_REGION") == str(DaplaRegion.DAPLA_LAB):
+            return os.getenv("DAPLA_USER")
+
         credentials = AuthClient.fetch_google_credentials()
         response = requests.get(
             url=f"https://oauth2.googleapis.com/tokeninfo?access_token={credentials.token}"
