@@ -8,7 +8,7 @@ import requests
 from gcsfs.retry import HttpError
 
 from dapla.auth import AuthClient
-from dapla.auth import DaplaRegion
+from dapla.const import DaplaRegion
 
 logger = logging.getLogger(__name__)
 
