@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 from google.api_core.exceptions import NotFound
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import pubsub_v1
+from google.cloud.pubsub_v1.publisher.futures import Future
 
 import dapla.pubsub
 from dapla.pubsub import _extract_env
@@ -55,9 +55,7 @@ class TestPubSub(unittest.TestCase):
             )
 
     def test_get_callback(self) -> None:
-        publish_future = MagicMock(
-            side_effect=pubsub_v1.publisher.futures.Future.result  # type: ignore[attr-defined]
-        )
+        publish_future = MagicMock(side_effect=Future.result)
         # Create a callback function using the _get_callback helper function
         callback = _get_callback(publish_future, "blob_name", timeout=1)
 
