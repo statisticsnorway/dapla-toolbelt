@@ -17,7 +17,7 @@ def test_call_api(auth_client_mock: Mock) -> None:
     fake_maskinporten_token = "maskinporten_access_token"
     guardian_response = {"accessToken": fake_maskinporten_token}
     responses.add(
-        responses.POST, guardian_endpoint_url, json=guardian_response, status=200
+        responses.POST, json=guardian_response, status=200
     )
     api_response = {"data": "some interesting data"}
     responses.add(responses.GET, target_endpoint_url, json=api_response, status=200)
@@ -41,8 +41,7 @@ def test_get_guardian_token() -> None:
 
     client = GuardianClient()
     body = {"maskinportenClientId": "fake_client_id", "scopes": "dummy:scope"}
-    response = client.get_guardian_token(
-        guardian_endpoint_url, "fake_auth_token", body=body
+    response = client.get_guardian_token("fake_auth_token", body=body
     )
 
     assert response == fake_maskinporten_token
