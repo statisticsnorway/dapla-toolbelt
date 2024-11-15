@@ -5,17 +5,30 @@ from typing import Optional
 import requests
 
 from .auth import AuthClient
+from .const import DaplaEnvironment
 
 
 class GuardianClient:
     """Client for interacting with the Maskinporten Guardian."""
 
     @staticmethod
+    def _get_guardian_endpoint() -> str:
+        """Get the appropriate Maskinporten Guardian endpoint URL based on the current DAPLA environment.
+
+        Returns:
+            The Maskinporten Guardian endpoint URL.
+        """
+        env, _, _ = AuthClient._get_current_dapla_metadata()
+        if env == DaplaEnvironment.PROD:
+            return "https://guardian.intern.ssb.no"
+        return "https://guardian.intern.test.ssb.no"
+
+    @staticmethod
     def call_api(
         api_endpoint_url: str,
         maskinporten_client_id: str,
         scopes: str,
-        guardian_endpoint_url: str = "http://maskinporten-guardian.dapla.svc.cluster.local/maskinporten/access-token",
+        guardian_endpoint_url: str = None,
         keycloak_token: Optional[str] = None,
     ) -> Any:
         """Call an external API using Maskinporten Guardian.
@@ -33,6 +46,9 @@ class GuardianClient:
         Returns:
             The endpoint json response
         """
+        if guardian_endpoint_url is None:
+            guardian_endpoint_url = GuardianClient._get_guardian_endpoint()
+
         if keycloak_token is None:
             keycloak_token = AuthClient.fetch_personal_token()
         body = {"maskinportenClientId": maskinporten_client_id, "scopes": scopes}
