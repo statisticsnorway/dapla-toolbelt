@@ -36,7 +36,6 @@ class GuardianClient:
             api_endpoint_url: URL to the target API
             maskinporten_client_id: the Maskinporten client id
             scopes: the Maskinporten scopes
-            guardian_endpoint_url: URL to the Maskinporten Guardian
             keycloak_token: the user's personal Keycloak token. Automatic fetch attempt will be made if left empty.
 
         Raises:
