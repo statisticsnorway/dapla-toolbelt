@@ -147,6 +147,7 @@ def mypy(session: Session) -> None:
     session.install(
         "mypy",
         "pytest",
+        "pytest-mock",
         "types-requests",
         "pyarrow-stubs",
         "google-auth-stubs",
@@ -165,7 +166,7 @@ def mypy(session: Session) -> None:
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
-    session.install("coverage[toml]", "pytest", "pygments", "responses")
+    session.install("coverage[toml]", "pytest", "pytest-mock", "pygments", "responses")
     try:
         session.run(
             "coverage",
@@ -199,7 +200,7 @@ def coverage(session: Session) -> None:
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
-    session.install("pytest", "typeguard", "pygments", "responses")
+    session.install("pytest", "pytest-mock", "typeguard", "pygments", "responses")
     session.run(
         "pytest",
         f"--typeguard-packages={package} --ignore=tests/test_auth.py",
