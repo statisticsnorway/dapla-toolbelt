@@ -1,3 +1,5 @@
+import unittest
+
 import pytest
 import responses
 
@@ -9,50 +11,44 @@ target_endpoint_url = "https://mock-target.no/get-data"
 guardian_endpoint_url = "https://mock-guardian.no/access-token"
 fake_auth_token = "123456789"
 
+class TestGuardian(unittest.TestCase):
+    @responses.activate
+    def test_call_api(self) -> None:
+        fake_keycloak_token = "keycloak_access_token"
+        fake_maskinporten_token = "maskinporten_access_token"
+        guardian_response = {"accessToken": fake_maskinporten_token}
+        responses.add( responses.POST, guardian_endpoint_url, json=guardian_response, status=200)
+        api_response = {"data": "some interesting data"}
+        responses.add(responses.GET, target_endpoint_url, json=api_response, status=200)
 
-@responses.activate
-def test_call_api() -> None:
-    fake_keycloak_token = "keycloak_access_token"
-    fake_maskinporten_token = "maskinporten_access_token"
-    guardian_response = {"accessToken": fake_maskinporten_token}
-    responses.add(
-        responses.POST, guardian_endpoint_url, json=guardian_response, status=200
-    )
-    api_response = {"data": "some interesting data"}
-    responses.add(responses.GET, target_endpoint_url, json=api_response, status=200)
+        client = GuardianClient()
+        response = client.call_api(target_endpoint_url,"fake_client_id",
+                                   "dummy:scope",
+                                   guardian_endpoint_url,
+                                   fake_keycloak_token)
+        assert response["data"] == "some interesting data"
+        assert len(responses.calls) == 2
 
-    client = GuardianClient()
-    response = client.call_api(
-        target_endpoint_url,
-        "fake_client_id",
-        "dummy:scope",
-        guardian_endpoint_url,
-        fake_keycloak_token,
-    )
+    @responses.activate
+    def test_get_guardian_token(self) -> None:
+        fake_maskinporten_token = "maskinporten_access_token"
+        guardian_response = {"accessToken": fake_maskinporten_token}
+        responses.add(
+            responses.POST, guardian_endpoint_url, json=guardian_response, status=200
+        )
 
-    assert response["data"] == "some interesting data"
-    assert len(responses.calls) == 2
+        client = GuardianClient()
+        body = {"maskinportenClientId": "fake_client_id", "scopes": "dummy:scope"}
+        response = client.get_guardian_token(
+            guardian_endpoint_url, "fake_auth_token", body=body
+        )
 
-
-@responses.activate
-def test_get_guardian_token() -> None:
-    fake_maskinporten_token = "maskinporten_access_token"
-    guardian_response = {"accessToken": fake_maskinporten_token}
-    responses.add(
-        responses.POST, guardian_endpoint_url, json=guardian_response, status=200
-    )
-
-    client = GuardianClient()
-    body = {"maskinportenClientId": "fake_client_id", "scopes": "dummy:scope"}
-    response = client.get_guardian_token(
-        guardian_endpoint_url, "fake_auth_token", body=body
-    )
-
-    assert response == fake_maskinporten_token
-    assert len(responses.calls) == 1
-
+        assert response == fake_maskinporten_token
+        assert len(responses.calls) == 1
 
 def test_get_guardian_url_empty_environment(monkeypatch):
+    """Test that an error is raised when the DAPLA_ENVIRONMENT environment variable is not set."""
+
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "")
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
@@ -91,7 +87,7 @@ def test_get_guardian_url_none_environment(monkeypatch):
     assert str(exc_info.value) == "None is not a valid DaplaEnvironment"
 
 
-def test_get_guardian_url_case_sensitive(monkeypatch):
+def test_get_guardian_url_case_sensitive(self, monkeypatch):
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "test")
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
@@ -103,3 +99,4 @@ def test_get_guardian_url_whitespace_environment(monkeypatch):
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
     assert str(exc_info.value) == "'  TEST  ' is not a valid DaplaEnvironment"
+
