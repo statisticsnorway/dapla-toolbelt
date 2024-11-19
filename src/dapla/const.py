@@ -26,3 +26,11 @@ class DaplaRegion(Enum):
     DAPLA_LAB = "DAPLA_LAB"
     BIP = "BIP"
     CLOUD_RUN = "CLOUD_RUN"
+
+
+GUARDIAN_URLS = {
+    DaplaEnvironment.DEV: "https://guardian.intern.test.ssb.no/maskinporten/access-token",
+    DaplaEnvironment.STAGING: "https://guardian.intern.test.ssb.no/maskinporten/access-token",
+    DaplaEnvironment.TEST: "https://guardian.intern.test.ssb.no/maskinporten/access-token",
+    DaplaEnvironment.PROD: "https://guardian.intern.ssb.no/maskinporten/access-token"
+}
