@@ -1,10 +1,8 @@
-from unittest import mock
-from unittest.mock import Mock
 import pytest
-
 import responses
 
-from dapla.const import DaplaEnvironment, GUARDIAN_URLS
+from dapla.const import GUARDIAN_URLS
+from dapla.const import DaplaEnvironment
 from dapla.guardian import GuardianClient
 
 target_endpoint_url = "https://mock-target.no/get-data"
@@ -25,7 +23,11 @@ def test_call_api() -> None:
 
     client = GuardianClient()
     response = client.call_api(
-        target_endpoint_url, "fake_client_id", "dummy:scope", guardian_endpoint_url, fake_keycloak_token
+        target_endpoint_url,
+        "fake_client_id",
+        "dummy:scope",
+        guardian_endpoint_url,
+        fake_keycloak_token,
     )
 
     assert response["data"] == "some interesting data"
@@ -86,7 +88,8 @@ def test_get_guardian_url_none_environment(monkeypatch):
     monkeypatch.delenv("DAPLA_ENVIRONMENT", raising=False)
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
-    assert str(exc_info.value) == 'None is not a valid DaplaEnvironment'
+    assert str(exc_info.value) == "None is not a valid DaplaEnvironment"
+
 
 def test_get_guardian_url_case_sensitive(monkeypatch):
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "test")
@@ -94,9 +97,9 @@ def test_get_guardian_url_case_sensitive(monkeypatch):
         GuardianClient.get_guardian_url()
     assert str(exc_info.value) == "'test' is not a valid DaplaEnvironment"
 
+
 def test_get_guardian_url_whitespace_environment(monkeypatch):
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "  TEST  ")
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
     assert str(exc_info.value) == "'  TEST  ' is not a valid DaplaEnvironment"
-

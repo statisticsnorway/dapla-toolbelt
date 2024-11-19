@@ -32,5 +32,5 @@ GUARDIAN_URLS = {
     DaplaEnvironment.DEV: "https://guardian.intern.test.ssb.no/maskinporten/access-token",
     DaplaEnvironment.STAGING: "https://guardian.intern.test.ssb.no/maskinporten/access-token",
     DaplaEnvironment.TEST: "https://guardian.intern.test.ssb.no/maskinporten/access-token",
-    DaplaEnvironment.PROD: "https://guardian.intern.ssb.no/maskinporten/access-token"
+    DaplaEnvironment.PROD: "https://guardian.intern.ssb.no/maskinporten/access-token",
 }

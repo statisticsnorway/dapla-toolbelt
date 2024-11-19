@@ -6,7 +6,8 @@ from typing import Optional
 import requests
 
 from dapla import AuthClient
-from dapla.const import DaplaEnvironment, GUARDIAN_URLS
+from dapla.const import GUARDIAN_URLS
+from dapla.const import DaplaEnvironment
 
 
 class GuardianClient:
