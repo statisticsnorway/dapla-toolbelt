@@ -14,19 +14,20 @@ class GuardianClient:
     """Client for interacting with the Maskinporten Guardian."""
 
     @staticmethod
-    def get_guardian_url():
+    def get_guardian_url() -> str:
+        """Get the Guardian URL for the current environment."""
         env = DaplaEnvironment(os.getenv("DAPLA_ENVIRONMENT"))
         try:
             return GUARDIAN_URLS[env]
-        except KeyError:
-            raise ValueError(f"Unknown environment: {env}")
+        except KeyError as err:
+            raise ValueError(f"Unknown environment: {env}") from err
 
     @staticmethod
     def call_api(
         api_endpoint_url: str,
         maskinporten_client_id: str,
         scopes: str,
-        guardian_endpoint_url: str = None,
+        guardian_endpoint_url: Optional[str] = None,
         keycloak_token: Optional[str] = None,
     ) -> Any:
         """Call an external API using Maskinporten Guardian.
