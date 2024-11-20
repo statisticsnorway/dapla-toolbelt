@@ -98,7 +98,9 @@ def test_get_guardian_url_case_sensitive(monkeypatch: pytest.MonkeyPatch) -> Non
     assert str(exc_info.value) == "'test' is not a valid DaplaEnvironment"
 
 
-def test_get_guardian_url_whitespace_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_guardian_url_whitespace_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "  TEST  ")
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
