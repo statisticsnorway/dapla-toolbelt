@@ -51,7 +51,7 @@ def test_get_guardian_token() -> None:
     assert len(responses.calls) == 1
 
 
-def test_get_guardian_url_valid_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_guardian_url_invalid_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that an error is raised when the DAPLA_ENVIRONMENT environment variable is not set."""
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "")
     with pytest.raises(ValueError) as exc_info:
