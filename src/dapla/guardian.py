@@ -1,21 +1,33 @@
+import os
 import typing as t
 from typing import Any
 from typing import Optional
 
 import requests
 
-from .auth import AuthClient
+from dapla import AuthClient
+from dapla.const import GUARDIAN_URLS
+from dapla.const import DaplaEnvironment
 
 
 class GuardianClient:
     """Client for interacting with the Maskinporten Guardian."""
 
     @staticmethod
+    def get_guardian_url() -> str:
+        """Get the Guardian URL for the current environment."""
+        env = DaplaEnvironment(os.getenv("DAPLA_ENVIRONMENT"))
+        try:
+            return GUARDIAN_URLS[env]
+        except KeyError as err:
+            raise ValueError(f"Unknown environment: {env}") from err
+
+    @staticmethod
     def call_api(
         api_endpoint_url: str,
         maskinporten_client_id: str,
         scopes: str,
-        guardian_endpoint_url: str = "http://maskinporten-guardian.dapla.svc.cluster.local/maskinporten/access-token",
+        guardian_endpoint_url: Optional[str] = None,
         keycloak_token: Optional[str] = None,
     ) -> Any:
         """Call an external API using Maskinporten Guardian.
@@ -33,6 +45,9 @@ class GuardianClient:
         Returns:
             The endpoint json response
         """
+        if guardian_endpoint_url is None:
+            guardian_endpoint_url = GuardianClient.get_guardian_url()
+
         if keycloak_token is None:
             keycloak_token = AuthClient.fetch_personal_token()
         body = {"maskinportenClientId": maskinporten_client_id, "scopes": scopes}
