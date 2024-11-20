@@ -1,5 +1,3 @@
-import unittest
-
 import pytest
 import responses
 
@@ -10,7 +8,6 @@ from dapla.guardian import GuardianClient
 target_endpoint_url = "https://mock-target.no/get-data"
 guardian_endpoint_url = "https://mock-guardian.no/access-token"
 fake_auth_token = "123456789"
-
 
 
 @responses.activate
@@ -34,6 +31,7 @@ def test_call_api() -> None:
     )
     assert response["data"] == "some interesting data"
     assert len(responses.calls) == 2
+
 
 @responses.activate
 def test_get_guardian_token() -> None:
