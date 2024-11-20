@@ -1,7 +1,0 @@
-diff a/.github/workflows/tests.yml b/.github/workflows/tests.yml	(rejected hunks)
-@@ -167,4 +168,4 @@ jobs:
-           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-         # No need to run SonarCloud analysis if dependabot update or token not defined
-         if: env.SONAR_TOKEN != '' && (github.actor != 'dependabot[bot]')
--        uses: SonarSource/sonarcloud-github-action@v2.1.1
-+        uses: SonarSource/sonarcloud-github-action@v3.0.0
