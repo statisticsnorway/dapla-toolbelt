@@ -52,7 +52,6 @@ pytest = ">=7.1.2"
 responses = ">=0.24.0"
 types-requests = ">=2.28.11"
 pyarrow-stubs = ">=10.0.1.7"
-google-auth-stubs = ">=0.2.0"                             # Not maintained by Google, should change if Google releases their own stubs
 pandas-stubs = ">=2.0.0"
 pytest-timeout = ">=2.3.1"
 pytest-mock = ">=3.14.0"
