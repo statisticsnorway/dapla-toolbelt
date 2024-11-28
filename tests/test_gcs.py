@@ -19,6 +19,14 @@ def test_instance() -> None:
 @pytest.mark.timeout(
     30
 )  # Times the test out after 30 sec, this is will happen if a deadlock happens
+@patch.dict(
+    "dapla.auth.os.environ",
+    {
+        "DAPLA_SERVICE": "JUPYTERLAB",
+        "DAPLA_REGION": "BIP",
+    },
+    clear=True,
+)
 @patch.dict("dapla.auth.os.environ", {"OIDC_TOKEN": "fake-token"}, clear=True)
 @patch.dict(
     "dapla.auth.os.environ", {"DAPLA_TOOLBELT_FORCE_TOKEN_EXCHANGE": "1"}, clear=True
