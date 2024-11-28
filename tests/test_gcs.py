@@ -50,7 +50,9 @@ def test_gcs_deadlock(mock_fetch_google_token: Mock) -> None:
         HttpError
     ) as exc_info:  # Since we supply invalid credentials an error should be raised
         dp.read_pandas(gcs_path)
-    assert "Invalid Credentials" in str(exc_info.value)
+    assert "Anonymous caller does not have storage.objects.get access" in str(
+        exc_info.value
+    )
     assert (
         mock_fetch_google_token.call_count == 5
     )  # mock_fetch_google_token is called as part of refresh
