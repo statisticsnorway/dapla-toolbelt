@@ -1,9 +1,12 @@
+import os
 import typing as t
 from typing import Any
 from typing import Optional
 
 import gcsfs
 from google.oauth2.credentials import Credentials
+
+from dapla.const import DaplaRegion
 
 
 class GCSFileSystem(gcsfs.GCSFileSystem):  # type: ignore [misc]
@@ -13,6 +16,13 @@ class GCSFileSystem(gcsfs.GCSFileSystem):  # type: ignore [misc]
         self, token: Optional[dict[str, str] | str | Credentials] = None, **kwargs: Any
     ) -> None:
         """Initialize GCSFileSystem."""
+        if os.getenv("DAPLA_REGION") == str(DaplaRegion.DAPLA_LAB) or os.getenv(
+            "DAPLA_REGION"
+        ) == str(DaplaRegion.CLOUD_RUN):
+            # When using environments with ADC, return a GCSFS using auth
+            # from the environment
+            super.__init__(**kwargs)
+
         super().__init__(token=token, **kwargs)
 
     def isdir(self, path: str) -> bool:
