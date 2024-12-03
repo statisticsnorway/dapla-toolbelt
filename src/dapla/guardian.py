@@ -27,7 +27,6 @@ class GuardianClient:
         api_endpoint_url: str,
         maskinporten_client_id: str,
         scopes: str,
-        guardian_endpoint_url: Optional[str] = None,
         keycloak_token: Optional[str] = None,
     ) -> Any:
         """Call an external API using Maskinporten Guardian.
@@ -36,7 +35,6 @@ class GuardianClient:
             api_endpoint_url: URL to the target API
             maskinporten_client_id: the Maskinporten client id
             scopes: the Maskinporten scopes
-            guardian_endpoint_url: URL to the Maskinporten Guardian
             keycloak_token: the user's personal Keycloak token. Automatic fetch attempt will be made if left empty.
 
         Raises:
@@ -45,8 +43,7 @@ class GuardianClient:
         Returns:
             The endpoint json response
         """
-        if guardian_endpoint_url is None:
-            guardian_endpoint_url = GuardianClient.get_guardian_url()
+        guardian_endpoint_url = GuardianClient.get_guardian_url()
 
         if keycloak_token is None:
             keycloak_token = AuthClient.fetch_personal_token()

@@ -1,54 +1,139 @@
 import pytest
+import requests
 import responses
 
+from dapla import GuardianClient
 from dapla.const import GUARDIAN_URLS
 from dapla.const import DaplaEnvironment
-from dapla.guardian import GuardianClient
-
-target_endpoint_url = "https://mock-target.no/get-data"
-guardian_endpoint_url = "https://mock-guardian.no/access-token"
-fake_auth_token = "123456789"
 
 
 @responses.activate
-def test_call_api() -> None:
+def test_call_api_with_failed_api_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TEST")
     fake_keycloak_token = "keycloak_access_token"
     fake_maskinporten_token = "maskinporten_access_token"
     guardian_response = {"accessToken": fake_maskinporten_token}
     responses.add(
-        responses.POST, guardian_endpoint_url, json=guardian_response, status=200
+        responses.POST,
+        "https://guardian.intern.test.ssb.no/maskinporten/access-token",
+        json=guardian_response,
+        status=200,
     )
-    api_response = {"data": "some interesting data"}
-    responses.add(responses.GET, target_endpoint_url, json=api_response, status=200)
+    responses.add(
+        responses.GET,
+        "https://target-endpoint-url.com",
+        json={"error": "Internal Server Error"},
+        status=500,
+    )
 
     client = GuardianClient()
-    response = client.call_api(
-        target_endpoint_url,
-        "fake_client_id",
-        "dummy:scope",
-        guardian_endpoint_url,
-        fake_keycloak_token,
-    )
-    assert response["data"] == "some interesting data"
-    assert len(responses.calls) == 2
+    with pytest.raises(RuntimeError) as exc_info:
+        client.call_api(
+            "https://target-endpoint-url.com",
+            "fake_client_id",
+            "dummy:scope",
+            fake_keycloak_token,
+        )
+    assert "Error calling target API" in str(exc_info.value)
+    assert "500" in str(exc_info.value)
 
 
 @responses.activate
-def test_get_guardian_token() -> None:
-    fake_maskinporten_token = "maskinporten_access_token"
-    guardian_response = {"accessToken": fake_maskinporten_token}
+def test_get_guardian_token_failed_response() -> None:
     responses.add(
-        responses.POST, guardian_endpoint_url, json=guardian_response, status=200
+        responses.POST,
+        "https://guardian-endpoint-url.com",
+        json={"error": "Invalid token"},
+        status=401,
     )
 
     client = GuardianClient()
     body = {"maskinportenClientId": "fake_client_id", "scopes": "dummy:scope"}
-    response = client.get_guardian_token(
-        guardian_endpoint_url, "fake_auth_token", body=body
+    with pytest.raises(RuntimeError) as exc_info:
+        client.get_guardian_token(
+            "https://guardian-endpoint-url.com", "invalid_token", body=body
+        )
+    assert "Error getting guardian token" in str(exc_info.value)
+    assert "401" in str(exc_info.value)
+
+
+@responses.activate
+def test_call_api_without_keycloak_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TEST")
+    fake_auto_token = "auto_fetched_token"
+    fake_maskinporten_token = "maskinporten_access_token"
+
+    def mock_fetch_personal_token():
+        return fake_auto_token
+
+    monkeypatch.setattr(
+        "dapla.AuthClient.fetch_personal_token", mock_fetch_personal_token
     )
 
-    assert response == fake_maskinporten_token
-    assert len(responses.calls) == 1
+    guardian_response = {"accessToken": fake_maskinporten_token}
+    responses.add(
+        responses.POST,
+        "https://guardian.intern.test.ssb.no/maskinporten/access-token",
+        json=guardian_response,
+        status=200,
+    )
+    api_response = {"data": "auto token response"}
+    responses.add(
+        responses.GET, "https://target-endpoint-url.com", json=api_response, status=200
+    )
+
+    client = GuardianClient()
+    response = client.call_api(
+        "https://target-endpoint-url.com",
+        "fake_client_id",
+        "dummy:scope",
+    )
+    assert response["data"] == "auto token response"
+    assert len(responses.calls) == 2
+
+
+@responses.activate
+def test_get_guardian_token_empty_response() -> None:
+    responses.add(
+        responses.POST,
+        "https://guardian-endpoint-url.com",
+        json={},
+        status=200,
+    )
+
+    client = GuardianClient()
+    body = {"maskinportenClientId": "fake_client_id", "scopes": "dummy:scope"}
+    with pytest.raises(KeyError):
+        client.get_guardian_token(
+            "https://guardian-endpoint-url.com", "fake_token", body=body
+        )
+
+
+@responses.activate
+def test_call_api_with_network_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TEST")
+    fake_maskinporten_token = "maskinporten_access_token"
+    guardian_response = {"accessToken": fake_maskinporten_token}
+    responses.add(
+        responses.POST,
+        "https://guardian.intern.test.ssb.no/maskinporten/access-token",
+        json=guardian_response,
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        "https://target-endpoint-url.com",
+        body=requests.exceptions.ConnectionError(),
+    )
+
+    client = GuardianClient()
+    with pytest.raises(requests.exceptions.ConnectionError):
+        client.call_api(
+            "https://target-endpoint-url.com",
+            "fake_client_id",
+            "dummy:scope",
+            "fake_token",
+        )
 
 
 def test_get_guardian_url_invalid_environment(monkeypatch: pytest.MonkeyPatch) -> None:
