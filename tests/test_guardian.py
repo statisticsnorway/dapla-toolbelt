@@ -57,14 +57,16 @@ def test_get_guardian_token_failed_response() -> None:
     assert "401" in str(exc_info.value)
 
 
+def mock_fetch_personal_token():
+    fake_auto_token = "auto_fetched_token"
+    return fake_auto_token
+
+
 @responses.activate
 def test_call_api_without_keycloak_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DAPLA_ENVIRONMENT", "TEST")
-    fake_auto_token = "auto_fetched_token"
-    fake_maskinporten_token = "maskinporten_access_token"
 
-    def mock_fetch_personal_token():
-        return fake_auto_token
+    fake_maskinporten_token = "maskinporten_access_token"
 
     monkeypatch.setattr(
         "dapla.AuthClient.fetch_personal_token", mock_fetch_personal_token
