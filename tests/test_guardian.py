@@ -57,7 +57,7 @@ def test_get_guardian_token_failed_response() -> None:
     assert "401" in str(exc_info.value)
 
 
-def mock_fetch_personal_token():
+def mock_fetch_personal_token() -> str:
     fake_auto_token = "auto_fetched_token"
     return fake_auto_token
 
