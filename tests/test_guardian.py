@@ -105,3 +105,44 @@ def test_get_guardian_url_whitespace_environment(
     with pytest.raises(ValueError) as exc_info:
         GuardianClient.get_guardian_url()
     assert str(exc_info.value) == "'  TEST  ' is not a valid DaplaEnvironment"
+
+
+def test_get_guardian_url_with_special_chars(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TEST\n")
+    with pytest.raises(ValueError) as exc_info:
+        GuardianClient.get_guardian_url()
+    assert str(exc_info.value) == "'TEST\\n' is not a valid DaplaEnvironment"
+
+
+def test_get_guardian_url_numeric_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "123")
+    with pytest.raises(ValueError) as exc_info:
+        GuardianClient.get_guardian_url()
+    assert str(exc_info.value) == "'123' is not a valid DaplaEnvironment"
+
+
+def test_get_guardian_url_mixed_case(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TeSt")
+    with pytest.raises(ValueError) as exc_info:
+        GuardianClient.get_guardian_url()
+    assert str(exc_info.value) == "'TeSt' is not a valid DaplaEnvironment"
+
+
+def test_get_guardian_url_unicode_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TÉST")
+    with pytest.raises(ValueError) as exc_info:
+        GuardianClient.get_guardian_url()
+    assert str(exc_info.value) == "'TÉST' is not a valid DaplaEnvironment"
+
+
+def test_get_guardian_url_empty_dict(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DAPLA_ENVIRONMENT", "TEST")
+    original_urls = GUARDIAN_URLS.copy()
+    GUARDIAN_URLS.clear()
+    try:
+        with pytest.raises(ValueError) as exc_info:
+            GuardianClient.get_guardian_url()
+        assert str(exc_info.value) == "Unknown environment: DaplaEnvironment.TEST"
+    finally:
+        GUARDIAN_URLS.update(original_urls)
+    assert str(exc_info.value) == "Unknown environment: DaplaEnvironment.TEST"
