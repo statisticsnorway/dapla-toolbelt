@@ -323,7 +323,7 @@ class AuthClient:
     @lru_cache(maxsize=1)
     def fetch_email_from_credentials() -> Optional[str]:
         """Retrieves an e-mail based on current Google Credentials. Potentially makes a Google API call."""
-        if os.getenv("DAPLA_REGION") == str(DaplaRegion.DAPLA_LAB):
+        if os.getenv("DAPLA_REGION") == DaplaRegion.DAPLA_LAB.value:
             return os.getenv("DAPLA_USER")
 
         credentials = AuthClient.fetch_google_credentials()

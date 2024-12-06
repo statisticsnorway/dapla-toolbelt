@@ -49,7 +49,7 @@ class FileClient:
 
         See https://gcsfs.readthedocs.io/en/latest for advanced usage
         """
-        return GCSFileSystem(token=AuthClient.fetch_google_credentials(), **kwargs)
+        return GCSFileSystem(**kwargs)
 
     @staticmethod
     def ls(gcs_path: str, detail: bool = False, **kwargs: Any) -> Any:
