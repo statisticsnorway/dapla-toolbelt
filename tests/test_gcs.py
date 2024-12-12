@@ -13,14 +13,14 @@ def test_instance(mock_auth: MagicMock) -> None:
 
 @patch("google.auth.default", return_value=(None, None))
 def test_init_with_dapla_lab(mock_auth: MagicMock) -> None:
-    os.environ["DAPLA_REGION"] = "dapla-lab"
+    os.environ["DAPLA_REGION"] = "DAPLA_LABx"
     client = GCSFileSystem(project="test-project")
     assert client is not None
 
 
 @patch("google.auth.default", return_value=(None, None))
 def test_init_with_cloud_run(mock_auth: MagicMock) -> None:
-    os.environ["DAPLA_REGION"] = "cloud-run"
+    os.environ["DAPLA_REGION"] = "CLOUD_RUN"
     client = GCSFileSystem(project="test-project")
     assert client is not None
 
