@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import typing as t
 from enum import Enum
 from typing import Any
@@ -17,6 +18,8 @@ from pandas import read_fwf
 from pandas import read_json
 from pandas import read_sas
 from pandas import read_xml
+
+from dapla.const import DaplaRegion
 
 from .auth import AuthClient
 from .files import FileClient
@@ -73,6 +76,12 @@ def read_pandas(
     """
     if isinstance(gcs_path, str):
         gcs_path = FileClient._ensure_gcs_uri_prefix(gcs_path)
+
+    if (
+        os.getenv("DAPLA_REGION") == DaplaRegion.DAPLA_LAB.value
+    ) and "storage_options" in kwargs:
+        ## If using Dapla Lab, "storage_options" is not necessary because we derive authentication from the environment
+        kwargs.pop("storage_options", None)
 
     if isinstance(gcs_path, list) and file_format != "parquet":
         raise ValueError("Multiple paths are only supported for parquet format")
@@ -164,6 +173,12 @@ def write_pandas(
     if isinstance(gcs_path, str):
         gcs_path = FileClient._ensure_gcs_uri_prefix(gcs_path)
 
+    if (
+        os.getenv("DAPLA_REGION") == DaplaRegion.DAPLA_LAB.value
+    ) and "storage_options" in kwargs:
+        ## If using Dapla Lab, "storage_options" is not necessary because we derive authentication from the environment
+        kwargs.pop("storage_options", None)
+
     match SupportedFileFormat(file_format):
         case SupportedFileFormat.PARQUET:
             # Transfom and write pandas dataframe
@@ -209,5 +224,8 @@ def _get_storage_options() -> Optional[dict[str, Optional[Credentials]]]:
     An error will be raised by Pandas if providing this argument with a local path or a file-like buffer.
     See the fsspec and backend storage implementation docs for the set of allowed keys and values
     """
+    if os.getenv("DAPLA_REGION") == DaplaRegion.DAPLA_LAB.value:
+        ## If using Dapla Lab, "storage_options" is not necessary because we derive authentication from the environment
+        return None
     credentials = AuthClient.fetch_google_credentials()
     return {"token": credentials} if credentials is not None else None
