@@ -26,12 +26,9 @@ class TestPubSub(unittest.TestCase):
     object_id = "felles/kilde1/test.csv"
 
     @patch("dapla.pubsub.storage.Client")
-    @patch("dapla.pubsub.AuthClient.fetch_google_credentials")
     def test_get_list_of_blobs_with_prefix(
-        self, mock_fetch_google_credentials: Mock, mock_storage_client_class: Mock
+        self, mock_storage_client_class: Mock
     ) -> None:
-
-        mock_fetch_google_credentials.return_value = MagicMock()
 
         fake_storage_client_instance = mock_storage_client_class.return_value
         fake_storage_client_instance.list_blobs.side_effect = NotFound(
