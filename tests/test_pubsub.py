@@ -1,6 +1,8 @@
 import json
 import unittest
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import pytest
 from google.api_core.exceptions import NotFound
@@ -8,13 +10,11 @@ from google.auth.exceptions import DefaultCredentialsError
 from google.cloud.pubsub_v1.publisher.futures import Future
 
 import dapla.pubsub
-from dapla.pubsub import (
-    _get_list_of_blobs_with_prefix,
-    EmptyListError,
-    _generate_pubsub_data,
-    _get_callback,
-    _publish_gcs_objects_to_pubsub,
-)
+from dapla.pubsub import EmptyListError
+from dapla.pubsub import _generate_pubsub_data
+from dapla.pubsub import _get_callback
+from dapla.pubsub import _get_list_of_blobs_with_prefix
+from dapla.pubsub import _publish_gcs_objects_to_pubsub
 
 
 class TestPubSub(unittest.TestCase):
@@ -30,6 +30,7 @@ class TestPubSub(unittest.TestCase):
     def test_get_list_of_blobs_with_prefix(
         self, mock_fetch_google_credentials: Mock, mock_storage_client_class: Mock
     ) -> None:
+
         mock_fetch_google_credentials.return_value = MagicMock()
 
         fake_storage_client_instance = mock_storage_client_class.return_value
