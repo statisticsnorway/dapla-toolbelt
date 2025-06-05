@@ -2,8 +2,6 @@ from typing import Optional
 
 from google.cloud.secretmanager import SecretManagerServiceClient
 
-from dapla import AuthClient
-
 
 def get_secret_version(
     project_id: str, shortname: str, version_id: Optional[str] = "latest"
@@ -21,9 +19,7 @@ def get_secret_version(
     Returns:
         str: The payload of the secret version as a UTF-8 decoded string.
     """
-    client = SecretManagerServiceClient(
-        credentials=AuthClient.fetch_google_credentials()
-    )
+    client = SecretManagerServiceClient()
     secret_name = f"projects/{project_id}/secrets/{shortname}/versions/{version_id}"
     response = client.access_secret_version(name=secret_name)
     return str(response.payload.data.decode("UTF-8"))

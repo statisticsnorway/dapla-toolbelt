@@ -77,9 +77,7 @@ class FileClient:
         Returns:
             List of versions of the file.
         """
-        storage_client = storage.Client(
-            credentials=AuthClient.fetch_google_credentials()
-        )
+        storage_client = storage.Client()
         try:
             bucket = storage_client.get_bucket(bucket_name)
 
@@ -109,9 +107,7 @@ class FileClient:
         Returns:
             A new blob with new generation id.
         """
-        storage_client = storage.Client(
-            credentials=AuthClient.fetch_google_credentials()
-        )
+        storage_client = storage.Client()
 
         try:
             source_bucket = storage_client.get_bucket(source_bucket_name)
