@@ -10,10 +10,6 @@ from google.cloud.pubsub_v1.publisher.futures import Future as PubSubFuture
 
 from dapla import AuthClient
 
-import warnings
-
-warnings.simplefilter("default", DeprecationWarning)
-
 
 class EmptyListError(Exception):
     """Empty list error."""

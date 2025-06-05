@@ -3,6 +3,8 @@
 import importlib.metadata
 import warnings
 
+warnings.simplefilter("default", DeprecationWarning)
+
 import tomli
 
 # Importing Authclient here so its exposed from dapla-toolbelt

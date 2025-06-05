@@ -9,10 +9,6 @@ from google.cloud import storage
 
 from dapla import AuthClient
 
-import warnings
-
-warnings.simplefilter("default", DeprecationWarning)
-
 from .gcs import GCSFileSystem
 
 GS_URI_PREFIX = "gs://"

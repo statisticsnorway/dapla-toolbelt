@@ -6,10 +6,6 @@ from requests import Response
 
 from dapla import AuthClient
 
-import warnings
-
-warnings.simplefilter("default", DeprecationWarning)
-
 
 class ConverterClient:
     """Client for working with DataConverter."""

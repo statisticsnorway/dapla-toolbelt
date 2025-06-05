@@ -9,10 +9,6 @@ from gcsfs.retry import HttpError
 
 from dapla import AuthClient
 
-import warnings
-
-warnings.simplefilter("default", DeprecationWarning)
-
 logger = logging.getLogger(__name__)
 
 
