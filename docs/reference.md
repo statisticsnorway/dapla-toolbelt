@@ -19,13 +19,6 @@ Subpackages
 -----------
 
 
-dapla.auth module
------------------
-
-.. automodule:: dapla.auth
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 dapla.backports module
 ----------------------
@@ -87,14 +80,6 @@ dapla.guardian module
 ---------------------
 
 .. automodule:: dapla.guardian
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-dapla.jupyterhub module
------------------------
-
-.. automodule:: dapla.jupyterhub
    :members:
    :undoc-members:
    :show-inheritance:

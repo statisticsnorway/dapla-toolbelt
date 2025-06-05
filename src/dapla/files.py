@@ -7,7 +7,8 @@ import pandas as pd
 from fsspec.spec import AbstractBufferedFile
 from google.cloud import storage
 
-from .auth import AuthClient
+from dapla import AuthClient
+
 from .gcs import GCSFileSystem
 
 GS_URI_PREFIX = "gs://"

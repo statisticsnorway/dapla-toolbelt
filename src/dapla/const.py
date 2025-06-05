@@ -24,7 +24,6 @@ class DaplaRegion(Enum):
 
     ON_PREM = "ON_PREM"
     DAPLA_LAB = "DAPLA_LAB"
-    BIP = "BIP"
     CLOUD_RUN = "CLOUD_RUN"
 
 

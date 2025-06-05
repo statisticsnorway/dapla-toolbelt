@@ -20,14 +20,13 @@ requests = ">=2.27.1"
 pyarrow = ">=14.0.2"
 pandas = { version = ">=1.4.2", extras = ["excel", "xml"] }
 gcsfs = ">=2022.7.1"
-ipython = ">=8.10.0"
-jupyterhub = ">=3.0.0"
 google-cloud-storage = ">=2.7.0"
 pyjwt = ">=2.6.0"
 tomli = ">=1.1.0"
 google-cloud-pubsub = ">=2.14.1"
 fsspec = ">=2023.12.2"
 google-cloud-secret-manager = ">=2.21.0"
+dapla-auth-client = "^0.0.5"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"
@@ -88,7 +87,6 @@ disallow_untyped_calls = false
 # Allow missing type hints in third-party libraries without type information.
 module = [
     "gcsfs.*",
-    "jupyterhub.*",
     "fsspec.*",
     "responses.*",
     "tomli.*",

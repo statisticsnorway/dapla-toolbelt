@@ -2,7 +2,7 @@ from typing import Optional
 
 from google.cloud.secretmanager import SecretManagerServiceClient
 
-from .auth import AuthClient
+from dapla import AuthClient
 
 
 def get_secret_version(

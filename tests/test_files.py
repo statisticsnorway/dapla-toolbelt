@@ -28,7 +28,7 @@ class TestFiles(unittest.TestCase):
             == PATH_WITHOUT_PREFIX
         )
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_get_versions_With_object_versioning_enabled(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -65,7 +65,7 @@ class TestFiles(unittest.TestCase):
         assert files[0].updated == mock_blob1.updated
         assert files[0].time_deleted is None
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_get_versions_With_soft_deleted_enabled(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -102,7 +102,7 @@ class TestFiles(unittest.TestCase):
         assert files[0].updated == mock_blob1.updated
         assert files[0].time_deleted is None
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_get_versions_nonexistent_file(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -121,7 +121,7 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 0
         assert files == []
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_get_versions_empty_bucket(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -140,7 +140,7 @@ class TestFiles(unittest.TestCase):
         assert len(files) == 0
         assert files == []
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_restore_version_with_versioning_enabled(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -170,7 +170,7 @@ class TestFiles(unittest.TestCase):
         )
         assert blob == mock_bucket.copy_blob.return_value
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_restore_version_with_soft_deleted_enabled(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -199,7 +199,7 @@ class TestFiles(unittest.TestCase):
         )
         assert blob == mock_bucket.restore_blob.return_value
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_restore_version_existing_live_version(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -227,7 +227,7 @@ class TestFiles(unittest.TestCase):
         )
         assert blob == mock_bucket.copy_blob.return_value
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_get_versions_with_invalid_bucket_name(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -243,7 +243,7 @@ class TestFiles(unittest.TestCase):
         mock_client.return_value.get_bucket.assert_called_with(bucket_name)
         assert len(files) == 0
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_restore_version_with_invalid_bucket_name(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -262,7 +262,7 @@ class TestFiles(unittest.TestCase):
         mock_client.return_value.get_bucket.assert_called_with(source_bucket_name)
         assert result is None
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_restore_version_with_invalid_file_name(
         self, mock_client: Mock, mock_auth_client: Mock
@@ -289,7 +289,7 @@ class TestFiles(unittest.TestCase):
         )
         assert result == []
 
-    @patch("dapla.auth.AuthClient.fetch_google_credentials", return_value="credentials")
+    @patch("dapla.AuthClient.fetch_google_credentials", return_value="credentials")
     @patch("google.cloud.storage.Client")
     def test_restore_version_with_invalid_generation_id(
         self, mock_client: Mock, mock_auth_client: Mock
