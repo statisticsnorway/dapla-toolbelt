@@ -1,5 +1,3 @@
-from unittest.mock import Mock
-
 from pytest_mock import MockerFixture
 
 from dapla.gsm import get_secret_version
