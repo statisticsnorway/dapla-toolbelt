@@ -9,6 +9,10 @@ from dapla import AuthClient
 from dapla.const import GUARDIAN_URLS
 from dapla.const import DaplaEnvironment
 
+import warnings
+
+warnings.simplefilter("default", DeprecationWarning)
+
 
 class GuardianClient:
     """Client for interacting with the Maskinporten Guardian."""

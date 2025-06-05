@@ -1,5 +1,9 @@
 from .files import FileClient
 
+import warnings
+
+warnings.simplefilter("default", DeprecationWarning)
+
 
 def show(gcs_path: str) -> list[str]:
     """Backported dapla function to recursively show all folders below a given GCS path.

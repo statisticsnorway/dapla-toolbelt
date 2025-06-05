@@ -20,6 +20,10 @@ from pandas import read_xml
 
 from dapla import AuthClient
 
+import warnings
+
+warnings.simplefilter("default", DeprecationWarning)
+
 from .files import FileClient
 
 

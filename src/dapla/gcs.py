@@ -7,6 +7,10 @@ import gcsfs
 from dapla import AuthClient
 from dapla.const import DaplaRegion
 
+import warnings
+
+warnings.simplefilter("default", DeprecationWarning)
+
 
 class GCSFileSystem(gcsfs.GCSFileSystem):  # type: ignore [misc]
     """GCSFileSystem is a wrapper around gcsfs.GCSFileSystem."""

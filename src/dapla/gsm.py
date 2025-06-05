@@ -4,6 +4,10 @@ from google.cloud.secretmanager import SecretManagerServiceClient
 
 from dapla import AuthClient
 
+import warnings
+
+warnings.simplefilter("default", DeprecationWarning)
+
 
 def get_secret_version(
     project_id: str, shortname: str, version_id: Optional[str] = "latest"
