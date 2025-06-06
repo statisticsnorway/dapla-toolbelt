@@ -21,6 +21,7 @@ class DaplaService(Enum):
 
 class DaplaRegion(Enum):
     """Represents the 'DAPLA_REGION' environment variable."""
+
     ON_PREM = "ON_PREM"
     BIP = "BIP"
     DAPLA_LAB = "DAPLA_LAB"
