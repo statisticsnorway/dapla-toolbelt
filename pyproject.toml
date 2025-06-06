@@ -26,7 +26,7 @@ tomli = ">=1.1.0"
 google-cloud-pubsub = ">=2.14.1"
 fsspec = ">=2023.12.2"
 google-cloud-secret-manager = ">=2.21.0"
-dapla-auth-client = "^0.0.5"
+dapla-auth-client = ">=0.0.6"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"
