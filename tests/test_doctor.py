@@ -24,18 +24,15 @@ def test_keycloak_token_valid(
     assert result is False
 
 
-@patch("dapla.doctor.AuthClient.fetch_google_credentials")
 @patch("dapla.doctor.storage.Client")
 @patch.dict(os.environ, {"CLUSTER_ID": "staging-bip-app"})
-def test_bucket_access(mock_client: Mock, mock_fetch_google_credentials: Mock) -> None:
+def test_bucket_access(mock_client: Mock) -> None:
     # Test successful bucket access
-    mock_fetch_google_credentials.return_value = "test_credentials"
     mock_client.return_value.get_bucket.return_value = "test_bucket"
     result = Doctor.bucket_access()
     assert result is True
 
     # Test unsuccessful bucket access
-    mock_fetch_google_credentials.return_value = "test_credentials"
     mock_client.return_value.get_bucket.side_effect = Exception("Test exception")
     result = Doctor.bucket_access()
     assert result is False

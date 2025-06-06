@@ -79,7 +79,7 @@ class Doctor:
         )
 
         # Fetch google credentials and create client object
-        client = storage.Client(credentials=AuthClient.fetch_google_credentials())
+        client = storage.Client()
 
         # Set the bucket that is to be accessed
         if os.environ["CLUSTER_ID"] == "staging-bip-app":

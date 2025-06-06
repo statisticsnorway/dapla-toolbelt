@@ -773,14 +773,14 @@ toml = ["tomli"]
 
 [[package]]
 name = "dapla-auth-client"
-version = "0.0.6"
+version = "1.0.0"
 description = "Dapla Auth Client"
 category = "main"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "dapla_auth_client-0.0.6-py3-none-any.whl", hash = "sha256:c38733fc710cbd3c588363df4ef40a6e3e6fb8295ad4290c584cb0d77c5b47a7"},
-    {file = "dapla_auth_client-0.0.6.tar.gz", hash = "sha256:070f3d1e9781dcf23408e429ded4914362b2b8b5843df2aa6a4f012eb0305b3e"},
+    {file = "dapla_auth_client-1.0.0-py3-none-any.whl", hash = "sha256:803dbb85c2fd9306edd5f3546c5bf23dafb94dfda72a3947fc456349e08ae188"},
+    {file = "dapla_auth_client-1.0.0.tar.gz", hash = "sha256:56b7321cab17d6a7f2de17ff9e3925be23415006f279beb74848d3d8ab821aad"},
 ]
 
 [package.dependencies]
@@ -5496,4 +5496,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "8604a3afeee09b0ea2759651bb2296b3de45cdb6906f3e6a737828b3569973d9"
+content-hash = "f3e17bea14b4035bba74cc717080d5dcda4097a6d112239fea6b7d6ea2e7d397"

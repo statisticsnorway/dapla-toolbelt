@@ -7,8 +7,6 @@ import pandas as pd
 from fsspec.spec import AbstractBufferedFile
 from google.cloud import storage
 
-from dapla import AuthClient
-
 from .gcs import GCSFileSystem
 
 GS_URI_PREFIX = "gs://"
@@ -188,7 +186,6 @@ class FileClient:
             pd.DataFrame,
             pd.read_csv(
                 FileClient._ensure_gcs_uri_prefix(gcs_path),
-                storage_options={"token": AuthClient.fetch_google_credentials()},
                 **kwargs,
             ),
         )
@@ -208,7 +205,6 @@ class FileClient:
             pd.DataFrame,
             pd.read_json(
                 FileClient._ensure_gcs_uri_prefix(gcs_path),
-                storage_options={"token": AuthClient.fetch_google_credentials()},
                 **kwargs,
             ),
         )
@@ -226,7 +222,6 @@ class FileClient:
         """
         return pd.read_xml(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
-            storage_options={"token": AuthClient.fetch_google_credentials()},
             **kwargs,
         )
 
@@ -241,7 +236,6 @@ class FileClient:
         """
         df.to_csv(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
-            storage_options={"token": AuthClient.fetch_google_credentials()},
             **kwargs,
         )
 
@@ -270,6 +264,5 @@ class FileClient:
         """
         df.to_xml(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
-            storage_options={"token": AuthClient.fetch_google_credentials()},
             **kwargs,
         )
