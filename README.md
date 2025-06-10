@@ -18,7 +18,6 @@
 [pypi status]: https://pypi.org/project/dapla-toolbelt/
 [documentation]: https://statisticsnorway.github.io/dapla-toolbelt
 [tests]: https://github.com/statisticsnorway/dapla-toolbelt/actions?workflow=Tests
-
 [sonarcov]: https://sonarcloud.io/summary/overall?id=statisticsnorway_dapla-toolbelt
 [sonarquality]: https://sonarcloud.io/summary/overall?id=statisticsnorway_dapla-toolbelt
 [pre-commit]: https://github.com/pre-commit/pre-commit
@@ -27,18 +26,17 @@
 
 Python module for use within Jupyterlab notebooks, specifically aimed for Statistics Norway's data platform called
 `Dapla`. It contains support for authenticated access to Google Services such as Google Cloud Storage (GCS) and custom
-Dapla services such as [Maskinporten Guardian](https://github.com/statisticsnorway/maskinporten-guardian). The
-authentication process is based on the [TokenExchangeAuthenticator](https://github.com/statisticsnorway/jupyterhub-extensions/tree/main/TokenExchangeAuthenticator)
-for Jupyterhub.
+Dapla services such as [Maskinporten Guardian](https://github.com/statisticsnorway/maskinporten-guardian).
 
 ## Features
 
 These operations are supported:
-* List contents of a bucket
-* Open a file in GCS
-* Copy a file from GCS into local
-* Load a file (CSV, JSON or XML) from GCS into a pandas dataframe
-* Save contents of a data frame into a file (CSV, JSON, XML) in GCS
+
+- List contents of a bucket
+- Open a file in GCS
+- Copy a file from GCS into local
+- Load a file (CSV, JSON or XML) from GCS into a pandas dataframe
+- Save contents of a data frame into a file (CSV, JSON, XML) in GCS
 
 When the user gives the path to a resource, they do not need to give the GCS uri, only the path.
 This just means users don't have to prefix a path with "gs://".
@@ -60,7 +58,7 @@ pip install dapla-toolbelt
 
 ## Usage
 
-``` python
+```python
 from dapla import FileClient
 from dapla import GuardianClient
 import pandas as pd
