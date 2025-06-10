@@ -146,3 +146,10 @@ dmypy.json
 .history/
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Nix
+result
+
+# Direnv
+.envrc
+.direnv
