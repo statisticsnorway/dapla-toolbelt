@@ -6,7 +6,7 @@ from typing import Any
 from typing import Optional
 
 # import this module to trigger import side-effect and register the pyarrow extension types
-import pandas.core.arrays.arrow.extension_types  # type: ignore [import-untyped] # noqa: F401
+import pandas.core.arrays.arrow.extension_types  # type: ignore [import-untyped, unused-ignore, import-not-found] # noqa: F401
 import pyarrow.compute
 from google.oauth2.credentials import Credentials
 from pandas import DataFrame
@@ -18,7 +18,8 @@ from pandas import read_json
 from pandas import read_sas
 from pandas import read_xml
 
-from .auth import AuthClient
+from dapla import AuthClient
+
 from .files import FileClient
 
 
@@ -91,7 +92,7 @@ def read_pandas(
                 gcs_path = FileClient._remove_gcs_uri_prefix(gcs_path)
 
             parquet_ds = pq.ParquetDataset(
-                gcs_path,  # type: ignore [arg-type]
+                gcs_path,  # type: ignore [arg-type, unused-ignore]
                 filesystem=fs,
                 filters=filters,  # type: ignore [arg-type]
             )  # Stubs show the incorrect type -

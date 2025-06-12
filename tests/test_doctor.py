@@ -1,49 +1,10 @@
 import os
-from unittest import mock
 from unittest.mock import Mock
 from unittest.mock import patch
 
 from dapla.doctor import Doctor
 
 auth_endpoint_url = "https://mock-auth.no/user"
-
-
-@patch("dapla.doctor.AuthClient.fetch_local_user_from_jupyter")
-def test_jupyterhub_auth_valid(mock_fetch_local_user: Mock) -> None:
-    # Test authenticated user
-    mock_fetch_local_user.return_value = "test_user"
-
-    result = Doctor.jupyterhub_auth_valid()
-    assert result is True
-
-    # Test unauthenticated user
-    mock_fetch_local_user.side_effect = Exception("Test exception")
-    result = Doctor.jupyterhub_auth_valid()
-    assert result is False
-
-
-@mock.patch.dict(
-    "dapla.auth.os.environ",
-    {
-        "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "DAPLA_LAB",
-        "OIDC_TOKEN": "dummy_token",
-    },
-    clear=True,
-)
-def test_jupyterhub_auth_valid_on_dapla_lab() -> None:
-    result = Doctor.jupyterhub_auth_valid()
-    assert result is True
-
-
-@mock.patch.dict(
-    "dapla.auth.os.environ",
-    {"DAPLA_SERVICE": "JUPYTERLAB", "DAPLA_REGION": "DAPLA_LAB", "OIDC_TOKEN": ""},
-    clear=True,
-)
-def test_jupyterhub_auth_invalid_on_dapla_lab() -> None:
-    result = Doctor.jupyterhub_auth_valid()
-    assert result is False
 
 
 @patch("dapla.doctor.AuthClient.fetch_personal_token")
@@ -63,18 +24,15 @@ def test_keycloak_token_valid(
     assert result is False
 
 
-@patch("dapla.doctor.AuthClient.fetch_google_credentials")
 @patch("dapla.doctor.storage.Client")
 @patch.dict(os.environ, {"CLUSTER_ID": "staging-bip-app"})
-def test_bucket_access(mock_client: Mock, mock_fetch_google_credentials: Mock) -> None:
+def test_bucket_access(mock_client: Mock) -> None:
     # Test successful bucket access
-    mock_fetch_google_credentials.return_value = "test_credentials"
     mock_client.return_value.get_bucket.return_value = "test_bucket"
     result = Doctor.bucket_access()
     assert result is True
 
     # Test unsuccessful bucket access
-    mock_fetch_google_credentials.return_value = "test_credentials"
     mock_client.return_value.get_bucket.side_effect = Exception("Test exception")
     result = Doctor.bucket_access()
     assert result is False

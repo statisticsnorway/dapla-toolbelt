@@ -8,8 +8,6 @@ import google.cloud.storage as storage
 from google.cloud.pubsub_v1 import PublisherClient
 from google.cloud.pubsub_v1.publisher.futures import Future as PubSubFuture
 
-from dapla import AuthClient
-
 
 class EmptyListError(Exception):
     """Empty list error."""
@@ -31,8 +29,7 @@ def _get_list_of_blobs_with_prefix(
         An list over the `storage.Blob` objects representing the blobs in the specified bucket and with names starting
         with the given prefix.
     """
-    google_credentials = AuthClient.fetch_google_credentials()
-    storage_client = storage.Client(project=project_id, credentials=google_credentials)
+    storage_client = storage.Client(project=project_id)
     return list(storage_client.list_blobs(bucket_name, prefix=folder_prefix))
 
 
@@ -102,7 +99,7 @@ def _publish_gcs_objects_to_pubsub(
             f"There are no files in {bucket_id:} with the given {folder_prefix:}."
         )
 
-    publisher = PublisherClient(credentials=AuthClient.fetch_google_credentials())
+    publisher = PublisherClient()
     topic_path = publisher.topic_path(project_id, topic_id)
 
     publish_futures = []

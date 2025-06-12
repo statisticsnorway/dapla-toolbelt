@@ -7,8 +7,7 @@ import jwt
 import requests
 from gcsfs.retry import HttpError
 
-from dapla.auth import AuthClient
-from dapla.const import DaplaRegion
+from dapla import AuthClient
 
 logger = logging.getLogger(__name__)
 
@@ -19,26 +18,6 @@ class Doctor:
     Checks whether user is authenticated, if the keycloak-token is valid and if user has access to GCS.
     Each method can be run individually or collectively with the 'health' method.
     """
-
-    @staticmethod
-    def jupyterhub_auth_valid() -> bool:
-        """Checks whether user is logged in and authenticated to Jupyterhub or Dapla Lab."""
-        print("Checking dapla region")
-        if AuthClient.get_dapla_region() == DaplaRegion.DAPLA_LAB:
-            print("Checking authentication to Dapla Lab...")
-            try:
-                AuthClient.fetch_personal_token()
-            except Exception:
-                return False
-            return True
-        else:
-            print("Checking authentication to JupyterHub...")
-            try:
-                # Attempt fetching the Jupyterhub user
-                AuthClient.fetch_local_user_from_jupyter()
-            except Exception:
-                return False
-            return True
 
     @staticmethod
     def keycloak_token_valid() -> bool:
@@ -100,7 +79,7 @@ class Doctor:
         )
 
         # Fetch google credentials and create client object
-        client = storage.Client(credentials=AuthClient.fetch_google_credentials())
+        client = storage.Client()
 
         # Set the bucket that is to be accessed
         if os.environ["CLUSTER_ID"] == "staging-bip-app":
@@ -120,9 +99,6 @@ class Doctor:
     def health(cls) -> None:
         """Runs a series of checks to determine the health of Dapla setup."""
         print("Performing checks...")
-        if not cls.jupyterhub_auth_valid():
-            print("You are either not logged in or not authenticated to JupyterHub.")
-            exit(1)
         if not cls.keycloak_token_valid():
             print("Your keycloak token seems to be expired.")
             exit(1)

@@ -7,7 +7,6 @@ import pandas as pd
 from fsspec.spec import AbstractBufferedFile
 from google.cloud import storage
 
-from .auth import AuthClient
 from .gcs import GCSFileSystem
 
 GS_URI_PREFIX = "gs://"
@@ -76,9 +75,7 @@ class FileClient:
         Returns:
             List of versions of the file.
         """
-        storage_client = storage.Client(
-            credentials=AuthClient.fetch_google_credentials()
-        )
+        storage_client = storage.Client()
         try:
             bucket = storage_client.get_bucket(bucket_name)
 
@@ -108,9 +105,7 @@ class FileClient:
         Returns:
             A new blob with new generation id.
         """
-        storage_client = storage.Client(
-            credentials=AuthClient.fetch_google_credentials()
-        )
+        storage_client = storage.Client()
 
         try:
             source_bucket = storage_client.get_bucket(source_bucket_name)
@@ -191,7 +186,6 @@ class FileClient:
             pd.DataFrame,
             pd.read_csv(
                 FileClient._ensure_gcs_uri_prefix(gcs_path),
-                storage_options={"token": AuthClient.fetch_google_credentials()},
                 **kwargs,
             ),
         )
@@ -211,7 +205,6 @@ class FileClient:
             pd.DataFrame,
             pd.read_json(
                 FileClient._ensure_gcs_uri_prefix(gcs_path),
-                storage_options={"token": AuthClient.fetch_google_credentials()},
                 **kwargs,
             ),
         )
@@ -229,7 +222,6 @@ class FileClient:
         """
         return pd.read_xml(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
-            storage_options={"token": AuthClient.fetch_google_credentials()},
             **kwargs,
         )
 
@@ -244,7 +236,6 @@ class FileClient:
         """
         df.to_csv(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
-            storage_options={"token": AuthClient.fetch_google_credentials()},
             **kwargs,
         )
 
@@ -273,6 +264,5 @@ class FileClient:
         """
         df.to_xml(
             FileClient._ensure_gcs_uri_prefix(gcs_path),
-            storage_options={"token": AuthClient.fetch_google_credentials()},
             **kwargs,
         )

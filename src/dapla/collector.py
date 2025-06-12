@@ -4,7 +4,7 @@ from typing import Any
 import requests
 from requests import Response
 
-from .auth import AuthClient
+from dapla import AuthClient
 
 
 class CollectorClient:

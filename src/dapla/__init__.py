@@ -3,9 +3,14 @@
 import importlib.metadata
 import warnings
 
+warnings.simplefilter("default", DeprecationWarning)
+
 import tomli
 
-from .auth import AuthClient
+# Importing Authclient here so its exposed from dapla-toolbelt
+# and also is importable with `from dapla import AuthClient`
+from dapla_auth_client import AuthClient
+
 from .backports import details
 from .backports import show
 from .collector import CollectorClient
@@ -15,7 +20,6 @@ from .files import FileClient
 from .git import repo_root_dir
 from .gsm import get_secret_version
 from .guardian import GuardianClient
-from .jupyterhub import generate_api_token
 from .pandas import read_pandas
 from .pandas import write_pandas
 from .pubsub import trigger_source_data_processing
@@ -28,7 +32,6 @@ __all__ = [
     "FileClient",
     "GuardianClient",
     "details",
-    "generate_api_token",
     "get_secret_version",
     "read_pandas",
     "repo_root_dir",

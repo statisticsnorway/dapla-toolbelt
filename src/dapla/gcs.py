@@ -4,7 +4,7 @@ from typing import Any
 
 import gcsfs
 
-from dapla.auth import AuthClient
+from dapla import AuthClient
 from dapla.const import DaplaRegion
 
 

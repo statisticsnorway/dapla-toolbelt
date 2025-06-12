@@ -23,8 +23,8 @@ class DaplaRegion(Enum):
     """Represents the 'DAPLA_REGION' environment variable."""
 
     ON_PREM = "ON_PREM"
-    DAPLA_LAB = "DAPLA_LAB"
     BIP = "BIP"
+    DAPLA_LAB = "DAPLA_LAB"
     CLOUD_RUN = "CLOUD_RUN"
 
 

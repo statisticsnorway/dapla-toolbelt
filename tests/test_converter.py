@@ -111,16 +111,23 @@ root record required
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ",
+    "dapla_auth_client.auth.os.environ",
     {
         "DAPLA_SERVICE": "JUPYTERLAB",
         "DAPLA_REGION": "DAPLA_LAB",
         "OIDC_TOKEN": "dummy_token",
+        "LABID_TOKEN_EXCHANGE_URL": "https://mock-auth.no/token-exchange",
     },
     clear=True,
 )
+@mock.patch(
+    "dapla_auth_client.auth.AuthClient.fetch_personal_token",
+    return_value="fake_personal_token",
+)
 @responses.activate
-def test_converter_start_200_response_on_dapla_lab() -> None:
+def test_converter_start_200_response_on_dapla_lab(
+    mock_read_kubernetes_token: mock.Mock,
+) -> None:
     job_config: dict[str, str] = {}
     responses.add(
         responses.POST,
@@ -136,47 +143,23 @@ def test_converter_start_200_response_on_dapla_lab() -> None:
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ",
+    "dapla_auth_client.auth.os.environ",
     {
         "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "BIP",
+        "DAPLA_REGION": "DAPLA_LAB",
         "LOCAL_USER_PATH": auth_endpoint_url,
+        "LABID_TOKEN_EXCHANGE_URL": "https://mock-auth.no/token-exchange",
     },
     clear=True,
 )
-@responses.activate
-def test_converter_start_200_response_on_jupyterhub() -> None:
-    mock_response = {
-        "access_token": "fake_access_token",
-    }
-    responses.add(responses.GET, auth_endpoint_url, json=mock_response, status=200)
-
-    job_config: dict[str, str] = {}
-
-    responses.add(
-        responses.POST,
-        "https://mock-converter.no/jobs",
-        json=sample_response_start_job,
-        status=200,
-    )
-    client = ConverterClient(converter_test_url)
-    response = client.start(job_config)
-    json_str = json.loads(response.json())
-
-    assert json_str["jobId"] == json.loads(sample_response_start_job)["jobId"]
-
-
-@mock.patch.dict(
-    "dapla.auth.os.environ",
-    {
-        "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "BIP",
-        "LOCAL_USER_PATH": auth_endpoint_url,
-    },
-    clear=True,
+@mock.patch(
+    "dapla_auth_client.auth.AuthClient.fetch_personal_token",
+    return_value="fake_personal_token",
 )
 @responses.activate
-def test_converter_start_simulation_200_response() -> None:
+def test_converter_start_simulation_200_response(
+    mock_read_kubernetes_token: mock.Mock,
+) -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
@@ -197,16 +180,23 @@ def test_converter_start_simulation_200_response() -> None:
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ",
+    "dapla_auth_client.auth.os.environ",
     {
         "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "BIP",
+        "DAPLA_REGION": "DAPLA_LAB",
         "LOCAL_USER_PATH": auth_endpoint_url,
+        "LABID_TOKEN_EXCHANGE_URL": "https://mock-auth.no/token-exchange",
     },
     clear=True,
 )
+@mock.patch(
+    "dapla_auth_client.auth.AuthClient.fetch_personal_token",
+    return_value="fake_personal_token",
+)
 @responses.activate
-def test_converter_get_job_summary_200_response() -> None:
+def test_converter_get_job_summary_200_response(
+    mock_read_kubernetes_token: mock.Mock,
+) -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
@@ -224,16 +214,23 @@ def test_converter_get_job_summary_200_response() -> None:
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ",
+    "dapla_auth_client.auth.os.environ",
     {
         "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "BIP",
+        "DAPLA_REGION": "DAPLA_LAB",
         "LOCAL_USER_PATH": auth_endpoint_url,
+        "LABID_TOKEN_EXCHANGE_URL": "https://mock-auth.no/token-exchange",
     },
     clear=True,
 )
+@mock.patch(
+    "dapla_auth_client.auth.AuthClient.fetch_personal_token",
+    return_value="fake_personal_token",
+)
 @responses.activate
-def test_converter_stop_job_200_response() -> None:
+def test_converter_stop_job_200_response(
+    mock_read_kubernetes_token: mock.Mock,
+) -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
@@ -251,16 +248,23 @@ def test_converter_stop_job_200_response() -> None:
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ",
+    "dapla_auth_client.auth.os.environ",
     {
         "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "BIP",
+        "DAPLA_REGION": "DAPLA_LAB",
         "LOCAL_USER_PATH": auth_endpoint_url,
+        "LABID_TOKEN_EXCHANGE_URL": "https://mock-auth.no/token-exchange",
     },
     clear=True,
 )
+@mock.patch(
+    "dapla_auth_client.auth.AuthClient.fetch_personal_token",
+    return_value="fake_personal_token",
+)
 @responses.activate
-def test_converter_get_pseudo_report_200_response() -> None:
+def test_converter_get_pseudo_report_200_response(
+    mock_read_kubernetes_token: mock.Mock,
+) -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
@@ -278,16 +282,23 @@ def test_converter_get_pseudo_report_200_response() -> None:
 
 
 @mock.patch.dict(
-    "dapla.auth.os.environ",
+    "dapla_auth_client.auth.os.environ",
     {
         "DAPLA_SERVICE": "JUPYTERLAB",
-        "DAPLA_REGION": "BIP",
+        "DAPLA_REGION": "DAPLA_LAB",
         "LOCAL_USER_PATH": auth_endpoint_url,
+        "LABID_TOKEN_EXCHANGE_URL": "https://mock-auth.no/token-exchange",
     },
     clear=True,
 )
+@mock.patch(
+    "dapla_auth_client.auth.AuthClient.fetch_personal_token",
+    return_value="fake_personal_token",
+)
 @responses.activate
-def test_converter_get_pseudo_schema_200_response() -> None:
+def test_converter_get_pseudo_schema_200_response(
+    mock_read_kubernetes_token: mock.Mock,
+) -> None:
     mock_response = {
         "access_token": "fake_access_token",
     }
