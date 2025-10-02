@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dapla-toolbelt"
-version = "4.0.0"
+version = "4.0.1"
 description = "Dapla Toolbelt"
 authors = ["Dapla Developers <dapla-platform-developers@ssb.no>"]
 license = "MIT"
@@ -27,6 +27,8 @@ google-cloud-pubsub = ">=2.14.1"
 fsspec = ">=2023.12.2"
 google-cloud-secret-manager = ">=2.21.0"
 dapla-auth-client = ">=1.0.1"
+deprecated = "^1.2.18"
+types-deprecated = "^1.2.15.20250304"
 
 [tool.poetry.group.dev.dependencies]
 pygments = ">=2.10.0"
