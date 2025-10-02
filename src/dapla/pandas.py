@@ -5,11 +5,10 @@ from enum import Enum
 from typing import Any
 from typing import Optional
 
-from deprecated import deprecated
-
 # import this module to trigger import side-effect and register the pyarrow extension types
 import pandas.core.arrays.arrow.extension_types  # type: ignore [import-untyped, unused-ignore, import-not-found] # noqa: F401
 import pyarrow.compute
+from deprecated import deprecated
 from google.oauth2.credentials import Credentials
 from pandas import DataFrame
 from pandas import Series
