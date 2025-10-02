@@ -46,7 +46,8 @@ class SupportedFileFormat(Enum):
 @deprecated(
     reason=(
         "The `read_pandas` function is deprecated and will be removed on 1st February of 2026. "
-        "Please use alternative methods for reading datasets."
+        "Please use alternative methods for reading datasets, such as the built-in pandas method `read_parquet`. "
+        "Read more at: https://pandas.pydata.org/docs/reference/io.html"
     ),
 )
 def read_pandas(
@@ -155,7 +156,8 @@ def read_pandas(
 @deprecated(
     reason=(
         "The `write_pandas` function is deprecated and will be removed on 1st February of 2026. "
-        "Please use alternative methods for reading datasets."
+        "Please use alternative methods for reading datasets, such as the built-in pyarrow method `parquet.write_table`. "
+        "Read more at: https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html"
     ),
 )
 def write_pandas(
