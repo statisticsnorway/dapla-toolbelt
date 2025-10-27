@@ -11,6 +11,10 @@ import tomli
 # and also is importable with `from dapla import AuthClient`
 from dapla_auth_client import AuthClient
 
+# Importing trigger_source_data_processing here so its exposed from dapla-toolbelt
+# and also is importable with `from dapla import trigger_source_data_processing`
+from dapla_toolbelt_automation import trigger_source_data_processing
+
 from .backports import details
 from .backports import show
 from .collector import CollectorClient
@@ -22,7 +26,6 @@ from .gsm import get_secret_version
 from .guardian import GuardianClient
 from .pandas import read_pandas
 from .pandas import write_pandas
-from .pubsub import trigger_source_data_processing
 
 __all__ = [
     "AuthClient",
